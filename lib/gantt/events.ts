@@ -39,6 +39,7 @@ export function applyEvent(data: GanttData, event: GanttEvent): GanttData {
 
     case 'dependency.deleted': {
       if (!data.dependencies[event.dependencyId]) return data
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars -- extraction volontaire pour retirer la clé par déstructuration
       const { [event.dependencyId]: _removed, ...dependencies } = data.dependencies
       return { ...data, dependencies }
     }

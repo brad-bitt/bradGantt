@@ -13,9 +13,11 @@ const data = { tasks: indexById([g, c1, c2]), dependencies: {} }
 // Deep freeze for purity tests
 function deepFreeze<T>(obj: T): T {
   Object.freeze(obj)
-  Object.getOwnPropertyNames(obj).forEach((prop) => {
-    if ((obj as any)[prop] !== null && ((typeof (obj as any)[prop]) === 'object' || typeof (obj as any)[prop] === 'function') && !Object.isFrozen((obj as any)[prop])) {
-      deepFreeze((obj as any)[prop])
+  const record = obj as Record<string, unknown>
+  Object.getOwnPropertyNames(record).forEach((prop) => {
+    const value = record[prop]
+    if (value !== null && (typeof value === 'object' || typeof value === 'function') && !Object.isFrozen(value)) {
+      deepFreeze(value)
     }
   })
   return obj
