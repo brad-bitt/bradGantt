@@ -19,4 +19,27 @@ describe('Dialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Fermer' }))
     expect(onClose).toHaveBeenCalledTimes(2)
   })
+
+  it('déplace le focus dans la modale à l\'ouverture', () => {
+    const { rerender } = render(<Dialog open onClose={() => {}} title="Test"><button>Bouton</button></Dialog>)
+    const btn = screen.getByText('Bouton')
+    expect(btn).toHaveFocus()
+  })
+
+  it('restaure le focus au déclencheur à la fermeture', () => {
+    const trigger = document.createElement('button')
+    document.body.appendChild(trigger)
+    trigger.focus()
+    const onClose = vi.fn()
+    const { rerender } = render(<Dialog open onClose={onClose} title="Test">contenu</Dialog>)
+    rerender(<Dialog open={false} onClose={onClose} title="Test">contenu</Dialog>)
+    expect(trigger).toHaveFocus()
+    document.body.removeChild(trigger)
+  })
+
+  it('garde le focus sur un champ avec autoFocus', () => {
+    render(<Dialog open onClose={() => {}} title="Test"><input autoFocus /></Dialog>)
+    const input = screen.getByRole('textbox')
+    expect(input).toHaveFocus()
+  })
 })
