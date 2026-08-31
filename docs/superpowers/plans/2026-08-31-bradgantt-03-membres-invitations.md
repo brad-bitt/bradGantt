@@ -18,7 +18,7 @@
 - Comparaison d'emails **insensible à la casse**, adresses normalisées en minuscules + trim avant stockage.
 - Messages d'erreur (exacts, affichés inline dans le formulaire) : `Adresse email invalide`, `Rôle invalide`, `Seul le propriétaire peut inviter`, `Projet introuvable`, `Cette personne est déjà membre`, `Une invitation est déjà en attente pour cette adresse`.
 - Pages d'erreur d'acceptation : `email_mismatch` → « Cette invitation est destinée à une autre adresse » + bouton « Changer de compte » ; `invitation_not_found` → « Lien invalide ou déjà utilisé ».
-- Variables d'environnement : `RESEND_API_KEY` (absent → mailer console), `EMAIL_FROM` (défaut `BradGantt <onboarding@resend.dev>`), `NEXT_PUBLIC_SITE_URL`. En mode `NEXT_PUBLIC_E2E=1` seulement, la route renvoie `inviteUrl` dans sa réponse et le formulaire l'affiche.
+- Variables d'environnement : `RESEND_API_KEY` (absent → mailer console), `EMAIL_FROM` (défaut `BradGantt <onboarding@resend.dev>`), `NEXT_PUBLIC_SITE_URL`. En mode `E2E_ENABLED=1` seulement (variable **serveur**, jamais `NEXT_PUBLIC_*` qui serait inlinée au build), la route renvoie `inviteUrl` dans sa réponse et le formulaire l'affiche.
 - Style néo-brutaliste et textes français comme aux plans précédents. `git add` explicite, jamais `--no-verify`, trailers de commit fournis par l'environnement.
 
 ---
@@ -569,7 +569,7 @@ git commit -m "feat(invitations): logique de création d'invitation (ajout direc
 
 **Interfaces:**
 - Consumes : `createClient` serveur, `createInvitation`, `createMailer`, `newInviteToken`.
-- Produces : `createSupabaseInvitationDb(client, userId): InvitationDb` ; `POST /api/invitations` body `{ projectId, email, role }` → `200 { kind: 'added'|'invited', inviteUrl? }` (`inviteUrl` seulement si `NEXT_PUBLIC_E2E=1`) | `400/401/403/404 { error }`.
+- Produces : `createSupabaseInvitationDb(client, userId): InvitationDb` ; `POST /api/invitations` body `{ projectId, email, role }` → `200 { kind: 'added'|'invited', inviteUrl? }` (`inviteUrl` seulement si `E2E_ENABLED=1`) | `400/401/403/404 { error }`.
 
 - [ ] **Step 1 : Adaptateur**
 
@@ -649,7 +649,7 @@ export async function POST(request: Request) {
       { projectId: body.projectId, email: body.email, role: body.role },
     )
     if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
-    const exposeUrl = process.env.NEXT_PUBLIC_E2E === '1' && result.kind === 'invited'
+    const exposeUrl = process.env.E2E_ENABLED === '1' && result.kind === 'invited'
     return NextResponse.json({ kind: result.kind, ...(exposeUrl ? { inviteUrl: result.inviteUrl } : {}) })
   } catch (e) {
     console.error('[api/invitations]', e)
@@ -1250,7 +1250,7 @@ Diagrammes de Gantt collaboratifs, néo-brutalistes. Next.js 15 + Supabase.
 3. `npx supabase db reset` — applique les migrations et le seed (utilisateurs `alice|bob|carol|dave@test.local`, mot de passe `password123`, projet « Projet démo »)
 4. `npm run dev` → http://localhost:3000
 
-Connexion locale : magic-link (boîte mail locale sur http://127.0.0.1:54324) ou, avec `NEXT_PUBLIC_E2E=1`, la page `/e2e-login` (email + mot de passe).
+Connexion locale : magic-link (boîte mail locale sur http://127.0.0.1:54424) ou, avec `E2E_ENABLED=1`, la page `/e2e-login` (email + mot de passe).
 
 ## Tests
 
@@ -1258,7 +1258,7 @@ Connexion locale : magic-link (boîte mail locale sur http://127.0.0.1:54324) ou
 |---|---|
 | `npm test` | Vitest — modules purs, store, commandes, composants UI |
 | `npm run test:db` | pgTAP — schéma, RLS, `accept_invitation` |
-| `npm run test:e2e` | Playwright (lance `next dev` avec `NEXT_PUBLIC_E2E=1`) — faire `npx supabase db reset` avant |
+| `npm run test:e2e` | Playwright (lance `next dev` avec `E2E_ENABLED=1`) — faire `npx supabase db reset` avant |
 | `npm run typecheck` / `npm run lint` | TypeScript / ESLint |
 
 ## Variables d'environnement

@@ -37,7 +37,7 @@
 | `app/(app)/layout.tsx` | Garde de session + `<AppHeader/>` |
 | `app/(app)/projects/page.tsx` | Liste « mes projets » |
 | `app/(app)/projects/actions.ts` | Server actions : créer / renommer / supprimer un projet, se déconnecter |
-| `app/e2e-login/page.tsx` | Page de login par mot de passe, **uniquement** si `NEXT_PUBLIC_E2E=1` (tests Playwright) |
+| `app/e2e-login/page.tsx` | Page de login par mot de passe, **uniquement** si `E2E_ENABLED=1` (tests Playwright). Variable **serveur** : un `NEXT_PUBLIC_*` serait inliné au build et figerait la porte ouverte dans l'artefact. |
 | `components/ui/*.tsx` | Button, Badge, Input, Select, Checkbox, Dialog, Avatar, Toast |
 | `components/layout/AppHeader.tsx` | En-tête : logo, avatar utilisateur, bouton déconnexion |
 | `components/project/ProjectCard.tsx`, `NewProjectDialog.tsx`, `RenameProjectDialog.tsx` | UI de la liste de projets |
@@ -1671,7 +1671,7 @@ export default defineConfig({
     command: 'npm run dev',
     url: 'http://localhost:3000/login',
     reuseExistingServer: !process.env.CI,
-    env: { NEXT_PUBLIC_E2E: '1' },
+    env: { E2E_ENABLED: '1' },
   },
 })
 ```
@@ -1898,7 +1898,9 @@ export default function Home() {
 }
 ```
 
-- [ ] **Step 6 : Page de login e2e (mot de passe), activée uniquement par `NEXT_PUBLIC_E2E=1`**
+- [ ] **Step 6 : Page de login e2e (mot de passe), activée uniquement par `E2E_ENABLED=1`**
+
+`E2E_ENABLED` est une variable **serveur** (pas `NEXT_PUBLIC_`) : les variables `NEXT_PUBLIC_*` sont inlinées au build, y compris dans le code serveur — un build fait par mégarde avec la variable positionnée figerait `notFound()` en code mort, et aucune variable d'environnement au runtime ne pourrait refermer la page. `dynamic = 'force-dynamic'` empêche en outre le pré-rendu statique de figer la décision.
 
 `app/e2e-login/page.tsx` :
 
@@ -1906,8 +1908,10 @@ export default function Home() {
 import { notFound } from 'next/navigation'
 import { E2ELoginForm } from './E2ELoginForm'
 
+export const dynamic = 'force-dynamic'
+
 export default function E2ELoginPage() {
-  if (process.env.NEXT_PUBLIC_E2E !== '1') notFound()
+  if (process.env.E2E_ENABLED !== '1') notFound()
   return <main className="p-8 max-w-sm"><h1 className="text-2xl mb-4">Login E2E</h1><E2ELoginForm /></main>
 }
 ```
