@@ -82,9 +82,9 @@ Règles :
 
 ### RLS (Row Level Security)
 Toutes les tables ont RLS activée. Helper `is_member(project_id, min_role)`.
-- `profiles` : lecture par tout utilisateur connecté (pour afficher les membres), écriture par soi-même.
+- `profiles` : lecture par tout utilisateur connecté (pour afficher les membres et retrouver un invité par email), écriture par soi-même **sauf la colonne `email`, figée par trigger** (source de vérité : `auth.users`) — sinon on usurpe une invitation en se donnant l'email de la cible.
 - `projects` : SELECT si membre ; UPDATE/DELETE si owner ; INSERT uniquement via `create_project`.
-- `memberships` : SELECT si membre du projet ; INSERT/UPDATE/DELETE si owner ; interdit de supprimer ou rétrograder la ligne owner.
+- `memberships` : SELECT si membre du projet ; INSERT/UPDATE/DELETE si owner ; interdit de supprimer ou rétrograder la ligne owner. **Les clauses `USING` et `WITH CHECK` de l'UPDATE portent toutes deux `is_member(project_id, 'owner')`** : sans cela, l'owner d'un projet quelconque peut déplacer une ligne membership vers un projet étranger et s'y ajouter (élévation de privilège).
 - `invitations` : SELECT/INSERT/DELETE si owner du projet.
 - `tasks`, `dependencies` : SELECT si membre ; INSERT/UPDATE/DELETE si `editor` ou `owner`.
 

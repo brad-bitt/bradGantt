@@ -1275,6 +1275,23 @@ create policy "profiles_select_authenticated" on public.profiles
 create policy "profiles_update_self" on public.profiles
   for update to authenticated using (id = auth.uid()) with check (id = auth.uid());
 
+-- `email` est figé : la source de vérité est auth.users. Sans ce verrou, un
+-- utilisateur se donne l'email d'une cible et se fait ajouter à sa place lors
+-- d'une invitation « ajout direct d'un compte existant » (plan 3).
+create or replace function public.protect_profile_email() returns trigger
+language plpgsql as $$
+begin
+  if new.email is distinct from old.email then raise exception 'email_is_read_only'; end if;
+  return new;
+end $$;
+
+create trigger profiles_protect_email
+before update on public.profiles
+for each row execute function public.protect_profile_email();
+
+revoke execute on function public.is_member(uuid, public.member_role) from anon, public;
+grant execute on function public.is_member(uuid, public.member_role) to authenticated;
+
 -- projects (INSERT uniquement via create_project, security definer)
 create policy "projects_select_member" on public.projects
   for select to authenticated using (public.is_member(id, 'viewer'));
@@ -1291,7 +1308,10 @@ create policy "memberships_insert_owner" on public.memberships
 create policy "memberships_update_owner" on public.memberships
   for update to authenticated
   using (public.is_member(project_id, 'owner') and role <> 'owner')
-  with check (role <> 'owner');
+  -- `is_member` est indispensable dans le WITH CHECK : sans lui, un owner de son
+  -- propre projet peut déplacer une ligne membership vers un projet étranger
+  -- (USING valide l'ancienne ligne, WITH CHECK la nouvelle) et s'y ajouter.
+  with check (public.is_member(project_id, 'owner') and role <> 'owner');
 create policy "memberships_delete_owner" on public.memberships
   for delete to authenticated using (public.is_member(project_id, 'owner') and role <> 'owner');
 
