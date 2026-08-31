@@ -32,6 +32,65 @@ describe('safeNext', () => {
   it('conserve la query string et le fragment sur un chemin relatif légitime', () => {
     expect(safeNext('/projects/42?zoom=week#section')).toBe('/projects/42?zoom=week#section')
   })
+  it('refuse le contournement par segments .. qui font réapparaître un préfixe protocol-relative', () => {
+    // La résolution des segments '..'/'.' dans le pathname peut faire apparaître
+    // '//host' sans que l'origine de la PREMIÈRE résolution n'ait bougé : c'est la
+    // valeur de SORTIE qu'il faut re-valider, pas seulement l'entrée.
+    expect(safeNext('/a/../..//evil.com/phish')).toBe('/projects')
+    expect(safeNext('/..//evil.com')).toBe('/projects')
+    expect(safeNext('/../..//evil.com')).toBe('/projects')
+    expect(safeNext('/..///evil.com')).toBe('/projects')
+    expect(safeNext('/.\\/evil.com')).toBe('/projects')
+    expect(safeNext('/./\\/evil.com')).toBe('/projects')
+    expect(safeNext('/..//evil.com/p?a=1#f')).toBe('/projects')
+    expect(safeNext('/..//evil.com@x')).toBe('/projects')
+  })
+  it('est idempotent : re-passer la sortie dans safeNext ne la change plus', () => {
+    const sample = [
+      null,
+      '/projects/abc',
+      '/projects/42?zoom=week#section',
+      '/%09/evil.com',
+      'https://evil.com',
+      '//evil.com',
+      '/\\evil.com',
+      '/\t/evil.com',
+      '/..//evil.com',
+      '/a/../..//evil.com/phish',
+      'javascript:alert(1)',
+    ]
+    for (const input of sample) {
+      const once = safeNext(input)
+      expect(safeNext(once)).toBe(once)
+    }
+  })
+  it('simule le second passage par new URL(target, origine appli) côté middleware : aucune sortie ne doit fuir hors origine', () => {
+    // C'est l'assertion qui aurait attrapé la régression du round 2 : elle rejoue
+    // exactement ce que fait middleware.ts avec la valeur retournée par safeNext.
+    const hostiles = [
+      'https://evil.com',
+      '//evil.com',
+      '/\\evil.com',
+      '\\\\evil.com',
+      '/\t/evil.com',
+      '/\r/evil.com',
+      '/\n/evil.com',
+      'javascript:alert(1)',
+      'data:text/html,<script>alert(1)</script>',
+      '/a/../..//evil.com/phish',
+      '/..//evil.com',
+      '/../..//evil.com',
+      '/..///evil.com',
+      '/.\\/evil.com',
+      '/./\\/evil.com',
+      '/..//evil.com/p?a=1#f',
+      '/..//evil.com@x',
+    ]
+    for (const input of hostiles) {
+      const out = safeNext(input)
+      expect(new URL(out, 'https://app.test').origin).toBe('https://app.test')
+    }
+  })
 })
 
 describe('resolveAuthRedirect', () => {
