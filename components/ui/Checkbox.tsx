@@ -11,8 +11,11 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
   const inputId = id ?? autoId
   return (
     <label htmlFor={inputId} className="inline-flex items-center gap-2 cursor-pointer select-none">
-      <input ref={ref} id={inputId} type="checkbox"
-        className={cn('appearance-none size-5 border-[3px] border-ink bg-paper checked:bg-ink brutal-focus', className)} {...props} />
+      {/* `type="checkbox"` après `{...props}` : ce composant DOIT toujours rendre une
+          case à cocher, quel que soit ce qu'un appelant fournirait par erreur via
+          `props.type`. Un attribut posé avant le spread serait silencieusement écrasé. */}
+      <input ref={ref} id={inputId}
+        className={cn('appearance-none size-5 border-[3px] border-ink bg-paper checked:bg-ink brutal-focus', className)} {...props} type="checkbox" />
       <span className="font-bold text-sm">{label}</span>
     </label>
   )

@@ -14,6 +14,16 @@ describe('Input', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Le nom est requis')
     expect(screen.getByLabelText('Nom')).toHaveAttribute('aria-invalid', 'true')
   })
+  it('un `type` fourni par l\'appelant passe intact (ex. date/number du plan suivant)', () => {
+    render(<Input label="Échéance" type="date" />)
+    expect(screen.getByLabelText('Échéance')).toHaveAttribute('type', 'date')
+  })
+  it('aria-invalid/aria-describedby dérivés de `error` ne sont pas écrasables via un spread de props', () => {
+    render(<Input label="Nom" error="Le nom est requis" aria-invalid="false" aria-describedby="autre-id" />)
+    const input = screen.getByLabelText('Nom')
+    expect(input).toHaveAttribute('aria-invalid', 'true')
+    expect(input.getAttribute('aria-describedby')).not.toBe('autre-id')
+  })
 })
 
 describe('Select', () => {
@@ -36,5 +46,9 @@ describe('Checkbox', () => {
     expect(box).not.toBeChecked()
     await userEvent.click(screen.getByText('Replié'))
     expect(box).toBeChecked()
+  })
+  it('reste type="checkbox" même si un `type` différent est fourni via les props', () => {
+    render(<Checkbox label="Replié" type="text" />)
+    expect(screen.getByLabelText('Replié')).toHaveAttribute('type', 'checkbox')
   })
 })
