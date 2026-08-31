@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Archivo_Black, Space_Grotesk, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
+import { Toaster } from '@/components/ui/Toast'
 
 const archivo = Archivo_Black({ weight: '400', subsets: ['latin'], variable: '--font-archivo-black' })
 const grotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space-grotesk' })
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className={`${archivo.variable} ${grotesk.variable} ${mono.variable}`}>
-      <body>{children}</body>
+      <body>{children}<Toaster /></body>
     </html>
   )
 }
