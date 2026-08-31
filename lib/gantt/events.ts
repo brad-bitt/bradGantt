@@ -24,6 +24,7 @@ export function applyEvent(data: GanttData, event: GanttEvent): GanttData {
     }
 
     case 'task.deleted': {
+      if (!data.tasks[event.taskId]) return data
       const removed = new Set<string>([event.taskId])
       for (const t of Object.values(data.tasks)) if (t.parentId === event.taskId) removed.add(t.id)
       const tasks = Object.fromEntries(Object.entries(data.tasks).filter(([id]) => !removed.has(id)))
@@ -37,6 +38,7 @@ export function applyEvent(data: GanttData, event: GanttEvent): GanttData {
       return { ...data, dependencies: { ...data.dependencies, [event.dependency.id]: event.dependency } }
 
     case 'dependency.deleted': {
+      if (!data.dependencies[event.dependencyId]) return data
       const { [event.dependencyId]: _removed, ...dependencies } = data.dependencies
       return { ...data, dependencies }
     }
