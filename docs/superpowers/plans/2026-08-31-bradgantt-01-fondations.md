@@ -1403,6 +1403,18 @@ describe('safeNext', () => {
     expect(safeNext('/\n/evil.com')).toBe('/projects')
     expect(safeNext('javascript:alert(1)')).toBe('/projects')
   })
+  it('refuse les contournements par segments de chemin', () => {
+    expect(safeNext('/..//evil.com')).toBe('/projects')
+    expect(safeNext('/a/../..//evil.com/phish')).toBe('/projects')
+    expect(safeNext('/.\\/evil.com')).toBe('/projects')
+  })
+  it('est idempotente et sûre après re-résolution (double passage du middleware)', () => {
+    const hostiles = ['/..//evil.com', '/a/../..//evil.com/phish', '/\\evil.com', '//evil.com', '/./\\/evil.com']
+    for (const h of hostiles) {
+      expect(safeNext(safeNext(h))).toBe(safeNext(h))
+      expect(new URL(safeNext(h), 'https://app.test').origin).toBe('https://app.test')
+    }
+  })
   it('conserve query string, fragment et séquences encodées', () => {
     expect(safeNext('/projects/42?zoom=week#bar')).toBe('/projects/42?zoom=week#bar')
     expect(safeNext('/%09/ok')).toBe('/%09/ok')
@@ -1456,7 +1468,13 @@ export function safeNext(next: string | null | undefined): string {
   try {
     const url = new URL(next, SAFE_BASE)
     if (url.origin !== SAFE_BASE) return '/projects'
-    return `${url.pathname}${url.search}${url.hash}`
+    const out = `${url.pathname}${url.search}${url.hash}`
+    // Re-valider la SORTIE : la résolution des segments `..`/`.` peut faire
+    // apparaître un préfixe protocol-relative dans le pathname sans changer
+    // l'origine (`/a/../..//evil.com` → pathname `//evil.com`). Le middleware
+    // re-résout cette valeur, elle repartirait alors vers l'extérieur.
+    if (new URL(out, SAFE_BASE).origin !== SAFE_BASE) return '/projects'
+    return out
   } catch {
     return '/projects'
   }
