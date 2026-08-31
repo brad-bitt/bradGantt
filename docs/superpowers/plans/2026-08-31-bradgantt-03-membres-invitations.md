@@ -16,6 +16,7 @@
 - Rôles invitables : `editor` | `viewer` uniquement. La ligne `owner` est intouchable (RLS déjà en place) ; pas de transfert d'ownership.
 - Token d'invitation : 32 octets aléatoires encodés en `base64url` (43 caractères).
 - Comparaison d'emails **insensible à la casse**, adresses normalisées en minuscules + trim avant stockage.
+- La table `profiles` n'est **plus** lisible par tout compte connecté (durcie en fin de plan 1) : on ne voit que soi-même et les membres d'un projet partagé. La recherche d'un invité par email passe donc par la RPC `security definer` `find_invitee_profile(p_project_id, p_email)`, qui exige que l'appelant soit owner du projet — sinon ce serait un oracle d'énumération d'emails.
 - Messages d'erreur (exacts, affichés inline dans le formulaire) : `Adresse email invalide`, `Rôle invalide`, `Seul le propriétaire peut inviter`, `Projet introuvable`, `Cette personne est déjà membre`, `Une invitation est déjà en attente pour cette adresse`.
 - Pages d'erreur d'acceptation : `email_mismatch` → « Cette invitation est destinée à une autre adresse » + bouton « Changer de compte » ; `invitation_not_found` → « Lien invalide ou déjà utilisé ».
 - Variables d'environnement : `RESEND_API_KEY` (absent → mailer console), `EMAIL_FROM` (défaut `BradGantt <onboarding@resend.dev>`), `NEXT_PUBLIC_SITE_URL`. En mode `E2E_ENABLED=1` seulement (variable **serveur**, jamais `NEXT_PUBLIC_*` qui serait inlinée au build), la route renvoie `inviteUrl` dans sa réponse et le formulaire l'affiche.
@@ -164,6 +165,23 @@ end $$;
 
 revoke execute on function public.accept_invitation(text) from anon, public;
 grant execute on function public.accept_invitation(text) to authenticated;
+
+-- Recherche d'un invité par email. Passe par une RPC `security definer` parce que
+-- la policy de `profiles` ne laisse plus voir que soi-même et les membres d'un
+-- projet partagé (plan 1, migration 20260831000004) : un invité n'est par
+-- définition pas encore membre. L'exigence « appelant owner du projet » évite
+-- d'en faire un oracle d'énumération d'emails ouvert à tout compte.
+create or replace function public.find_invitee_profile(p_project_id uuid, p_email text) returns uuid
+language plpgsql security definer set search_path = public as $$
+declare uid uuid;
+begin
+  if not public.is_member(p_project_id, 'owner') then raise exception 'not_project_owner'; end if;
+  select id into uid from public.profiles where lower(email) = lower(trim(p_email));
+  return uid;
+end $$;
+
+revoke execute on function public.find_invitee_profile(uuid, text) from anon, public;
+grant execute on function public.find_invitee_profile(uuid, text) to authenticated;
 ```
 
 - [ ] **Step 4 : Appliquer, tester, régénérer les types**
@@ -569,7 +587,7 @@ git commit -m "feat(invitations): logique de création d'invitation (ajout direc
 
 **Interfaces:**
 - Consumes : `createClient` serveur, `createInvitation`, `createMailer`, `newInviteToken`.
-- Produces : `createSupabaseInvitationDb(client, userId): InvitationDb` ; `POST /api/invitations` body `{ projectId, email, role }` → `200 { kind: 'added'|'invited', inviteUrl? }` (`inviteUrl` seulement si `E2E_ENABLED=1`) | `400/401/403/404 { error }`.
+- Produces : `createSupabaseInvitationDb(client, userId, projectId): InvitationDb` ; `POST /api/invitations` body `{ projectId, email, role }` → `200 { kind: 'added'|'invited', inviteUrl? }` (`inviteUrl` seulement si `E2E_ENABLED=1`) | `400/401/403/404 { error }`.
 
 - [ ] **Step 1 : Adaptateur**
 
@@ -580,7 +598,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/supabase/types'
 import type { InvitationDb } from './types'
 
-export function createSupabaseInvitationDb(client: SupabaseClient<Database>, userId: string): InvitationDb {
+export function createSupabaseInvitationDb(client: SupabaseClient<Database>, userId: string, projectId: string): InvitationDb {
   const fail = (error: { message: string } | null) => { if (error) throw new Error(error.message) }
   return {
     async getMyRole(projectId) {
@@ -594,9 +612,11 @@ export function createSupabaseInvitationDb(client: SupabaseClient<Database>, use
       return data?.name ?? null
     },
     async findProfileIdByEmail(email) {
-      const { data, error } = await client.from('profiles').select('id').ilike('email', email).maybeSingle()
+      // RPC security definer : la policy de `profiles` ne laisse plus voir que soi-même
+      // et les membres d'un projet partagé, or un invité n'est pas encore membre.
+      const { data, error } = await client.rpc('find_invitee_profile', { p_project_id: projectId, p_email: email })
       fail(error)
-      return data?.id ?? null
+      return data ?? null
     },
     async isMember(projectId, memberId) {
       const { data, error } = await client.from('memberships').select('user_id').eq('project_id', projectId).eq('user_id', memberId).maybeSingle()
@@ -645,7 +665,7 @@ export async function POST(request: Request) {
 
   try {
     const result = await createInvitation(
-      { db: createSupabaseInvitationDb(supabase, user.id), mailer: createMailer(), baseUrl, inviterName: profile?.display_name ?? user.email ?? 'Un membre', newToken: newInviteToken },
+      { db: createSupabaseInvitationDb(supabase, user.id, String(body.projectId ?? '')), mailer: createMailer(), baseUrl, inviterName: profile?.display_name ?? user.email ?? 'Un membre', newToken: newInviteToken },
       { projectId: body.projectId, email: body.email, role: body.role },
     )
     if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
