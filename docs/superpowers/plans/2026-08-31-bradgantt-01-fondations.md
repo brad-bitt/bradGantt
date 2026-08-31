@@ -1469,12 +1469,15 @@ export function safeNext(next: string | null | undefined): string {
     const url = new URL(next, SAFE_BASE)
     if (url.origin !== SAFE_BASE) return '/projects'
     const out = `${url.pathname}${url.search}${url.hash}`
-    // Re-valider la SORTIE : la résolution des segments `..`/`.` peut faire
-    // apparaître un préfixe protocol-relative dans le pathname sans changer
-    // l'origine (`/a/../..//evil.com` → pathname `//evil.com`). Le middleware
-    // re-résout cette valeur, elle repartirait alors vers l'extérieur.
-    if (new URL(out, SAFE_BASE).origin !== SAFE_BASE) return '/projects'
-    return out
+    // Re-valider la SORTIE et renvoyer la valeur re-normalisée : la résolution
+    // des segments `..`/`.` peut faire apparaître un préfixe protocol-relative
+    // dans le pathname sans changer l'origine (`/a/../..//evil.com` → pathname
+    // `//evil.com`), que le middleware re-résoudrait vers l'extérieur. Renvoyer
+    // `final` plutôt que `out` fait de safeNext un point fixe, ce qui ferme
+    // aussi le cas où `next` désigne explicitement l'hôte de SAFE_BASE.
+    const final = new URL(out, SAFE_BASE)
+    if (final.origin !== SAFE_BASE) return '/projects'
+    return `${final.pathname}${final.search}${final.hash}`
   } catch {
     return '/projects'
   }
