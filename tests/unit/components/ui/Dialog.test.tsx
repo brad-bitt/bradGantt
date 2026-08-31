@@ -21,7 +21,7 @@ describe('Dialog', () => {
   })
 
   it('déplace le focus dans la modale à l\'ouverture', () => {
-    const { rerender } = render(<Dialog open onClose={() => {}} title="Test"><button>Bouton</button></Dialog>)
+    render(<Dialog open onClose={() => {}} title="Test"><button>Bouton</button></Dialog>)
     const btn = screen.getByText('Bouton')
     expect(btn).toHaveFocus()
   })
@@ -37,9 +37,47 @@ describe('Dialog', () => {
     document.body.removeChild(trigger)
   })
 
-  it('garde le focus sur un champ avec autoFocus', () => {
-    render(<Dialog open onClose={() => {}} title="Test"><input autoFocus /></Dialog>)
-    const input = screen.getByRole('textbox')
+  it('garde le focus sur un champ avec autoFocus (pas le premier focusable)', () => {
+    render(
+      <Dialog open onClose={() => {}} title="Test">
+        <button>Premier</button>
+        <input autoFocus placeholder="Deuxième" />
+        <button>Troisième</button>
+      </Dialog>
+    )
+    const input = screen.getByPlaceholderText('Deuxième')
     expect(input).toHaveFocus()
+  })
+
+  it('boucle Tab depuis le dernier élément au premier', async () => {
+    render(
+      <Dialog open onClose={() => {}} title="Test">
+        <button>Premier</button>
+        <button>Deuxième</button>
+      </Dialog>
+    )
+    const premier = screen.getByText('Premier')
+    const deuxieme = screen.getByText('Deuxième')
+    expect(premier).toHaveFocus()
+    await userEvent.tab()
+    expect(deuxieme).toHaveFocus()
+    await userEvent.tab()
+    expect(premier).toHaveFocus()
+  })
+
+  it('boucle Shift+Tab depuis le premier élément au dernier', async () => {
+    render(
+      <Dialog open onClose={() => {}} title="Test">
+        <button>Premier</button>
+        <button>Deuxième</button>
+      </Dialog>
+    )
+    const premier = screen.getByText('Premier')
+    const deuxieme = screen.getByText('Deuxième')
+    expect(premier).toHaveFocus()
+    await userEvent.tab({ shift: true })
+    expect(deuxieme).toHaveFocus()
+    await userEvent.tab({ shift: true })
+    expect(premier).toHaveFocus()
   })
 })
