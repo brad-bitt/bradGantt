@@ -1,5 +1,10 @@
 begin;
 create extension if not exists pgtap with schema extensions;
+
+-- Rend ce fichier indépendant des données de `supabase/seed.sql` (mêmes UUID de test) :
+-- la transaction est annulée par le `rollback` final, donc rien n'est perdu pour le dev.
+delete from auth.users;
+
 select plan(26);
 
 -- Helpers de session dans un schéma "tests" : lisibles par le rôle authenticated, annulés par le rollback final

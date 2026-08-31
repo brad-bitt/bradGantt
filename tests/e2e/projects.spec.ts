@@ -26,5 +26,7 @@ test('un nom vide est refusé', async ({ page }) => {
   await loginAs(page, 'alice')
   await page.getByRole('button', { name: 'Nouveau projet' }).click()
   await page.getByRole('button', { name: 'Créer' }).click()
+  // Scopé à la boîte de dialogue : Next.js monte en permanence son propre role="alert"
+  // (AppRouterAnnouncer), donc un getByRole('alert') global matche 2 éléments.
   await expect(page.getByRole('dialog').getByRole('alert')).toHaveText('Le nom est requis')
 })
