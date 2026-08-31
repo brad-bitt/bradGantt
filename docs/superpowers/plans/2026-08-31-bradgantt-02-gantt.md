@@ -275,10 +275,16 @@ describe('conversions', () => {
     expect(xToDate(39, range, 'day')).toBe('2026-08-01')
     expect(xToDate(40, range, 'day')).toBe('2026-08-02')
   })
-  it('pxToDays arrondit au plus proche', () => {
+  it('pxToDays arrondit au plus proche, symétriquement', () => {
     expect(pxToDays(59, 'day')).toBe(1)
     expect(pxToDays(61, 'day')).toBe(2)
     expect(pxToDays(-25, 'day')).toBe(-1)
+    // Bornes exactes : un demi-jour doit se comporter pareil dans les deux sens
+    expect(pxToDays(20, 'day')).toBe(1)
+    expect(pxToDays(-20, 'day')).toBe(-1)
+    expect(pxToDays(6, 'week')).toBe(1)
+    expect(pxToDays(-6, 'week')).toBe(-1)
+    expect(Object.is(pxToDays(-5, 'day'), 0)).toBe(true) // pas de -0
   })
   it('timelineWidth est inclusive', () => {
     expect(timelineWidth({ start: '2026-09-01', end: '2026-09-03' }, 'day')).toBe(3 * 40)
@@ -320,6 +326,16 @@ describe('arrowPath', () => {
     const from = { x: 0, y: 8, width: 200, height: 28 }
     const to = { x: 100, y: 52, width: 40, height: 28 }
     expect(arrowPath(from, to)).toBe('M200,22 H210 V44 H90 V66 H100')
+  })
+  it("contourne sans traverser aucune barre quand la dépendance remonte", () => {
+    const from = { x: 0, y: 52, width: 200, height: 28 }
+    const to = { x: 100, y: 8, width: 40, height: 28 }
+    // Le segment horizontal de contournement doit tomber strictement entre les
+    // deux lignes : sous la barre cible (y+height = 36) et au-dessus de la
+    // barre source (y = 52).
+    const midY = Number(arrowPath(from, to).match(/V([\d.]+) H/)![1])
+    expect(midY).toBeGreaterThan(to.y + to.height)
+    expect(midY).toBeLessThan(from.y)
   })
 })
 ```
@@ -368,7 +384,12 @@ export function xToDate(x: number, range: Range, zoom: Zoom): string {
 }
 
 export function pxToDays(dx: number, zoom: Zoom): number {
-  return Math.round(dx / PX_PER_DAY[zoom])
+  // Arrondi symétrique : Math.round arrondit les .5 vers +infini, donc un
+  // glissement d'exactement une demi-colonne déplacerait d'un jour vers la
+  // droite mais de zéro vers la gauche — effet « collant » asymétrique
+  // perceptible pendant un drag. Le `|| 0` neutralise le -0.
+  const days = Math.sign(dx) * Math.round(Math.abs(dx) / PX_PER_DAY[zoom])
+  return days || 0
 }
 
 export function barRect(task: Dated, rowIndex: number, range: Range, zoom: Zoom): Rect {
@@ -443,7 +464,15 @@ export function arrowPath(from: Rect, to: Rect): string {
   const ey = to.y + to.height / 2
   const stub = 10
   if (ex - sx >= 2 * stub) return `M${sx},${sy} H${sx + stub} V${ey} H${ex}`
-  const midY = from.y + from.height + BAR_INSET // frontière basse de la ligne source
+  // Contournement : le segment horizontal doit passer STRICTEMENT ENTRE les deux
+  // lignes, sans recouvrir l'étendue verticale d'aucune des deux barres. Le sens
+  // dépend de la position relative — une dépendance peut remonter vers une ligne
+  // au-dessus (tâches réordonnées) ; une frontière calculée en dur vers le bas
+  // ferait traverser la barre source à la flèche.
+  const goingDown = to.y > from.y
+  const midY = goingDown
+    ? (from.y + from.height + to.y) / 2
+    : (to.y + to.height + from.y) / 2
   return `M${sx},${sy} H${sx + stub} V${midY} H${ex - stub} V${ey} H${ex}`
 }
 ```
