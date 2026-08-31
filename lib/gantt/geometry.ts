@@ -35,7 +35,11 @@ export function xToDate(x: number, range: Range, zoom: Zoom): string {
 }
 
 export function pxToDays(dx: number, zoom: Zoom): number {
-  return Math.round(dx / PX_PER_DAY[zoom])
+  const ratio = dx / PX_PER_DAY[zoom]
+  // Arrondi symétrique : arrondi vers zéro au-delà (away from zero at ±0.5)
+  const rounded = Math.sign(ratio) * Math.floor(Math.abs(ratio) + 0.5)
+  // Évite de retourner -0
+  return rounded || 0
 }
 
 export function barRect(task: Dated, rowIndex: number, range: Range, zoom: Zoom): Rect {
@@ -110,6 +114,11 @@ export function arrowPath(from: Rect, to: Rect): string {
   const ey = to.y + to.height / 2
   const stub = 10
   if (ex - sx >= 2 * stub) return `M${sx},${sy} H${sx + stub} V${ey} H${ex}`
-  const midY = from.y + from.height + BAR_INSET // frontière basse de la ligne source
+  // Contournement : le segment horizontal doit se situer strictement entre les deux barres
+  // Si la cible est en dessous (to.y > from.y) : détour en bas
+  // Si la cible est au-dessus (to.y < from.y) : détour au-delà de la cible
+  const midY = to.y > from.y
+    ? from.y + from.height + BAR_INSET  // cible en dessous
+    : to.y + to.height + BAR_INSET      // cible au-dessus
   return `M${sx},${sy} H${sx + stub} V${midY} H${ex - stub} V${ey} H${ex}`
 }
