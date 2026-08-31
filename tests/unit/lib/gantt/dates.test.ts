@@ -69,10 +69,12 @@ describe('dates', () => {
   })
 
   it('todayISO retourne un format valide et cohérent', () => {
+    const now = new Date()
     const today = todayISO()
+    const formatted = formatDate(now)
     // Vérifier le format yyyy-MM-dd avec une regex
     expect(today).toMatch(/^\d{4}-\d{2}-\d{2}$/)
-    // Vérifier la cohérence avec formatDate(new Date())
-    expect(today).toBe(formatDate(new Date()))
+    // Vérifier la cohérence : todayISO et formatDate appliqués à la même capture doivent être égales
+    expect(today).toBe(formatted)
   })
 })
