@@ -2,28 +2,36 @@ import { addDays as dfAddDays, differenceInCalendarDays, format, isWeekend as df
 
 export const ISO = 'yyyy-MM-dd'
 
-// Memoize parseISO to avoid reparsing the same ISO strings on every call.
-// During a drag operation, many calls are made with the same set of dates per frame,
-// so cache hit rate is high. Bounded to prevent memory leaks on long sessions.
+// Memoïse le temps (en millisecondes) d'une chaîne ISO pour éviter de réanalyser à chaque appel.
+// Pendant une opération de glissement, les mêmes dates sont appelées plusieurs fois par image,
+// donc le taux de succès du cache est élevé. Limité pour prévenir les fuites mémoire sur sessions longues.
+// Note : on stocke le temps en millisecondes plutôt que l'objet Date pour éviter les mutations.
+// Si on retournait la même instance, un appelant pourrait faire `d.setDate()` et corrompre
+// le cache de façon permanente (y compris sur d'autres fichiers). Reconstituer une Date
+// depuis des millisecondes coûte ~100 ns, vs ~4 µs pour analyser une chaîne ISO : l'optimisation
+// sur le parsing reste dominante.
 const PARSE_CACHE_LIMIT = 5000
-const parseCache = new Map<string, Date>()
+const parseCache = new Map<string, number>()
 
 export function parseDate(iso: string): Date {
-  let cached = parseCache.get(iso)
-  if (!cached) {
-    cached = parseISO(iso)
+  let cachedTime = parseCache.get(iso)
+  if (cachedTime === undefined) {
+    const parsed = parseISO(iso)
+    cachedTime = parsed.getTime()
     if (parseCache.size >= PARSE_CACHE_LIMIT) {
-      // Purge oldest entries (simple FIFO, not LRU)
-      let deleteCount = Math.floor(PARSE_CACHE_LIMIT * 0.2) // Remove 20% when limit reached
+      // Purge des entrées les plus anciennes (simple FIFO, pas LRU)
+      let deleteCount = Math.floor(PARSE_CACHE_LIMIT * 0.2) // Enlève 20% quand la limite est atteinte
       for (const key of parseCache.keys()) {
         if (deleteCount <= 0) break
         parseCache.delete(key)
         deleteCount--
       }
     }
-    parseCache.set(iso, cached)
+    parseCache.set(iso, cachedTime)
   }
-  return cached
+  // Retourner une copie plutôt que l'instance mise en cache : cela évite que un appelant
+  // qui mute la date (même si c'est rare) ne corrompe le cache de façon permanente
+  return new Date(cachedTime)
 }
 export function formatDate(d: Date): string { return format(d, ISO) }
 export function todayISO(): string { return formatDate(new Date()) }
