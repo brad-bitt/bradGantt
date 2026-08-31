@@ -15,7 +15,10 @@ export function RenameProjectDialog({ projectId, currentName, open, onClose }: {
     e.preventDefault()
     start(async () => {
       const res = await renameProject(projectId, name)
-      if (res.error) { setError(res.error); toast.error(res.error); return }
+      // Politique d'erreur unifiée : validation -> inline dans le formulaire,
+      // persistance -> toast. Jamais les deux à la fois pour un même échec.
+      if (res.fieldError) { setError(res.fieldError); return }
+      if (res.error) { toast.error(res.error); return }
       onClose()
     })
   }

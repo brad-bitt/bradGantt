@@ -1,13 +1,12 @@
 'use client'
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Dialog } from '@/components/ui/Dialog'
 import { Input } from '@/components/ui/Input'
 import { createProject } from '@/app/(app)/projects/actions'
+import { toast } from '@/lib/toast/store'
 
 export function NewProjectDialog() {
-  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -17,9 +16,12 @@ export function NewProjectDialog() {
     e.preventDefault()
     start(async () => {
       const res = await createProject(name)
-      if (res.error) { setError(res.error); return }
+      // Politique d'erreur unifiée : validation -> inline dans le formulaire,
+      // persistance -> toast. `revalidatePath('/projects')` côté serveur (dans
+      // createProject) suffit à rafraîchir la liste ; pas besoin de router.refresh().
+      if (res.fieldError) { setError(res.fieldError); return }
+      if (res.error) { toast.error(res.error); return }
       setOpen(false); setName(''); setError(null)
-      router.refresh()
     })
   }
 

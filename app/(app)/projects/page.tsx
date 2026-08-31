@@ -1,14 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
+import { requireUser } from '@/lib/auth/require-user'
 import { ProjectCard, type ProjectListItem } from '@/components/project/ProjectCard'
 import { NewProjectDialog } from '@/components/project/NewProjectDialog'
 
 export default async function ProjectsPage() {
+  const user = await requireUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
   const { data } = await supabase
     .from('projects')
     .select('id, name, created_at, memberships!inner(role, user_id)')
-    .eq('memberships.user_id', user!.id)
+    .eq('memberships.user_id', user.id)
     .order('created_at', { ascending: false })
 
   const projects: ProjectListItem[] = (data ?? []).map((p) => ({
