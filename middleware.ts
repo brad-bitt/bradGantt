@@ -1,11 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
+import { updateSession, copyCookies } from '@/lib/supabase/middleware'
 import { resolveAuthRedirect } from '@/lib/auth/redirect'
 
 export async function middleware(request: NextRequest) {
   const { response, user } = await updateSession(request)
   const target = resolveAuthRedirect(request.nextUrl.pathname + request.nextUrl.search, !!user)
-  if (target) return NextResponse.redirect(new URL(target, request.url))
+  if (target) return copyCookies(response, NextResponse.redirect(new URL(target, request.url)))
   return response
 }
 

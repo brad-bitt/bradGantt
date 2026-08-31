@@ -49,35 +49,67 @@ describe('Dialog', () => {
     expect(input).toHaveFocus()
   })
 
-  it('boucle Tab depuis le dernier élément au premier', async () => {
+  it('boucle Tab depuis le dernier élément au premier (le piège couvre toute la modale, Fermer inclus)', async () => {
     render(
       <Dialog open onClose={() => {}} title="Test">
         <button>Premier</button>
         <button>Deuxième</button>
       </Dialog>
     )
+    const fermer = screen.getByRole('button', { name: 'Fermer' })
     const premier = screen.getByText('Premier')
     const deuxieme = screen.getByText('Deuxième')
+    // Ouverture sans autoFocus : le focus initial va au premier élément du CONTENU
+    // (comportement UX volontaire, distinct de l'ordre du piège Tab lui-même).
     expect(premier).toHaveFocus()
     await userEvent.tab()
     expect(deuxieme).toHaveFocus()
+    // Le dernier élément de la modale (Deuxième) boucle vers le PREMIER élément de la
+    // modale entière, qui est Fermer (header), pas Premier (contenu).
+    await userEvent.tab()
+    expect(fermer).toHaveFocus()
     await userEvent.tab()
     expect(premier).toHaveFocus()
   })
 
-  it('boucle Shift+Tab depuis le premier élément au dernier', async () => {
+  it('boucle Shift+Tab depuis le premier élément de la modale (Fermer) au dernier', async () => {
     render(
       <Dialog open onClose={() => {}} title="Test">
         <button>Premier</button>
         <button>Deuxième</button>
       </Dialog>
     )
+    const fermer = screen.getByRole('button', { name: 'Fermer' })
     const premier = screen.getByText('Premier')
     const deuxieme = screen.getByText('Deuxième')
-    expect(premier).toHaveFocus()
+    fermer.focus()
     await userEvent.tab({ shift: true })
     expect(deuxieme).toHaveFocus()
     await userEvent.tab({ shift: true })
     expect(premier).toHaveFocus()
+  })
+
+  it('le piège Tab couvre toute la modale : le bouton Fermer du header et les actions du footer sont atteignables', async () => {
+    render(
+      <Dialog open onClose={() => {}} title="Test" footer={<button>Enregistrer</button>}>
+        <button>Contenu</button>
+      </Dialog>
+    )
+    const fermer = screen.getByRole('button', { name: 'Fermer' })
+    const contenu = screen.getByText('Contenu')
+    const enregistrer = screen.getByText('Enregistrer')
+
+    // Ordre DOM : Fermer (header) -> Contenu -> Enregistrer (footer), puis boucle.
+    expect(contenu).toHaveFocus()
+    await userEvent.tab()
+    expect(enregistrer).toHaveFocus()
+    await userEvent.tab()
+    expect(fermer).toHaveFocus()
+    await userEvent.tab()
+    expect(contenu).toHaveFocus()
+
+    // Shift+Tab depuis le contenu doit atteindre Fermer, pas rester coincé dans le contenu.
+    await userEvent.tab({ shift: true })
+    expect(fermer).toHaveFocus()
   })
 })

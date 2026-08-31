@@ -25,3 +25,14 @@ export async function updateSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   return { response, user }
 }
+
+// updateSession() reconstruit `response` précisément pour y reposer les cookies quand
+// getUser() a fait tourner le jeton de rafraîchissement. Une redirection construite à
+// partir de zéro (NextResponse.redirect(...)) n'hérite d'aucun de ces cookies : il faut
+// les recopier explicitement dessus avant de la renvoyer, sous peine de jeter le
+// rafraîchissement de session à chaque redirection (/, /login avec session, /projects
+// sans session).
+export function copyCookies(from: NextResponse, to: NextResponse): NextResponse {
+  from.cookies.getAll().forEach((cookie) => to.cookies.set(cookie))
+  return to
+}

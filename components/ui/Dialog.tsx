@@ -19,7 +19,8 @@ function getFocusableElements(element: Element): HTMLElement[] {
 }
 
 function getContentFocusableElements(contentElement: HTMLElement | null): HTMLElement[] {
-  // Chercher dans le contenu principal (pas le header)
+  // Utilisé uniquement pour le focus initial : préférer le contenu principal (pas le
+  // header) quand rien n'a déjà le focus (pas d'autoFocus).
   if (contentElement) {
     return Array.from(contentElement.querySelectorAll(focusableSelectors.join(','))) as HTMLElement[]
   }
@@ -40,9 +41,12 @@ export function Dialog({ open, onClose, title, children, footer }: DialogProps) 
     // Gérer l'échap
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
-      // Piéger Tab
-      if (e.key === 'Tab' && contentRef.current) {
-        const focusables = getContentFocusableElements(contentRef.current)
+      // Piéger Tab sur la modale ENTIÈRE (header + contenu + pied), pas seulement le
+      // contenu : sinon le bouton "Fermer" du header et les actions passées via `footer`
+      // (ex. un futur "Enregistrer"/"Supprimer" en pied de modale) restent injoignables
+      // au clavier.
+      if (e.key === 'Tab' && dialogRef.current) {
+        const focusables = getFocusableElements(dialogRef.current)
         if (focusables.length === 0) return
 
         const currentFocus = document.activeElement
