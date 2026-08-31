@@ -679,6 +679,7 @@ const byOrder = (a: Task, b: Task) => a.sortOrder - b.sortOrder || a.id.localeCo
 
 export function buildRows(tasks: Task[]): Row[] {
   const rows: Row[] = []
+  const byId = new Map(tasks.map((t) => [t.id, t]))
   const roots = tasks.filter((t) => t.parentId === null).sort(byOrder)
   for (const root of roots) {
     rows.push({ task: root, depth: 0, index: rows.length })
@@ -688,6 +689,18 @@ export function buildRows(tasks: Task[]): Row[] {
       }
     }
   }
+  // Filet : une tâche dont le parent est introuvable ou n'est pas un groupe
+  // n'apparaîtrait nulle part. Le trigger `check_task_parent` l'interdit en base,
+  // mais « la tâche existe et l'utilisateur ne la voit pas » est indiagnosticable
+  // depuis l'interface — on la remonte en racine plutôt que de l'avaler.
+  const orphans = tasks
+    .filter((t) => {
+      if (t.parentId === null) return false
+      const parent = byId.get(t.parentId)
+      return !parent || parent.type !== 'group'
+    })
+    .sort(byOrder)
+  for (const orphan of orphans) rows.push({ task: orphan, depth: 0, index: rows.length })
   return rows
 }
 
