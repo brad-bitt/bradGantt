@@ -105,6 +105,14 @@ export function createSupabaseRepository(client: SupabaseClient<Database>): Gant
       const { error, count } = await client.from('dependencies').delete({ count: 'exact' }).eq('id', depId)
       check(error, count)
     },
+    // Limite connue : les écritures ci-dessous partent en parallèle et ne forment pas une
+    // transaction. Si l'une échoue (RLS, réseau) alors que d'autres réussissent, la base
+    // garde un ordre partiellement appliqué — aucune des écritures déjà passées n'est
+    // annulée côté serveur. Le store fera un retour arrière côté navigateur après le rejet de
+    // cette promesse, mais l'état affiché et l'état en base peuvent alors diverger jusqu'au
+    // prochain rechargement. Correction propre : déplacer `reorderTasks` vers une fonction
+    // Postgres transactionnelle (RPC) qui applique tous les `sort_order` en une seule
+    // transaction — hors périmètre de cette tâche.
     async reorderTasks(order) {
       const results = await Promise.all(
         order.map((o) => client.from('tasks').update({ sort_order: o.sortOrder }, { count: 'exact' }).eq('id', o.taskId)),

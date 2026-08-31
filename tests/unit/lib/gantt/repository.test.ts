@@ -2,6 +2,7 @@ import { rowToTask, rowToDependency, taskToRow, patchToRow, createSupabaseReposi
 import { makeTask, makeDep } from './fixtures'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/supabase/types'
+import type { Task } from '@/lib/gantt/types'
 
 describe('mappers', () => {
   it('rowToTask ↔ taskToRow sont inverses (hors created_at)', () => {
@@ -21,9 +22,41 @@ describe('mappers', () => {
     ).toEqual(task)
   })
 
+  it('rowToTask ↔ taskToRow restent inverses sur des profils structurellement différents', () => {
+    const profiles: Partial<Task>[] = [
+      { id: 'sans-parent', parentId: null },
+      { id: 'sans-assigne', assigneeId: null },
+      { id: 'jalon', type: 'milestone' },
+      { id: 'groupe-replie', type: 'group', collapsed: true },
+    ]
+    for (const partial of profiles) {
+      const task = makeTask(partial)
+      const row = taskToRow(task)
+      const roundTripped = rowToTask({
+        ...row,
+        created_at: 'c',
+        updated_at: task.updatedAt,
+      } as Parameters<typeof rowToTask>[0])
+      expect(roundTripped).toEqual(task)
+    }
+  })
+
   it('patchToRow ne mappe que les clés présentes', () => {
     expect(patchToRow({ startDate: '2026-09-01', collapsed: true })).toEqual({ start_date: '2026-09-01', collapsed: true })
     expect(patchToRow({})).toEqual({})
+  })
+
+  // Piège identifié pour cette tâche : `assigneeId` absent du patch doit être omis (on ne
+  // touche pas à la colonne en base), `assigneeId: undefined` doit aussi être omis (même
+  // raison — un envoi explicite de `undefined` écraserait la valeur existante), tandis que
+  // `assigneeId: null` doit être conservé tel quel (c'est la façon de désassigner une tâche).
+  // Un simple test de véracité (`if (patch[key])`) confondrait `null` avec « absent » et
+  // casserait la désassignation ; ce test doit échouer si quelqu'un simplifie ainsi la
+  // condition.
+  it('patchToRow distingue clé absente, clé à undefined et clé à null', () => {
+    expect(patchToRow({ title: 'x' })).toEqual({ title: 'x' }) // assigneeId absent : omis
+    expect(patchToRow({ title: 'x', assigneeId: undefined })).toEqual({ title: 'x' }) // undefined explicite : omis
+    expect(patchToRow({ title: 'x', assigneeId: null })).toEqual({ title: 'x', assignee_id: null }) // null explicite : conservé
   })
 
   it('rowToDependency', () => {
