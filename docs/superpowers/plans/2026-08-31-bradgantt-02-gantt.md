@@ -1536,15 +1536,45 @@ export interface CommandDeps {
 }
 
 export function createCommands({ store, repo, notify, newId = () => crypto.randomUUID(), now = () => new Date().toISOString() }: CommandDeps): GanttCommands {
-  /** Applique l'événement (optimiste), persiste, restaure le snapshot en cas d'échec. */
-  async function run(event: GanttEvent, persist: () => Promise<void>): Promise<boolean> {
-    const { tasks, dependencies } = store.getState()
+  /**
+   * Applique l'événement (optimiste), persiste, et **annule par événement inverse**
+   * en cas d'échec.
+   *
+   * ⚠️ NE PAS revenir à une restauration d'instantané global (`replaceData` avec les
+   * données capturées avant l'appel). Cette approche a été implémentée puis retirée :
+   * elle casse dès qu'une seconde commande passe pendant qu'une première est en vol,
+   * ce qui est le cas courant sur un réseau lent. Trois défaillances démontrées :
+   *   1. une action réussie et enregistrée est annulée à l'écran par l'échec d'une
+   *      autre (l'écran et la base divergent définitivement jusqu'au rechargement) ;
+   *   2. une tâche créée avec succès disparaît de l'affichage alors qu'elle existe en
+   *      base — l'utilisateur la recrée et obtient un doublon ;
+   *   3. après navigation vers un autre projet, la restauration réinjecte les tâches
+   *      du projet précédent dans le projet courant.
+   * L'inverse ciblé est aussi la seule approche qui restera correcte quand les
+   * événements distants du temps réel (v2) arriveront pendant une écriture en vol.
+   *
+   * `inverse` est calculée AVANT l'application et retourne la liste des événements à
+   * rejouer pour défaire uniquement cette commande (une suppression en demande
+   * plusieurs : la tâche, ses enfants, ses dépendances).
+   */
+  async function run(
+    event: GanttEvent,
+    persist: () => Promise<void>,
+    inverse: () => GanttEvent[],
+  ): Promise<boolean> {
+    const undo = inverse()
+    const projectAtStart = store.getState().projectId
     store.getState().apply(event)
     try {
       await persist()
       return true
-    } catch {
-      store.getState().replaceData({ tasks, dependencies })
+    } catch (error) {
+      console.error('[gantt] persistance échouée', error)
+      // Garde de contexte : si le projet a changé pendant l'écriture, l'état affiché
+      // n'est plus celui qu'on voulait corriger — ne rien annuler.
+      if (store.getState().projectId === projectAtStart) {
+        for (const e of undo) store.getState().apply(e)
+      }
       notify(PERSIST_ERROR)
       return false
     }
