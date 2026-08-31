@@ -58,15 +58,38 @@ const byOrder = (a: Task, b: Task) => a.sortOrder - b.sortOrder || a.id.localeCo
 
 export function buildRows(tasks: Task[]): Row[] {
   const rows: Row[] = []
-  const roots = tasks.filter((t) => t.parentId === null).sort(byOrder)
+  const taskMap = new Map(tasks.map((t) => [t.id, t]))
+
+  // Racines légitimes (parentId === null) + orphans (parent inexistant).
+  // Les orphans sont traités comme des racines pour le tri et l'affichage.
+  // Cela assure que aucune tâche ne disparaît silencieusement.
+  const roots = tasks
+    .filter((t) => {
+      if (t.parentId === null) return true
+      const parent = taskMap.get(t.parentId)
+      return !parent // Parent inexistant = orphan
+    })
+    .sort(byOrder)
+
   for (const root of roots) {
     rows.push({ task: root, depth: 0, index: rows.length })
+
+    // Ajouter les enfants directs de cette tâche
+    const children = tasks.filter((t) => t.parentId === root.id).sort(byOrder)
     if (root.type === 'group' && !root.collapsed) {
-      for (const child of tasks.filter((t) => t.parentId === root.id).sort(byOrder)) {
+      // Enfants d'un groupe non-replié : depth 1
+      for (const child of children) {
         rows.push({ task: child, depth: 1, index: rows.length })
+      }
+    } else if (children.length > 0 && root.type !== 'group') {
+      // Enfants d'un non-groupe : depth 0
+      // (Les enfants d'un groupe replié ne s'affichent pas)
+      for (const child of children) {
+        rows.push({ task: child, depth: 0, index: rows.length })
       }
     }
   }
+
   return rows
 }
 
