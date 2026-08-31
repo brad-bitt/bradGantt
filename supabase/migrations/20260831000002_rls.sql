@@ -17,7 +17,7 @@ create policy "profiles_update_self" on public.profiles
 create or replace function public.check_profile_email_immutable() returns trigger
 language plpgsql as $$
 begin
-  if new.email <> old.email then
+  if new.email is distinct from old.email then
     raise exception 'email_is_read_only';
   end if;
   return new;

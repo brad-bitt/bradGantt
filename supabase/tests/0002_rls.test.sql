@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(24);
+select plan(26);
 
 -- Helpers de session dans un schéma "tests" : lisibles par le rôle authenticated, annulés par le rollback final
 create schema tests;
@@ -99,10 +99,23 @@ select is((select name from public.projects where id = (select project_id from t
 -- utiliser son statut d'owner de A pour se servir de son statut de simple viewer de B afin
 -- d'y ajouter n'importe qui comme editor (régression de la faille d'élévation de privilège :
 -- le WITH CHECK d'UPDATE doit re-vérifier is_member sur le project_id de la NOUVELLE ligne,
--- pas seulement sur celui de l'ancienne). Note : un déplacement vers un projet où alice
--- n'aurait aucun accès du tout échoue déjà avant même le correctif, PostgreSQL combinant
--- implicitement la policy SELECT à la vérification de la nouvelle ligne d'un UPDATE — d'où
--- le scénario ci-dessous, où alice a un accès viewer légitime à B mais pas owner.
+-- pas seulement sur celui de l'ancienne).
+--
+-- Nuance importante sur la portée du filet SELECT implicite de PostgreSQL (déjà observé au
+-- round de correction précédent) : il ne joue QUE lorsque la commande UPDATE requiert un
+-- accès en lecture à la relation, c'est-à-dire en présence d'un WHERE ou d'un RETURNING qui
+-- référence des colonnes de la table. Un `update memberships set project_id = ..., role = ...`
+-- SANS WHERE ni RETURNING n'engage aucune policy SELECT : le scénario littéral du rapport de
+-- sécurité (déplacement vers un projet totalement hors d'atteinte) est donc bien exploitable
+-- tel quel, malgré ce qui avait été avancé dans le rapport de la tâche précédente. Ce filet
+-- dépend en outre d'une policy SELECT permissive aux viewers (`memberships_select_member`) :
+-- toute restriction future de cette policy rouvrirait la brèche pour les requêtes avec WHERE.
+-- Seul le WITH CHECK explicite ci-dessous constitue une garantie fiable, indépendante de la
+-- forme de la requête cliente. Le scénario ci-dessous exerce le cas où alice a un accès
+-- viewer légitime à B mais pas owner — avec un WHERE, donc le filet SELECT joue déjà côté
+-- ligne existante (project_id = A, visible), mais pas côté nouvelle ligne (project_id = B :
+-- is_member(B, 'viewer') est vrai pour alice, donc le filet ne bloque pas non plus la nouvelle
+-- ligne ici) — c'est bien le WITH CHECK explicite qui doit porter tout le travail.
 select tests.login_as('a0000000-0000-0000-0000-000000000001', 'alice@test.local');
 select throws_ok($$
   update public.memberships set project_id = (select project_id from tests.ctxb), user_id = 'a0000000-0000-0000-0000-000000000004', role = 'editor'
@@ -110,6 +123,14 @@ select throws_ok($$
 $$, '42501', null, 'owner : ajout de dave comme editor du projet où il n est que viewer refusé');
 select is((select count(*) from public.memberships m join tests.ctxb b on b.project_id = m.project_id
   where m.user_id = 'a0000000-0000-0000-0000-000000000004'), 0::bigint, 'owner : dave non ajoute au projet cible');
+-- Non-régression : le correctif ne doit pas empêcher un owner de continuer à modifier le
+-- rôle d'un membre au sein de son PROPRE projet (seul le déplacement inter-projets doit être
+-- bloqué).
+select results_eq($$
+  update public.memberships set role = 'viewer'
+  where project_id = (select project_id from tests.ctx) and user_id = 'a0000000-0000-0000-0000-000000000002'
+  returning role::text
+$$, $$ values ('viewer') $$, 'owner : modification du role dun membre de son propre projet toujours autorisee');
 delete from public.memberships where user_id = 'a0000000-0000-0000-0000-000000000001' and project_id = (select project_id from tests.ctx);
 update public.memberships set role = 'viewer' where user_id = 'a0000000-0000-0000-0000-000000000001' and project_id = (select project_id from tests.ctx);
 delete from public.memberships where user_id = 'a0000000-0000-0000-0000-000000000002';
@@ -123,6 +144,11 @@ select is((select name from public.projects where id = (select project_id from t
 -- doit être bloquée pour empêcher qu'on s'attribue l'email d'une cible (résolution d'invitation).
 select tests.login_as('a0000000-0000-0000-0000-000000000003', 'carol@test.local');
 select throws_ok($$ update public.profiles set email = 'pirate@test.local' where id = auth.uid() $$, 'P0001', 'email_is_read_only', 'email figé : update refusé');
+-- Non-régression : le trigger de gel de l'email ne doit pas gêner la modification des autres
+-- colonnes du profil par son propriétaire.
+select results_eq($$
+  update public.profiles set display_name = 'Carol Renommée' where id = auth.uid() returning display_name
+$$, $$ values ('Carol Renommée') $$, 'profil : modification du display_name toujours autorisee malgre le trigger email');
 select tests.logout();
 select is((select email from public.profiles where id = 'a0000000-0000-0000-0000-000000000003'), 'carol@test.local', 'email figé : email inchangé');
 
