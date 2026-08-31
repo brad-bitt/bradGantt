@@ -14,16 +14,22 @@ export function safeNext(next: string | null | undefined): string {
     const resolved = new URL(next, REFERENCE_ORIGIN)
     if (resolved.origin !== REFERENCE_ORIGIN) return '/projects'
     const out = resolved.pathname + resolved.search + resolved.hash
-    // Re-validation de la SORTIE, pas seulement de l'entrée : la résolution des
+    // Re-résolution de la SORTIE, pas seulement de l'entrée : la résolution des
     // segments `..`/`.` du pathname peut faire apparaître un préfixe
     // protocol-relative ('//host/...') sans que l'origine résolue une première
     // fois n'ait bougé (ex. '/a/../..//evil.com' résout en pathname '//evil.com'
     // tout en restant sur REFERENCE_ORIGIN à cette étape). `out` repart ensuite
     // dans `new URL(target, request.url)` côté middleware.ts, qui la re-résout
     // et s'échapperait vers l'autre origine. On simule donc ce second passage
-    // ici et on rejette si l'origine bouge à la ré-résolution.
-    if (new URL(out, REFERENCE_ORIGIN).origin !== REFERENCE_ORIGIN) return '/projects'
-    return out
+    // ici — et surtout on RETOURNE la valeur re-normalisée (pas `out`), pour que
+    // `safeNext` soit un point fixe : même si `next` désigne littéralement
+    // REFERENCE_ORIGIN elle-même (ex. '/..//bradgantt.internal/pwn', qui reste
+    // sur REFERENCE_ORIGIN aux deux résolutions mais garde un préfixe
+    // d'autorité '//bradgantt.internal/...' dans le pathname final), la sortie
+    // ne doit jamais conserver de préfixe protocol-relative.
+    const final = new URL(out, REFERENCE_ORIGIN)
+    if (final.origin !== REFERENCE_ORIGIN) return '/projects'
+    return final.pathname + final.search + final.hash
   } catch {
     return '/projects'
   }

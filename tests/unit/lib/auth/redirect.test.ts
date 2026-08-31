@@ -45,50 +45,68 @@ describe('safeNext', () => {
     expect(safeNext('/..//evil.com/p?a=1#f')).toBe('/projects')
     expect(safeNext('/..//evil.com@x')).toBe('/projects')
   })
-  it('est idempotent : re-passer la sortie dans safeNext ne la change plus', () => {
-    const sample = [
-      null,
-      '/projects/abc',
-      '/projects/42?zoom=week#section',
-      '/%09/evil.com',
-      'https://evil.com',
-      '//evil.com',
-      '/\\evil.com',
-      '/\t/evil.com',
-      '/..//evil.com',
-      '/a/../..//evil.com/phish',
-      'javascript:alert(1)',
-    ]
-    for (const input of sample) {
-      const once = safeNext(input)
-      expect(safeNext(once)).toBe(once)
+  it("ne laisse jamais fuir l'hôte de l'origine de référence interne dans la sortie", () => {
+    // L'origine de référence utilisée pour valider next ('bradgantt.internal') est
+    // un hôte arbitraire jamais exposé publiquement — mais si next la désigne
+    // explicitement, les DEUX résolutions restent sur cette même origine (elle est
+    // par définition son propre point fixe), donc la validation par origine seule
+    // ne suffit pas à l'écarter. C'est le seul cas où la fonction n'était pas un
+    // point fixe : safeNext('//bradgantt.internal/x') renvoyait '/x' alors que
+    // safeNext('/..//bradgantt.internal/pwn') renvoyait encore '//bradgantt.internal/pwn'
+    // (préfixe protocol-relative conservé tel quel dans la sortie intermédiaire).
+    // La sortie doit systématiquement être re-normalisée avant d'être renvoyée :
+    // aucun résultat ne doit commencer par '//' (protocol-relative), et rejouer le
+    // second passage du middleware (new URL(out, origine réelle de l'appli)) ne
+    // doit jamais atterrir sur une origine différente de celle de l'appli.
+    for (const input of [
+      '/..//bradgantt.internal/pwn',
+      '/..//BRADGANTT.internal/pwn',
+      '/..//user:pw@bradgantt.internal/pwn',
+    ]) {
+      const out = safeNext(input)
+      expect(out.startsWith('//')).toBe(false)
+      expect(new URL(out, 'https://app.test').origin).toBe('https://app.test')
     }
   })
-  it('simule le second passage par new URL(target, origine appli) côté middleware : aucune sortie ne doit fuir hors origine', () => {
-    // C'est l'assertion qui aurait attrapé la régression du round 2 : elle rejoue
-    // exactement ce que fait middleware.ts avec la valeur retournée par safeNext.
-    const hostiles = [
-      'https://evil.com',
-      '//evil.com',
-      '/\\evil.com',
-      '\\\\evil.com',
-      '/\t/evil.com',
-      '/\r/evil.com',
-      '/\n/evil.com',
-      'javascript:alert(1)',
-      'data:text/html,<script>alert(1)</script>',
-      '/a/../..//evil.com/phish',
-      '/..//evil.com',
-      '/../..//evil.com',
-      '/..///evil.com',
-      '/.\\/evil.com',
-      '/./\\/evil.com',
-      '/..//evil.com/p?a=1#f',
-      '/..//evil.com@x',
+
+  // --- Test de propriété générique sur corpus généré ---
+  //
+  // C'est le test qui aurait attrapé les trois régressions successives (antislash/
+  // contrôle, segments '..', fuite de l'hôte de référence) : au lieu d'une liste
+  // figée d'exemples connus, on combine un jeu de « jetons dangereux » pour
+  // produire quelques centaines d'entrées, et on vérifie pour chacune deux
+  // invariants qui doivent tenir INCONDITIONNELLEMENT, quel que soit le vecteur :
+  //   1. safeNext est un point fixe : safeNext(safeNext(x)) === safeNext(x)
+  //   2. aucune sortie ne fuit hors de l'origine réelle de l'application, une fois
+  //      rejouée exactement comme le fait middleware.ts (new URL(out, origine)).
+  function generateCorpus(): string[] {
+    const broadTokens = [
+      '/', '\\', '.', '..', '%2e', '//', '@', ':', '#', '?', '%09', '\t', '\r',
+      'evil.com', 'bradgantt.internal',
     ]
-    for (const input of hostiles) {
-      const out = safeNext(input)
-      expect(new URL(out, 'https://app.test').origin).toBe('https://app.test')
+    const deepFamilyTokens = ['/', '\\', '.', '..', '%2e', 'bradgantt.internal', '@', '//']
+
+    const seen = new Set<string>()
+    const combine = (tokens: string[], depth: number) => {
+      const build = (prefix: string, remaining: number) => {
+        seen.add(prefix)
+        if (remaining === 0) return
+        for (const t of tokens) build(prefix + t, remaining - 1)
+      }
+      for (const t of tokens) build(t, depth - 1)
+    }
+    combine(broadTokens, 2) // toutes les paires du jeu large
+    combine(deepFamilyTokens, 3) // triplets sur le sous-ensemble le plus sensible (famille '..' / hôte de référence)
+    return Array.from(seen)
+  }
+
+  const corpus = generateCorpus()
+
+  it(`vérifie point-fixe et absence de fuite d'origine sur un corpus généré de ${corpus.length} entrées`, () => {
+    for (const input of corpus) {
+      const once = safeNext(input)
+      expect(safeNext(once)).toBe(once)
+      expect(new URL(once, 'https://app.test').origin).toBe('https://app.test')
     }
   })
 })
