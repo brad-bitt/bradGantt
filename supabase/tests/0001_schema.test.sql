@@ -84,9 +84,15 @@ alter table public.tasks enable trigger tasks_set_updated_at;
 select lives_ok($$
   update public.tasks set title = 'Groupe renommé' where id = 'b0000000-0000-0000-0000-000000000001'
 $$, 'update ok');
-select isnt(
-  (select updated_at from public.tasks where id = 'b0000000-0000-0000-0000-000000000001')::text,
-  '2020-01-01T00:00:00Z',
+-- `is(..., now(), ...)` compare directement en timestamptz (pas de cast en texte : un
+-- `isnt(...::text, '2020-01-01T00:00:00Z', ...)` comparerait à un littéral ISO avec
+-- 'T'/'Z' que `timestamptz::text` ne produit jamais — '2020-01-01 00:00:00+00', avec un
+-- espace et un décalage '+00' — rendant l'assertion inconditionnellement vraie, trigger
+-- opérant ou non). `now()` vaut `transaction_timestamp()`, exactement ce que pose le
+-- trigger : la comparaison est donc un vrai test d'égalité, pas un test de forme.
+select is(
+  (select updated_at from public.tasks where id = 'b0000000-0000-0000-0000-000000000001'),
+  now(),
   'updated_at écrasé par le trigger à l''horodatage courant, pas laissé à l''ancienne valeur forcée'
 );
 

@@ -19,9 +19,13 @@ export function NewProjectDialog() {
       // Politique d'erreur unifiée : validation -> inline dans le formulaire,
       // persistance -> toast. `revalidatePath('/projects')` côté serveur (dans
       // createProject) suffit à rafraîchir la liste ; pas besoin de router.refresh().
+      // On efface d'abord tout message inline précédent : une erreur de validation
+      // suivie d'un échec de persistance ne doit pas laisser les deux affichés à la
+      // fois (le message inline resterait affiché sous le toast sinon).
+      setError(null)
       if (res.fieldError) { setError(res.fieldError); return }
       if (res.error) { toast.error(res.error); return }
-      setOpen(false); setName(''); setError(null)
+      setOpen(false); setName('')
     })
   }
 

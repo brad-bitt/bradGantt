@@ -73,7 +73,7 @@ select is((select count(*) from public.tasks), 0::bigint, 'non-membre : aucune t
 select is((select count(*) from public.memberships), 0::bigint, 'non-membre : aucune membership');
 select is((select count(*) from public.dependencies), 0::bigint, 'non-membre : aucune dépendance');
 -- Visibilité des profils restreinte (A1) : dave n'est membre d'aucun projet, il ne voit
--- donc que son propre profil, plus l'annuaire complet d'avant la restriction.
+-- donc que son propre profil, et non plus l'annuaire complet d'avant la restriction.
 select is((select count(*) from public.profiles), 1::bigint, 'non-membre : dave ne voit que son propre profil');
 select tests.logout();
 

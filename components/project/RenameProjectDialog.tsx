@@ -16,7 +16,10 @@ export function RenameProjectDialog({ projectId, currentName, open, onClose }: {
     start(async () => {
       const res = await renameProject(projectId, name)
       // Politique d'erreur unifiée : validation -> inline dans le formulaire,
-      // persistance -> toast. Jamais les deux à la fois pour un même échec.
+      // persistance -> toast. Jamais les deux à la fois pour un même échec. On efface
+      // d'abord tout message inline précédent : une erreur de validation suivie d'un
+      // échec de persistance ne doit pas laisser le message inline affiché sous le toast.
+      setError(null)
       if (res.fieldError) { setError(res.fieldError); return }
       if (res.error) { toast.error(res.error); return }
       onClose()

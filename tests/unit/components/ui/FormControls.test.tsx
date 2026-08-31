@@ -24,6 +24,10 @@ describe('Input', () => {
     expect(input).toHaveAttribute('aria-invalid', 'true')
     expect(input.getAttribute('aria-describedby')).not.toBe('autre-id')
   })
+  it('sans erreur, un aria-describedby fourni par l\'appelant (ex. texte d\'aide) est conservé', () => {
+    render(<Input label="Nom" aria-describedby="hint-id" />)
+    expect(screen.getByLabelText('Nom')).toHaveAttribute('aria-describedby', 'hint-id')
+  })
 })
 
 describe('Select', () => {

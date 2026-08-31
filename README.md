@@ -28,7 +28,10 @@ npm run dev                # démarre l'app sur http://localhost:3100
 ```
 
 `npx supabase db reset` est sans danger à rejouer à tout moment sur ce projet : il
-recrée entièrement la base locale `bradgantt` à partir des migrations et du seed.
+recrée entièrement la base Postgres locale de ce projet (`bradgantt` est le
+`project_id` qui distingue sa stack Docker des autres projets Supabase locaux du
+poste, pas le nom de la base — la base elle-même s'appelle `postgres`) à partir des
+migrations et du seed.
 
 ### Ports
 

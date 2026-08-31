@@ -33,4 +33,18 @@ describe('RenameProjectDialog : politique d\'erreur unifiée', () => {
     expect(useToastStore.getState().toasts[0]).toMatchObject({ kind: 'error', message: 'Modification non enregistrée' })
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
+
+  it('un échec de persistance qui suit une erreur de validation efface le message inline précédent (pas de double affichage)', async () => {
+    mockRenameProject
+      .mockResolvedValueOnce({ fieldError: 'Le nom est requis' })
+      .mockResolvedValueOnce({ error: 'Modification non enregistrée' })
+    render(<RenameProjectDialog projectId="p1" currentName="Ancien nom" open onClose={() => {}} />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Le nom est requis')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+    await vi.waitFor(() => expect(useToastStore.getState().toasts).toHaveLength(1))
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
 })
