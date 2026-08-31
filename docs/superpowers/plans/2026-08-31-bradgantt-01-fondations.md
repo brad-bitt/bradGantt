@@ -1396,6 +1396,17 @@ describe('safeNext', () => {
     expect(safeNext('https://evil.com')).toBe('/projects')
     expect(safeNext('//evil.com')).toBe('/projects')
   })
+  it('refuse les contournements par antislash et caractères de contrôle', () => {
+    expect(safeNext('/\\evil.com')).toBe('/projects')
+    expect(safeNext('\\\\evil.com')).toBe('/projects')
+    expect(safeNext('/\t/evil.com')).toBe('/projects')
+    expect(safeNext('/\n/evil.com')).toBe('/projects')
+    expect(safeNext('javascript:alert(1)')).toBe('/projects')
+  })
+  it('conserve query string, fragment et séquences encodées', () => {
+    expect(safeNext('/projects/42?zoom=week#bar')).toBe('/projects/42?zoom=week#bar')
+    expect(safeNext('/%09/ok')).toBe('/%09/ok')
+  })
 })
 
 describe('resolveAuthRedirect', () => {
@@ -1431,9 +1442,24 @@ Expected : FAIL — module `@/lib/auth/redirect` introuvable
 ```ts
 const PROTECTED = [/^\/projects(\/|$)/, /^\/invite(\/|$)/]
 
+const SAFE_BASE = 'http://safe.invalid'
+
+/**
+ * N'accepte qu'un chemin strictement interne. Le contrôle par `startsWith` seul
+ * est contournable : le parseur d'URL WHATWG traite l'antislash comme un slash
+ * pour les schémas spéciaux (`/\\evil.com` → `http://evil.com/`) et supprime
+ * les tabulations et sauts de ligne littéraux avant de résoudre. On valide donc
+ * par résolution : l'origine doit rester celle de référence.
+ */
 export function safeNext(next: string | null | undefined): string {
-  if (!next || !next.startsWith('/') || next.startsWith('//')) return '/projects'
-  return next
+  if (!next || !next.startsWith('/')) return '/projects'
+  try {
+    const url = new URL(next, SAFE_BASE)
+    if (url.origin !== SAFE_BASE) return '/projects'
+    return `${url.pathname}${url.search}${url.hash}`
+  } catch {
+    return '/projects'
+  }
 }
 
 export function resolveAuthRedirect(url: string, hasSession: boolean): string | null {
