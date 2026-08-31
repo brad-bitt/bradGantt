@@ -14,6 +14,14 @@ create policy "profiles_update_self" on public.profiles
 -- email figé : la source de vérité reste auth.users, alimentée par handle_new_user.
 -- Sans ce verrou, un utilisateur pourrait s'attribuer l'email d'une cible et se faire
 -- ajouter à sa place lors d'une future invitation résolue par email.
+--
+-- Absence délibérée d'échappatoire : ce trigger se déclenche quel que soit le rôle
+-- appelant, y compris un futur rôle privilégié ou un service interne. Le jour où un flux
+-- légitime devra synchroniser profiles.email depuis un changement dans auth.users (ex.
+-- webhook de confirmation d'email), il faudra prévoir une exemption explicite — par
+-- exemple un rôle dédié exclu du trigger, ou une variable de session
+-- (current_setting('app.bypass_email_lock', true)) vérifiée en tête de fonction — plutôt
+-- que d'affaiblir ou de supprimer ce verrou.
 create or replace function public.check_profile_email_immutable() returns trigger
 language plpgsql as $$
 begin

@@ -5,7 +5,7 @@ create extension if not exists pgtap with schema extensions;
 -- la transaction est annulée par le `rollback` final, donc rien n'est perdu pour le dev.
 delete from auth.users;
 
-select plan(26);
+select plan(31);
 
 -- Helpers de session dans un schéma "tests" : lisibles par le rôle authenticated, annulés par le rollback final
 create schema tests;
@@ -72,7 +72,19 @@ select is((select count(*) from public.projects), 0::bigint, 'non-membre : aucun
 select is((select count(*) from public.tasks), 0::bigint, 'non-membre : aucune tâche');
 select is((select count(*) from public.memberships), 0::bigint, 'non-membre : aucune membership');
 select is((select count(*) from public.dependencies), 0::bigint, 'non-membre : aucune dépendance');
-select is((select count(*) from public.profiles), 5::bigint, 'les profils sont lisibles par tout connecté');
+-- Visibilité des profils restreinte (A1) : dave n'est membre d'aucun projet, il ne voit
+-- donc que son propre profil, plus l'annuaire complet d'avant la restriction.
+select is((select count(*) from public.profiles), 1::bigint, 'non-membre : dave ne voit que son propre profil');
+select tests.logout();
+
+-- Alice est owner de "Projet RLS" (avec bob editor, carol viewer) et viewer de "Projet Eve"
+-- (avec eve owner) : elle doit voir son propre profil et ceux des co-membres de CES DEUX
+-- projets (bob, carol, eve), mais jamais dave, avec qui elle ne partage aucun projet.
+select tests.login_as('a0000000-0000-0000-0000-000000000001', 'alice@test.local');
+select is((select count(*) from public.profiles), 4::bigint, 'alice : voit son profil + les co-membres des projets partagés (bob, carol, eve)');
+select ok(exists(select 1 from public.profiles where id = 'a0000000-0000-0000-0000-000000000001'), 'alice : voit son propre profil');
+select ok(exists(select 1 from public.profiles where id = 'a0000000-0000-0000-0000-000000000002'), 'alice : voit bob, membre d''un projet partagé');
+select ok(not exists(select 1 from public.profiles where id = 'a0000000-0000-0000-0000-000000000004'), 'alice : ne voit pas dave, avec qui elle ne partage aucun projet');
 select tests.logout();
 
 -- Carol (viewer) lit mais n'écrit pas
@@ -140,6 +152,12 @@ delete from public.memberships where user_id = 'a0000000-0000-0000-0000-00000000
 update public.memberships set role = 'viewer' where user_id = 'a0000000-0000-0000-0000-000000000001' and project_id = (select project_id from tests.ctx);
 delete from public.memberships where user_id = 'a0000000-0000-0000-0000-000000000002';
 select lives_ok($$ update public.projects set name = 'Renommé par Alice' $$, 'owner : rename ok');
+-- owner_id figé (A2) : la colonne projects.owner_id ne fait pas autorité, memberships
+-- (role owner) est la seule source de vérité. Même l'owner ne peut pas la réécrire.
+select throws_ok($$
+  update public.projects set owner_id = 'a0000000-0000-0000-0000-000000000002'
+  where id = (select project_id from tests.ctx)
+$$, 'P0001', 'owner_id_is_read_only', 'owner_id figé : update refusé même par l''owner');
 select tests.logout();
 select is((select role::text from public.memberships where user_id = 'a0000000-0000-0000-0000-000000000001' and project_id = (select project_id from tests.ctx)), 'owner', 'owner : ligne owner intouchable');
 select is((select count(*) from public.memberships where user_id = 'a0000000-0000-0000-0000-000000000002'), 0::bigint, 'owner : retrait de bob ok');
