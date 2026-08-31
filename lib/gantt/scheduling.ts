@@ -56,9 +56,12 @@ export function checkLink(deps: Dependency[], fromId: string, toId: string): Lin
 
 const byOrder = (a: Task, b: Task) => a.sortOrder - b.sortOrder || a.id.localeCompare(b.id)
 
-export function buildRows(tasks: Task[]): Row[] {
+export function buildRows(tasks: Task[], childrenIndex?: Map<string, string[]>): Row[] {
   const rows: Row[] = []
   const taskMap = new Map(tasks.map((t) => [t.id, t]))
+
+  // Use provided index or build it on demand
+  const childMap = childrenIndex || buildChildrenIndex(tasks)
 
   // Racines légitimes (parentId === null) + orphans (parent inexistant).
   // Les orphans sont traités comme des racines pour le tri et l'affichage.
@@ -75,7 +78,11 @@ export function buildRows(tasks: Task[]): Row[] {
     rows.push({ task: root, depth: 0, index: rows.length })
 
     // Ajouter les enfants directs de cette tâche
-    const children = tasks.filter((t) => t.parentId === root.id).sort(byOrder)
+    const childIds = childMap.get(root.id) || []
+    const children = childIds
+      .map((id) => taskMap.get(id)!)
+      .filter((t): t is Task => t !== undefined)
+      .sort(byOrder)
     if (root.type === 'group' && !root.collapsed) {
       // Enfants d'un groupe non-replié : depth 1
       for (const child of children) {
@@ -91,6 +98,19 @@ export function buildRows(tasks: Task[]): Row[] {
   }
 
   return rows
+}
+
+function buildChildrenIndex(tasks: Task[]): Map<string, string[]> {
+  const index = new Map<string, string[]>()
+  for (const task of tasks) {
+    if (task.parentId !== null) {
+      if (!index.has(task.parentId)) {
+        index.set(task.parentId, [])
+      }
+      index.get(task.parentId)!.push(task.id)
+    }
+  }
+  return index
 }
 
 export function siblingsOf(tasks: Task[], task: Pick<Task, 'parentId'>): Task[] {

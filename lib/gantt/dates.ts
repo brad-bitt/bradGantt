@@ -2,7 +2,29 @@ import { addDays as dfAddDays, differenceInCalendarDays, format, isWeekend as df
 
 export const ISO = 'yyyy-MM-dd'
 
-export function parseDate(iso: string): Date { return parseISO(iso) }
+// Memoize parseISO to avoid reparsing the same ISO strings on every call.
+// During a drag operation, many calls are made with the same set of dates per frame,
+// so cache hit rate is high. Bounded to prevent memory leaks on long sessions.
+const PARSE_CACHE_LIMIT = 5000
+const parseCache = new Map<string, Date>()
+
+export function parseDate(iso: string): Date {
+  let cached = parseCache.get(iso)
+  if (!cached) {
+    cached = parseISO(iso)
+    if (parseCache.size >= PARSE_CACHE_LIMIT) {
+      // Purge oldest entries (simple FIFO, not LRU)
+      let deleteCount = Math.floor(PARSE_CACHE_LIMIT * 0.2) // Remove 20% when limit reached
+      for (const key of parseCache.keys()) {
+        if (deleteCount <= 0) break
+        parseCache.delete(key)
+        deleteCount--
+      }
+    }
+    parseCache.set(iso, cached)
+  }
+  return cached
+}
 export function formatDate(d: Date): string { return format(d, ISO) }
 export function todayISO(): string { return formatDate(new Date()) }
 export function addDays(iso: string, n: number): string { return formatDate(dfAddDays(parseDate(iso), n)) }
