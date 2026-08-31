@@ -10,6 +10,6 @@ export default defineConfig({
     command: 'npm run dev',
     url: 'http://localhost:3100/login',
     reuseExistingServer: !process.env.CI,
-    env: { NEXT_PUBLIC_E2E: '1' },
+    env: { E2E_ENABLED: '1' },
   },
 })
