@@ -1,8 +1,8 @@
 import { computeLayout } from '@/lib/gantt/layout'
 import { indexById } from '@/lib/gantt/events'
-import { PX_PER_DAY, ROW_HEIGHT } from '@/lib/gantt/geometry'
+import { PX_PER_DAY, ROW_HEIGHT, SIDEBAR_WIDTH } from '@/lib/gantt/geometry'
 import { makeTask } from './fixtures'
-import type { GanttData, Task } from '@/lib/gantt/types'
+import type { GanttData, Task, Zoom } from '@/lib/gantt/types'
 
 const today = '2026-08-31'
 const g = makeTask({ id: 'g', type: 'group', startDate: '2026-01-01', endDate: '2026-01-01', sortOrder: 0 })
@@ -130,5 +130,46 @@ describe('computeLayout', () => {
     // Moyenne sur les 30 appels avec cache chaud
     const avg = times.reduce((a, b) => a + b, 0) / times.length
     expect(avg).toBeLessThan(40)
+  })
+})
+
+describe('computeLayout : la timeline remplit la largeur visible', () => {
+  const VISIBLE = 1280 - SIDEBAR_WIDTH
+  const zooms: Zoom[] = ['day', 'week', 'month']
+
+  it.each(zooms)('au zoom %s, la largeur calculée couvre la largeur visible', (zoom) => {
+    // Sans ce paramètre, une plage de quelques semaines donnait 732 px au zoom semaine et
+    // 244 px au zoom mois : la grille s'arrêtait en plein écran, laissant un grand vide à droite.
+    expect(computeLayout(data, null, zoom, today, VISIBLE).width).toBeGreaterThanOrEqual(VISIBLE)
+  })
+
+  it.each(zooms)('au zoom %s, la valeur par défaut reproduit à l\'identique le layout d\'origine', (zoom) => {
+    // Le contrat du paramètre optionnel : ne rien changer pour qui ne le passe pas.
+    expect(computeLayout(data, null, zoom, today)).toEqual(computeLayout(data, null, zoom, today, 0))
+  })
+
+  it.each(zooms)('au zoom %s, étendre ne déplace AUCUNE barre déjà placée', (zoom) => {
+    // `dateToX` part de `range.start` : si l'extension touchait le début, toutes les abscisses
+    // bougeraient et le glisser-déposer déposerait les barres sur le mauvais jour.
+    const base = computeLayout(data, null, zoom, today)
+    const wide = computeLayout(data, null, zoom, today, VISIBLE)
+    expect(wide.range.start).toBe(base.range.start)
+    expect(wide.rects).toEqual(base.rects)
+  })
+
+  it.each(zooms)('au zoom %s, changer de gabarit ne déplace aucune barre', (zoom) => {
+    // Le cas réel : la fenêtre est redimensionnée (ou une barre de défilement verticale apparaît)
+    // PENDANT un glissement. La largeur visible change donc d'une image à l'autre. Comme seule la
+    // fin de la plage bouge, les rects doivent être rigoureusement identiques — sinon l'aperçu
+    // sauterait sous le curseur et la barre serait déposée ailleurs qu'à l'endroit visé.
+    const small = computeLayout(data, null, zoom, today, 1280 - SIDEBAR_WIDTH)
+    const large = computeLayout(data, null, zoom, today, 1920 - SIDEBAR_WIDTH)
+    expect(large.range.start).toBe(small.range.start)
+    expect(large.rects).toEqual(small.rects)
+  })
+
+  it('n\'ampute pas une plage plus large que l\'écran', () => {
+    const base = computeLayout(data, null, 'day', today)
+    expect(computeLayout(data, null, 'day', today, VISIBLE).range).toEqual(base.range)
   })
 })

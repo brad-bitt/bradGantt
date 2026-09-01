@@ -90,6 +90,37 @@ test('le corps du Gantt remplit la hauteur disponible', async ({ page }) => {
   expect(sidebar.height).toBeGreaterThan(scroller.height * 0.8) // et jusqu'au bas du conteneur
 })
 
+test('la timeline remplit la largeur visible aux trois zooms, sur deux gabarits', async ({ page }) => {
+  await loginAs(page, 'alice')
+
+  // On mesure le BLOC DE CONTENU, pas le `scrollWidth` du conteneur : ce dernier vaut au minimum
+  // le `clientWidth`, donc il rapportait déjà « 1280 sur 1280 » quand le contenu ne faisait que
+  // 584 px. C'est le piège classique de l'observable qui ne distingue pas les deux mondes.
+  const measure = async () => {
+    const scroller = page.getByTestId('gantt-scroll')
+    const content = page.getByTestId('gantt-content')
+    const clientWidth = await scroller.evaluate((el) => el.clientWidth)
+    const contentWidth = (await content.boundingBox())!.width
+    return { clientWidth, contentWidth }
+  }
+
+  for (const size of [{ width: 1280, height: 720 }, { width: 1920, height: 1080 }]) {
+    await page.setViewportSize(size)
+    await page.goto(DEMO)
+    await expect(page.locator('[data-task-id]')).toHaveCount(4)
+
+    for (const zoom of ['Jour', 'Semaine', 'Mois']) {
+      await page.getByRole('button', { name: zoom, exact: true }).click()
+      await expect(page.getByRole('button', { name: zoom, exact: true })).toHaveAttribute('aria-pressed', 'true')
+      const { clientWidth, contentWidth } = await measure()
+      // Mesuré avant correctif à 1280 : 1152 px en semaine et 584 px en mois pour 1280 visibles.
+      expect(contentWidth, `${size.width}px / zoom ${zoom}`).toBeGreaterThanOrEqual(clientWidth)
+      // Aujourd'hui reste atteignable à tous les zooms : c'est le recentrage de la tâche 9.
+      await expect(page.getByTestId('today-line')).toBeInViewport()
+    }
+  }
+})
+
 test('le zoom change la largeur de la timeline', async ({ page }) => {
   await loginAs(page, 'alice')
   await page.goto(DEMO)
@@ -119,5 +150,18 @@ test('un projet sans tâche affiche son message, dans le champ de vision', async
   // nue, sans la moindre indication. C'est bien la présence DANS LE CHAMP DE VISION qu'on exige.
   const message = page.getByText('Aucune tâche pour l\'instant.')
   await expect(message).toBeVisible()
+  await expect(message).toBeInViewport()
+
+  // Il ne doit pas non plus TOUCHER la grille : `mt-4` seul le collait à l'élément du dessous.
+  const gap = await message.evaluate((el) => {
+    const next = el.nextElementSibling!.getBoundingClientRect()
+    return Math.round(next.top - el.getBoundingClientRect().bottom)
+  })
+  expect(gap).toBeGreaterThanOrEqual(16)
+
+  // La propriété essentielle du message reste vraie : il suit le défilement horizontal. On pousse
+  // le conteneur à fond à droite — la timeline remplit désormais l'écran à tous les zooms, donc il
+  // y a réellement de quoi défiler et l'assertion n'est pas gratuite.
+  await page.getByTestId('gantt-scroll').evaluate((el) => { el.scrollLeft = el.scrollWidth })
   await expect(message).toBeInViewport()
 })

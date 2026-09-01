@@ -1,8 +1,9 @@
 import {
   PX_PER_DAY, ROW_HEIGHT, BAR_INSET, computeRange, dateToX, xToDate, pxToDays, barRect,
   timelineWidth, dayColumns, monthCells, subCells, arrowPath, initialScrollLeft, SIDEBAR_WIDTH,
-  RESIZE_HANDLE_PX, resizeHandleWidth,
+  RESIZE_HANDLE_PX, resizeHandleWidth, extendRangeToWidth,
 } from '@/lib/gantt/geometry'
+import type { Zoom } from '@/lib/gantt/types'
 
 const today = '2026-08-31'
 
@@ -72,6 +73,52 @@ describe('resizeHandleWidth', () => {
   it('ne renvoie jamais de largeur négative', () => {
     expect(resizeHandleWidth(0)).toBe(0)
     expect(resizeHandleWidth(-10)).toBe(0)
+  })
+})
+
+describe('extendRangeToWidth', () => {
+  // Plage par défaut d'un projet neuf : aujourd'hui ± 30 jours, soit 61 jours.
+  const range = computeRange([], today)
+  // Timeline visible sur un écran de 1280 : 1280 − 300 de sidebar.
+  const VISIBLE = 1280 - SIDEBAR_WIDTH
+
+  it.each<[Zoom, number]>([['day', 40], ['week', 12], ['month', 4]])(
+    'couvre au moins la largeur visible au zoom %s',
+    (zoom) => {
+      const extended = extendRangeToWidth(range, zoom, VISIBLE)
+      expect(timelineWidth(extended, zoom)).toBeGreaterThanOrEqual(VISIBLE)
+    },
+  )
+
+  it('n\'étend que la FIN : le début ne bouge jamais', () => {
+    // Le début est l'origine de `dateToX` : le décaler déplacerait toutes les barres,
+    // le recentrage initial et la géométrie du glisser-déposer.
+    for (const zoom of ['day', 'week', 'month'] as Zoom[]) {
+      const extended = extendRangeToWidth(range, zoom, 5000)
+      expect(extended.start).toBe(range.start)
+      expect(extended.end >= range.end).toBe(true)
+      expect(dateToX(today, extended, zoom)).toBe(dateToX(today, range, zoom))
+    }
+  })
+
+  it('ne raccourcit jamais une plage déjà plus large que l\'écran', () => {
+    // 61 jours × 40 px = 2440 px au zoom jour, déjà bien au-delà des 980 visibles.
+    expect(extendRangeToWidth(range, 'day', VISIBLE)).toEqual(range)
+  })
+
+  it('ne fait rien sans largeur mesurée (0, négatif, NaN)', () => {
+    // La valeur par défaut de `computeLayout` est 0 : ce cas EST le comportement d'origine.
+    expect(extendRangeToWidth(range, 'month', 0)).toEqual(range)
+    expect(extendRangeToWidth(range, 'month', -500)).toEqual(range)
+    expect(extendRangeToWidth(range, 'month', Number.NaN)).toEqual(range)
+  })
+
+  it('étend au jour près, sans excédent d\'un jour entier', () => {
+    // 980 / 4 = 245 jours exactement au zoom mois : ni 244 (trop court) ni 246 (excédent).
+    const extended = extendRangeToWidth(range, 'month', VISIBLE)
+    expect(timelineWidth(extended, 'month')).toBe(980)
+    // 980 / 12 = 81,67 → 82 jours au zoom semaine, soit 984 px : le premier multiple qui couvre.
+    expect(timelineWidth(extendRangeToWidth(range, 'week', VISIBLE), 'week')).toBe(984)
   })
 })
 

@@ -43,6 +43,27 @@ export function computeRange(tasks: Dated[], today: string): Range {
   return { start, end }
 }
 
+/**
+ * Étend la FIN d'une plage pour que la timeline couvre au moins `minWidth` pixels.
+ *
+ * `computeRange` raisonne en JOURS (aujourd'hui ±30 au minimum), jamais en pixels : la même
+ * plage de 61 jours donne 2 440 px au zoom jour mais 732 px en semaine et 244 px en mois. Sur
+ * une zone de timeline d'environ 1 000 px, les deux zooms les plus larges laissaient donc un
+ * grand vide crème à droite — d'autant plus grand que le zoom était large.
+ *
+ * SEULE LA FIN BOUGE. `dateToX` mesure depuis `range.start` : reculer le début décalerait
+ * toutes les abscisses déjà calculées, donc le recentrage initial sur aujourd'hui et la
+ * géométrie du glisser-déposer. Étendre par la fin est invisible pour tout ce qui existe.
+ *
+ * Ne raccourcit jamais : une plage déjà plus large que l'écran est rendue telle quelle.
+ */
+export function extendRangeToWidth(range: Range, zoom: Zoom, minWidth: number): Range {
+  if (!(minWidth > 0)) return range
+  const needed = Math.ceil(minWidth / PX_PER_DAY[zoom])
+  if (needed <= durationDays(range.start, range.end)) return range
+  return { start: range.start, end: addDays(range.start, needed - 1) }
+}
+
 export function timelineWidth(range: Range, zoom: Zoom): number {
   return durationDays(range.start, range.end) * PX_PER_DAY[zoom]
 }

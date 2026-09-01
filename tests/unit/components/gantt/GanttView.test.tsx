@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react'
 import { GanttView } from '@/components/gantt/GanttView'
 import { useGanttStore } from '@/lib/gantt/store'
-import { dateToX, initialScrollLeft, PX_PER_DAY, computeRange } from '@/lib/gantt/geometry'
+import { dateToX, initialScrollLeft, PX_PER_DAY, computeRange, SIDEBAR_WIDTH } from '@/lib/gantt/geometry'
 import { makeTask } from '../../lib/gantt/fixtures'
 
 // jsdom ne fait pas de mise en page : `clientWidth` vaut 0 et `scrollLeft` est un accesseur
@@ -112,5 +112,47 @@ describe('GanttView : recentrage initial sur aujourd\'hui', () => {
     hydrate('p2')
     rerender(<GanttView />)
     expect(scroller().scrollLeft).toBe(expected('day'))
+  })
+})
+
+describe('GanttView : la timeline remplit la largeur du conteneur', () => {
+  // jsdom ne fait aucune mise en page : on lit la largeur POSÉE sur le bloc de contenu
+  // (`SIDEBAR_WIDTH + layout.width`), la seule chose que le composant décide vraiment.
+  function contentWidth() {
+    return parseFloat(screen.getByTestId('gantt-content').style.width)
+  }
+
+  it.each(['day', 'week', 'month'] as const)(
+    'au zoom %s, le contenu est au moins aussi large que le conteneur',
+    (zoom) => {
+      useGanttStore.setState({ zoom })
+      hydrate()
+      render(<GanttView />)
+      expect(contentWidth()).toBeGreaterThanOrEqual(VIEWPORT)
+    },
+  )
+
+  it('mesure le conteneur une seule fois, pas à chaque rendu', () => {
+    useGanttStore.setState({ zoom: 'week' })
+    hydrate()
+    render(<GanttView />)
+    const before = contentWidth()
+    // Un re-rendu (chaque image du glisser-déposer en produit un) ne doit pas relire le DOM
+    // ni changer la largeur : la mesure vient de l'état, posé au montage et au redimensionnement.
+    act(() => {
+      useGanttStore.getState().apply({ type: 'task.updated', taskId: 'a', patch: { title: 'Bougée' } })
+    })
+    expect(contentWidth()).toBe(before)
+    expect(before).toBeGreaterThanOrEqual(VIEWPORT)
+  })
+
+  it('la sidebar est retranchée de la largeur demandée à la timeline', () => {
+    // Au zoom mois la plage naturelle ne fait que 244 px : toute la largeur vient de l'extension,
+    // ce qui rend l'écart de SIDEBAR_WIDTH observable au pixel près.
+    useGanttStore.setState({ zoom: 'month' })
+    hydrate()
+    render(<GanttView />)
+    // 1280 − 300 = 980 visibles, 980 / 4 = 245 jours pile, donc 980 px de timeline.
+    expect(contentWidth()).toBe(SIDEBAR_WIDTH + 980)
   })
 })

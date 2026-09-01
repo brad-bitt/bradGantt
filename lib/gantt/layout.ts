@@ -1,5 +1,5 @@
 import type { DragState, GanttData, Range, Rect, Row, Task, Zoom } from './types'
-import { ROW_HEIGHT, barRect, computeRange, timelineWidth } from './geometry'
+import { ROW_HEIGHT, barRect, computeRange, extendRangeToWidth, timelineWidth } from './geometry'
 import { buildRows, groupBounds, resizeDates, shiftDates } from './scheduling'
 
 export interface Layout {
@@ -16,8 +16,19 @@ export interface Layout {
  * Assumes groups are non-nested (i.e., groups always have parentId === null).
  * This constraint ensures group bounds are computed correctly in a single pass
  * without requiring topological sort.
+ *
+ * `minTimelineWidth` est la largeur VISIBLE de la timeline en pixels (largeur du conteneur
+ * défilant moins la sidebar) : la plage est étendue par la FIN jusqu'à la couvrir, pour qu'aucun
+ * zoom ne laisse de vide à droite. Sa valeur par défaut de 0 préserve exactement le comportement
+ * d'origine — les appels qui ne mesurent rien (tests, calculs hors écran) sont inchangés.
  */
-export function computeLayout(data: GanttData, drag: DragState | null, zoom: Zoom, today: string): Layout {
+export function computeLayout(
+  data: GanttData,
+  drag: DragState | null,
+  zoom: Zoom,
+  today: string,
+  minTimelineWidth = 0,
+): Layout {
   const tasks = Object.values(data.tasks)
   const effective: Record<string, Task> = {}
 
@@ -52,7 +63,7 @@ export function computeLayout(data: GanttData, drag: DragState | null, zoom: Zoo
 
   // La plage ignore les dates stockées des groupes non vides (elles ne sont pas affichées)
   const forRange = Object.values(effective).filter((t) => t.type !== 'group' || !childrenIndex.has(t.id))
-  const range = computeRange(forRange, today)
+  const range = extendRangeToWidth(computeRange(forRange, today), zoom, minTimelineWidth)
   const rows = buildRows(Object.values(effective), childrenIndex)
   const rects: Record<string, Rect> = {}
   for (const row of rows) rects[row.task.id] = barRect(row.task, row.index, range, zoom)

@@ -282,6 +282,38 @@ test('un double-clic tremblé au zoom mois ouvre l\'éditeur sans rien écrire',
   await expect(page.locator('[data-task-id]', { hasText: 'Dev' })).toHaveAttribute('title', title(START, END))
 })
 
+test('une barre déposée tombe sur le bon jour aux trois zooms', async ({ page }) => {
+  await loginAs(page, 'alice')
+  const bar = await projectWithTask(page)
+
+  // La plage affichée est désormais ÉTENDUE jusqu'à remplir l'écran aux zooms semaine et mois.
+  // L'extension ne porte que sur la FIN : `dateToX` mesure depuis `range.start`, donc toucher au
+  // début décalerait l'origine et une barre déposée tomberait un ou plusieurs jours à côté. Ce
+  // test l'exige en dates réelles, pas en pixels : +2 jours puis −1 jour, à chaque zoom.
+  let start = START
+  let end = END
+  for (const zoom of ['Jour', 'Semaine', 'Mois'] as const) {
+    await page.getByRole('button', { name: zoom, exact: true }).click()
+    await expect(bar).toBeInViewport()
+    const px = PX_PER_DAY[({ Jour: 'day', Semaine: 'week', Mois: 'month' } as const)[zoom]]
+
+    await dragCenter(page, bar, 2 * px)
+    start += 2
+    end += 2
+    await expect(bar, `zoom ${zoom} : +2 jours`).toHaveAttribute('title', title(start, end))
+
+    await dragCenter(page, bar, -1 * px)
+    start -= 1
+    end -= 1
+    await expect(bar, `zoom ${zoom} : −1 jour`).toHaveAttribute('title', title(start, end))
+  }
+
+  // Et la dernière position survit au rechargement : ce sont bien des dates persistées, pas un
+  // aperçu qui aurait l'air juste à l'écran.
+  await page.reload()
+  await expect(page.locator('[data-task-id]', { hasText: 'Dev' })).toHaveAttribute('title', title(start, end))
+})
+
 test('la barre reste déplaçable ET redimensionnable aux trois zooms', async ({ page }) => {
   await loginAs(page, 'alice')
   const bar = await projectWithTask(page)
