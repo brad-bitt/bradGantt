@@ -159,6 +159,126 @@ describe('useTimelineDrag : aperçu pendant le glissement', () => {
   })
 })
 
+describe('useTimelineDrag : seuil de déclenchement', () => {
+  // Au zoom mois (4 px par jour), une demi-colonne fait 2 px : sans seuil, un clic qui tremble
+  // de deux pixels décalait la tâche d'un jour ET l'écrivait en base — dans une application
+  // sans annulation. Le seuil gèle le delta à zéro tant qu'il n'est pas franchi.
+  beforeEach(() => useGanttStore.setState({ zoom: 'month' }))
+
+  it('gèle le delta à zéro sous le seuil, même quand deux pixels valent un jour', async () => {
+    const drag = setup()
+    act(() => drag.current.onBarPointerDown(ptr({ clientX: 500 }), 't1', 'move'))
+
+    act(() => drag.current.onPointerMove(ptr({ clientX: 502 })))
+    expect(useGanttStore.getState().drag).toMatchObject({ deltaDays: 0 })
+    // 3 px : encore sous le seuil, alors que la conversion brute donnerait déjà 1 jour.
+    act(() => drag.current.onPointerMove(ptr({ clientX: 503 })))
+    expect(useGanttStore.getState().drag).toMatchObject({ deltaDays: 0 })
+
+    await act(async () => { await drag.current.onPointerUp(ptr({ clientX: 503 })) })
+    expect(commands.moveTask).not.toHaveBeenCalled()
+  })
+
+  it('arme le geste au seuil et reprend la géométrie exacte depuis le point de pression', () => {
+    const drag = setup()
+    act(() => drag.current.onBarPointerDown(ptr({ clientX: 500 }), 't1', 'move'))
+    act(() => drag.current.onPointerMove(ptr({ clientX: 504 })))
+    // Une fois armé, le delta est celui du déplacement RÉEL depuis la pression (4 px = 1 jour au
+    // zoom mois) : le seuil retarde l'armement, il ne décale pas l'origine.
+    expect(useGanttStore.getState().drag).toMatchObject({ deltaDays: 1 })
+
+    act(() => drag.current.onPointerMove(ptr({ clientX: 540 })))
+    expect(useGanttStore.getState().drag).toMatchObject({ deltaDays: 10 })
+  })
+
+  it('un geste armé le reste, même si le pointeur repasse près du point de départ', () => {
+    const drag = setup()
+    act(() => drag.current.onBarPointerDown(ptr({ clientX: 500 }), 't1', 'move'))
+    act(() => drag.current.onPointerMove(ptr({ clientX: 540 })))
+    expect(useGanttStore.getState().drag).toMatchObject({ deltaDays: 10 })
+
+    // Un déplacement délibéré ramené sous le seuil doit continuer de suivre le pointeur, sinon
+    // l'aperçu se figerait au dernier jour franchi.
+    act(() => drag.current.onPointerMove(ptr({ clientX: 502 })))
+    expect(useGanttStore.getState().drag).toMatchObject({ deltaDays: 1 })
+    act(() => drag.current.onPointerMove(ptr({ clientX: 500 })))
+    expect(useGanttStore.getState().drag).toMatchObject({ deltaDays: 0 })
+  })
+
+  it('un double-clic tremblé n\'écrit rien du tout', async () => {
+    const drag = setup()
+    // Deux pressions/relâchements à deux pixels près : c'est ce que produit un vrai double-clic
+    // humain, et c'est ce qui enregistrait un déplacement d'un jour au zoom mois.
+    for (const [down, up] of [[500, 502], [501, 499]]) {
+      act(() => drag.current.onBarPointerDown(ptr({ clientX: down }), 't1', 'move'))
+      act(() => drag.current.onPointerMove(ptr({ clientX: up })))
+      await act(async () => { await drag.current.onPointerUp(ptr({ clientX: up })) })
+    }
+    expect(commands.moveTask).not.toHaveBeenCalled()
+    expect(commands.resizeTask).not.toHaveBeenCalled()
+  })
+
+  it('le seuil vaut aussi pour un redimensionnement', async () => {
+    const drag = setup()
+    act(() => drag.current.onBarPointerDown(ptr({ clientX: 500 }), 't1', 'resize-end'))
+    act(() => drag.current.onPointerMove(ptr({ clientX: 502 })))
+    await act(async () => { await drag.current.onPointerUp(ptr({ clientX: 502 })) })
+    expect(commands.resizeTask).not.toHaveBeenCalled()
+  })
+})
+
+describe('useTimelineDrag : un seul pointeur à la fois', () => {
+  it('un second pointeur ne détourne pas le geste en cours', async () => {
+    const drag = setup()
+    act(() => drag.current.onBarPointerDown(ptr({ clientX: 500, pointerId: 1 }), 't1', 'move'))
+
+    // Un second doigt sur une AUTRE barre : le geste ouvert garde la main, et la barre visée
+    // n'est même pas sélectionnée par-dessus.
+    act(() => drag.current.onBarPointerDown(ptr({ clientX: 900, pointerId: 2 }), 't2', 'move'))
+    expect(useGanttStore.getState().drag).toMatchObject({ mode: 'move', taskId: 't1', deltaDays: 0 })
+    expect(useGanttStore.getState().selection).toEqual({ kind: 'task', id: 't1' })
+
+    // Ses déplacements ne pilotent pas l'aperçu du premier.
+    act(() => drag.current.onPointerMove(ptr({ clientX: 1300, pointerId: 2 })))
+    expect(useGanttStore.getState().drag).toMatchObject({ taskId: 't1', deltaDays: 0 })
+
+    // Le geste du pointeur propriétaire, lui, fonctionne normalement.
+    act(() => drag.current.onPointerMove(ptr({ clientX: 700, pointerId: 1 })))
+    expect(useGanttStore.getState().drag).toMatchObject({ taskId: 't1', deltaDays: 5 })
+
+    // Et son relâchement à lui ne clôt rien : ni écriture, ni aperçu effacé.
+    await act(async () => { await drag.current.onPointerUp(ptr({ clientX: 1300, pointerId: 2 })) })
+    expect(commands.moveTask).not.toHaveBeenCalled()
+    expect(useGanttStore.getState().drag).toMatchObject({ taskId: 't1', deltaDays: 5 })
+
+    await act(async () => { await drag.current.onPointerUp(ptr({ clientX: 700, pointerId: 1 })) })
+    expect(commands.moveTask).toHaveBeenCalledExactlyOnceWith('t1', 5)
+  })
+
+  it('un `pointercancel` d\'un autre pointeur n\'abandonne pas le geste en cours', async () => {
+    const drag = setup()
+    act(() => drag.current.onBarPointerDown(ptr({ clientX: 500, pointerId: 1 }), 't1', 'move'))
+    act(() => drag.current.onPointerMove(ptr({ clientX: 700, pointerId: 1 })))
+
+    act(() => drag.current.onPointerCancel(ptr({ clientX: 1300, pointerId: 2 })))
+    expect(useGanttStore.getState().drag).toMatchObject({ taskId: 't1', deltaDays: 5 })
+
+    act(() => drag.current.onPointerCancel(ptr({ clientX: 700, pointerId: 1 })))
+    expect(useGanttStore.getState().drag).toBeNull()
+  })
+
+  it('la même souris reprend la main si un relâchement a été perdu', async () => {
+    const drag = setup()
+    act(() => drag.current.onBarPointerDown(ptr({ clientX: 500, pointerId: 1 }), 't1', 'move'))
+    // Aucun `pointerup` : le geste reste ouvert. Une nouvelle pression du MÊME pointeur doit
+    // pouvoir repartir, sinon la timeline resterait morte jusqu'au rechargement.
+    act(() => drag.current.onBarPointerDown(ptr({ clientX: 900, pointerId: 1 }), 't2', 'move'))
+    act(() => drag.current.onPointerMove(ptr({ clientX: 940, pointerId: 1 })))
+    await act(async () => { await drag.current.onPointerUp(ptr({ clientX: 940, pointerId: 1 })) })
+    expect(commands.moveTask).toHaveBeenCalledExactlyOnceWith('t2', 1)
+  })
+})
+
 describe('useTimelineDrag : fin du geste', () => {
   it('déplace la tâche et efface l\'aperçu', async () => {
     const drag = setup()

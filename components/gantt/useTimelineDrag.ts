@@ -2,7 +2,7 @@
 import { useCallback, useMemo, useRef, type PointerEvent, type RefObject } from 'react'
 import { useGanttStore } from '@/lib/gantt/store'
 import { getGanttCommands } from '@/lib/gantt/client-commands'
-import { pxToDays } from '@/lib/gantt/geometry'
+import { DRAG_THRESHOLD_PX, pxToDays } from '@/lib/gantt/geometry'
 
 export type BarDragMode = 'move' | 'resize-start' | 'resize-end'
 
@@ -41,8 +41,18 @@ export interface TimelineDragHandlers {
  * singleton relit le projet courant à chaque appel (tâche 8), le capturer figerait un contexte.
  */
 export function useTimelineDrag(timelineRef: RefObject<HTMLDivElement | null>): TimelineDragHandlers {
-  /** Position de la pression, en coordonnées écran. `null` hors geste. */
-  const start = useRef<{ x: number; y: number } | null>(null)
+  /**
+   * Le geste en cours. `null` hors geste.
+   *
+   * - `x`/`y` : position de la pression, en coordonnées écran ; le delta se mesure toujours
+   *   depuis ce point, jamais d'une image à l'autre.
+   * - `pointerId` : le pointeur PROPRIÉTAIRE du geste. Les événements des autres pointeurs sont
+   *   ignorés — sans quoi un second doigt posé sur une autre barre écrasait cette origine et le
+   *   geste finissait par écrire sur la mauvaise tâche, sans qu'aucun aperçu ne l'annonce.
+   * - `armed` : le seuil de déclenchement a été franchi. Tant qu'il vaut `false`, le delta reste
+   *   gelé à zéro (voir `DRAG_THRESHOLD_PX`).
+   */
+  const start = useRef<{ x: number; y: number; pointerId: number; armed: boolean } | null>(null)
 
   const toLocal = useCallback((e: PointerEvent) => {
     const el = timelineRef.current
@@ -64,11 +74,23 @@ export function useTimelineDrag(timelineRef: RefObject<HTMLDivElement | null>): 
     } catch {
       // Pointeur déjà relâché entre-temps : le geste reste utilisable au-dessus de la timeline.
     }
-    start.current = { x: e.clientX, y: e.clientY }
+    start.current = { x: e.clientX, y: e.clientY, pointerId: e.pointerId, armed: false }
   }, [])
 
+  /**
+   * Vrai si l'événement vient d'un pointeur AUTRE que celui qui a ouvert le geste en cours.
+   * Un seul geste à la fois : le premier pointeur pressé le garde jusqu'à son relâchement.
+   *
+   * Le même `pointerId` n'est jamais étranger : c'est ce qui permet à une nouvelle pression de
+   * la souris (`pointerId` stable) de reprendre la main si un `pointerup` avait été perdu.
+   */
+  const isForeignPointer = useCallback(
+    (e: PointerEvent) => start.current !== null && start.current.pointerId !== e.pointerId,
+    [],
+  )
+
   const onBarPointerDown = useCallback((e: PointerEvent, taskId: string, mode: BarDragMode) => {
-    if (e.button !== 0) return
+    if (e.button !== 0 || isForeignPointer(e)) return
     const s = useGanttStore.getState()
     // La sélection, elle, vaut aussi pour un lecteur : c'est le remplaçant du `onClick`.
     s.select({ kind: 'task', id: taskId })
@@ -78,30 +100,42 @@ export function useTimelineDrag(timelineRef: RefObject<HTMLDivElement | null>): 
     e.stopPropagation()
     capture(e)
     s.setDrag({ mode, taskId, deltaDays: 0 })
-  }, [capture])
+  }, [capture, isForeignPointer])
 
   const onLinkPointerDown = useCallback((e: PointerEvent, fromTaskId: string) => {
-    if (e.button !== 0) return
+    if (e.button !== 0 || isForeignPointer(e)) return
     const s = useGanttStore.getState()
     if (s.myRole === 'viewer') return
     e.stopPropagation()
     capture(e)
     const p = toLocal(e)
     s.setDrag({ mode: 'link', fromTaskId, x: p.x, y: p.y })
-  }, [capture, toLocal])
+  }, [capture, isForeignPointer, toLocal])
 
   const onPointerMove = useCallback((e: PointerEvent) => {
     const s = useGanttStore.getState()
     const d = s.drag
-    // La timeline reçoit tous les survols : hors geste armé, il n'y a rien à faire.
-    if (!d || !start.current) return
+    const st = start.current
+    // La timeline reçoit tous les survols : hors geste ouvert, il n'y a rien à faire. Et les
+    // déplacements d'un second pointeur ne doivent pas piloter le geste du premier.
+    if (!d || !st || st.pointerId !== e.pointerId) return
     if (d.mode === 'link') {
       const p = toLocal(e)
       s.setDrag({ ...d, x: p.x, y: p.y })
       return
     }
     if (d.mode === 'reorder') return
-    const deltaDays = pxToDays(e.clientX - start.current.x, s.zoom)
+    const dx = e.clientX - st.x
+    // Seuil de déclenchement. Sous `DRAG_THRESHOLD_PX`, le geste n'est pas armé et le delta
+    // reste GELÉ À ZÉRO : un clic (ou un double-clic) qui tremble de un à trois pixels ne
+    // modifie plus la tâche, alors qu'au zoom mois deux pixels suffisaient à la décaler d'un
+    // jour et à l'écrire en base. Une fois armé, le geste le reste jusqu'au relâchement : on ne
+    // veut pas qu'un retour près du point de départ désarme un déplacement délibéré.
+    if (!st.armed) {
+      if (Math.abs(dx) < DRAG_THRESHOLD_PX) return
+      st.armed = true
+    }
+    const deltaDays = pxToDays(dx, s.zoom)
     // Écrire un objet identique à chaque pixel invaliderait la mémoïsation de `computeLayout`
     // et referait un calcul de mise en page complet pour un dessin inchangé.
     if (deltaDays !== d.deltaDays) s.setDrag({ ...d, deltaDays })
@@ -110,6 +144,8 @@ export function useTimelineDrag(timelineRef: RefObject<HTMLDivElement | null>): 
   const onPointerUp = useCallback(async (e: PointerEvent) => {
     const s = useGanttStore.getState()
     const d = s.drag
+    // Le relâchement d'un pointeur secondaire ne clôt pas le geste du pointeur propriétaire.
+    if (start.current && start.current.pointerId !== e.pointerId) return
     start.current = null
     if (!d) return
     // L'aperçu est retiré AVANT l'écriture : la commande applique le résultat de façon
@@ -128,7 +164,10 @@ export function useTimelineDrag(timelineRef: RefObject<HTMLDivElement | null>): 
     }
   }, [])
 
-  const onPointerCancel = useCallback(() => {
+  const onPointerCancel = useCallback((e: PointerEvent) => {
+    // Même règle qu'au relâchement : un `pointercancel` sur un pointeur secondaire n'abandonne
+    // pas le geste en cours du pointeur propriétaire.
+    if (start.current && start.current.pointerId !== e.pointerId) return
     start.current = null
     useGanttStore.getState().setDrag(null)
   }, [])

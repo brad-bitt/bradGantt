@@ -1,6 +1,7 @@
 import {
   PX_PER_DAY, ROW_HEIGHT, BAR_INSET, computeRange, dateToX, xToDate, pxToDays, barRect,
   timelineWidth, dayColumns, monthCells, subCells, arrowPath, initialScrollLeft, SIDEBAR_WIDTH,
+  RESIZE_HANDLE_PX, resizeHandleWidth,
 } from '@/lib/gantt/geometry'
 
 const today = '2026-08-31'
@@ -51,6 +52,26 @@ describe('conversions', () => {
   it('barRect', () => {
     const rect = barRect({ startDate: '2026-08-03', endDate: '2026-08-05' }, 2, range, 'day')
     expect(rect).toEqual({ x: 80, y: 2 * ROW_HEIGHT + BAR_INSET, width: 120, height: ROW_HEIGHT - 2 * BAR_INSET })
+  })
+})
+
+describe('resizeHandleWidth', () => {
+  it('vaut la pleine poignée dès que la barre est assez large', () => {
+    expect(resizeHandleWidth(120)).toBe(RESIZE_HANDLE_PX)
+    expect(resizeHandleWidth(4 * RESIZE_HANDLE_PX)).toBe(RESIZE_HANDLE_PX)
+  })
+
+  it('laisse toujours au moins la moitié de la barre pour la déplacer', () => {
+    // Le défaut corrigé : deux poignées de 8 px sur une barre de 12 px (3 jours au zoom mois)
+    // ne laissaient aucun pixel de déplacement.
+    for (const width of [4, 8, 12, 16, 24, 36, 120]) {
+      expect(2 * resizeHandleWidth(width)).toBeLessThanOrEqual(width / 2)
+    }
+  })
+
+  it('ne renvoie jamais de largeur négative', () => {
+    expect(resizeHandleWidth(0)).toBe(0)
+    expect(resizeHandleWidth(-10)).toBe(0)
   })
 })
 

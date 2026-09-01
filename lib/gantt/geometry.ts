@@ -9,6 +9,27 @@ export const HEADER_HEIGHT = 56
 export const BAR_INSET = 8
 export const SIDEBAR_WIDTH = 300
 export const RESIZE_HANDLE_PX = 8
+/**
+ * Distance à parcourir avant qu'une pression ne devienne un glissement. Sous ce seuil le geste
+ * n'est pas armé et son delta reste gelé à zéro.
+ *
+ * Sans lui, le premier pixel parcouru comptait : une demi-colonne suffisant à décaler d'un jour,
+ * il fallait 20 px au zoom jour, 6 px en semaine et **2 px au zoom mois** pour modifier la tâche.
+ * Un double-clic humain tremble de 1 à 3 px : au zoom mois, ouvrir l'éditeur enregistrait donc
+ * aussi un déplacement d'un jour, dans une application sans annulation.
+ */
+export const DRAG_THRESHOLD_PX = 4
+/**
+ * Épaisseur de la bordure d'une barre — doit rester égale au `border-[3px]` de `TaskBar`.
+ *
+ * Elle compte : les barres sont en `box-sizing: border-box` (préflight Tailwind), donc un enfant
+ * `absolute` posé à `left: 0` commence APRÈS la bordure. Une poignée bornée au quart d'une barre
+ * de 12 px se retrouvait ainsi au MILIEU du dessin, les deux poignées occupant à elles seules les
+ * 6 px de la boîte de contenu et ne laissant « déplaçables » que les deux liserés de bordure. Les
+ * poignées débordent donc de la bordure (`-BAR_BORDER_PX`) pour couvrir les bords VISIBLES de la
+ * barre, et le milieu reste ce qu'il doit être : la zone de déplacement.
+ */
+export const BAR_BORDER_PX = 3
 
 type Dated = { startDate: string; endDate: string }
 
@@ -40,6 +61,23 @@ export function pxToDays(dx: number, zoom: Zoom): number {
   const rounded = Math.sign(ratio) * Math.floor(Math.abs(ratio) + 0.5)
   // Évite de retourner -0
   return rounded || 0
+}
+
+/**
+ * Largeur d'une poignée de redimensionnement pour une barre de `barWidth` pixels : jamais plus
+ * du quart de la barre.
+ *
+ * `RESIZE_HANDLE_PX` en dur laissait les deux poignées (8 px chacune) recouvrir toute barre plus
+ * étroite que 16 px. Au zoom mois (4 px/jour) une tâche de 3 jours fait 12 px : la zone de
+ * déplacement disparaissait — mesuré à 0 px sur 12, la poignée droite, dernière dans le DOM à
+ * `z-index` égal, l'emportant sur 9 px. Toute tâche de 4 jours ou moins n'était plus que
+ * redimensionnable.
+ *
+ * Le quart borne les deux poignées à la moitié de la barre : il reste toujours au moins la moitié
+ * pour la saisir et la déplacer, à tous les zooms.
+ */
+export function resizeHandleWidth(barWidth: number): number {
+  return Math.min(RESIZE_HANDLE_PX, Math.max(barWidth, 0) / 4)
 }
 
 export function barRect(task: Dated, rowIndex: number, range: Range, zoom: Zoom): Rect {

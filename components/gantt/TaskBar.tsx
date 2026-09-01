@@ -1,6 +1,6 @@
 'use client'
 import { useGanttStore } from '@/lib/gantt/store'
-import { RESIZE_HANDLE_PX } from '@/lib/gantt/geometry'
+import { BAR_BORDER_PX, resizeHandleWidth } from '@/lib/gantt/geometry'
 import type { Rect, Task } from '@/lib/gantt/types'
 import { cn } from '@/lib/utils'
 import { useGanttView } from './GanttView'
@@ -9,6 +9,10 @@ export function TaskBar({ task, rect }: { task: Task; rect: Rect }) {
   const selected = useGanttStore((s) => s.selection?.kind === 'task' && s.selection.id === task.id)
   const openEditor = useGanttStore((s) => s.openEditor)
   const { drag, canEdit } = useGanttView()
+  // Bornée au quart de la barre : à 8 px fixes, les deux poignées mangeaient toute barre plus
+  // étroite que 16 px et il ne restait plus rien à saisir pour la déplacer (au zoom mois, une
+  // tâche de 3 jours fait 12 px). Il reste désormais au moins la moitié de la barre.
+  const handle = resizeHandleWidth(rect.width)
   return (
     <div
       data-task-id={task.id}
@@ -37,16 +41,18 @@ export function TaskBar({ task, rect }: { task: Task; rect: Rect }) {
         <>
           {/* Enfants de la barre : leur `stopPropagation` (dans le hook) empêche la barre
               d'armer un déplacement par-dessus le redimensionnement. */}
+          {/* Décalées de l'épaisseur de la bordure : posées à `left: 0`, elles commenceraient
+              après elle et se retrouveraient au milieu d'une barre étroite. */}
           <div
             data-handle="resize-start"
-            className="absolute inset-y-0 left-0 z-10 cursor-ew-resize"
-            style={{ width: RESIZE_HANDLE_PX }}
+            className="absolute z-10 cursor-ew-resize"
+            style={{ width: handle, left: -BAR_BORDER_PX, top: -BAR_BORDER_PX, bottom: -BAR_BORDER_PX }}
             onPointerDown={(e) => drag.onBarPointerDown(e, task.id, 'resize-start')}
           />
           <div
             data-handle="resize-end"
-            className="absolute inset-y-0 right-0 z-10 cursor-ew-resize"
-            style={{ width: RESIZE_HANDLE_PX }}
+            className="absolute z-10 cursor-ew-resize"
+            style={{ width: handle, right: -BAR_BORDER_PX, top: -BAR_BORDER_PX, bottom: -BAR_BORDER_PX }}
             onPointerDown={(e) => drag.onBarPointerDown(e, task.id, 'resize-end')}
           />
         </>
