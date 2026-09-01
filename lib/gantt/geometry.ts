@@ -122,3 +122,17 @@ export function arrowPath(from: Rect, to: Rect): string {
     : to.y + to.height + BAR_INSET      // cible au-dessus
   return `M${sx},${sy} H${sx + stub} V${midY} H${ex - stub} V${ey} H${ex}`
 }
+
+/**
+ * Position horizontale de défilement à appliquer au chargement pour qu'« aujourd'hui » soit
+ * visible sans être collé au bord : on laisse un quart de la largeur visible de contexte à sa
+ * gauche (le passé récent). `viewportWidth` est la largeur du conteneur défilant, sidebar
+ * collante comprise — c'est elle qui masque les `SIDEBAR_WIDTH` premiers pixels.
+ *
+ * Fonction pure et bornée à zéro : sur une plage courte (`todayX` proche de 0) ou un conteneur
+ * plus étroit que la sidebar, elle ne renvoie jamais de valeur négative.
+ */
+export function initialScrollLeft(todayX: number, viewportWidth: number): number {
+  const visible = Math.max(viewportWidth - SIDEBAR_WIDTH, 0)
+  return Math.max(0, todayX - visible / 4)
+}

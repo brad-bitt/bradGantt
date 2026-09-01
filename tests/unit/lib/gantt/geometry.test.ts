@@ -1,6 +1,6 @@
 import {
   PX_PER_DAY, ROW_HEIGHT, BAR_INSET, computeRange, dateToX, xToDate, pxToDays, barRect,
-  timelineWidth, dayColumns, monthCells, subCells, arrowPath,
+  timelineWidth, dayColumns, monthCells, subCells, arrowPath, initialScrollLeft, SIDEBAR_WIDTH,
 } from '@/lib/gantt/geometry'
 
 const today = '2026-08-31'
@@ -51,6 +51,28 @@ describe('conversions', () => {
   it('barRect', () => {
     const rect = barRect({ startDate: '2026-08-03', endDate: '2026-08-05' }, 2, range, 'day')
     expect(rect).toEqual({ x: 80, y: 2 * ROW_HEIGHT + BAR_INSET, width: 120, height: ROW_HEIGHT - 2 * BAR_INSET })
+  })
+})
+
+describe('initialScrollLeft', () => {
+  it('laisse un quart de la largeur visible de contexte à gauche d\'aujourd\'hui', () => {
+    // 1280 px de conteneur, 300 de sidebar collante => 980 visibles, quart = 245.
+    expect(initialScrollLeft(1200, 1280)).toBe(1200 - 245)
+  })
+  it('place réellement aujourd\'hui dans la partie visible', () => {
+    const todayX = 1200
+    const left = initialScrollLeft(todayX, 1280)
+    // Abscisse d'aujourd'hui À L'ÉCRAN : la sidebar masque les SIDEBAR_WIDTH premiers pixels.
+    const onScreen = SIDEBAR_WIDTH + todayX - left
+    expect(onScreen).toBeGreaterThan(SIDEBAR_WIDTH)
+    expect(onScreen).toBeLessThan(1280)
+  })
+  it('ne défile pas avant le début de la plage', () => {
+    expect(initialScrollLeft(100, 1280)).toBe(0)
+    expect(initialScrollLeft(0, 1280)).toBe(0)
+  })
+  it('reste borné quand le conteneur est plus étroit que la sidebar', () => {
+    expect(initialScrollLeft(1200, 200)).toBe(1200)
   })
 })
 

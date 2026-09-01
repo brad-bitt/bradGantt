@@ -39,3 +39,18 @@ values ('d0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-0000000
 insert into public.dependencies (project_id, from_task_id, to_task_id) values
   ('c0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000003'),
   ('c0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000003', 'd0000000-0000-0000-0000-000000000004');
+
+-- Second projet d'alice. Il n'existe QUE pour verrouiller l'isolation inter-projets : sans lui,
+-- retirer les `.eq('project_id', id)` de la page projet laisse toute la suite e2e au vert (le seed
+-- ne contenait qu'un projet). Ses titres sont volontairement criards et ses identifiants finissent
+-- par `f1`/`f2` pour qu'une fuite saute aux yeux, y compris dans le payload RSC.
+-- Sert aussi de fixture « autre projet » aux tâches suivantes.
+insert into public.projects (id, name, owner_id)
+values ('c0000000-0000-0000-0000-000000000002', 'Projet voisin', 'a0000000-0000-0000-0000-000000000001');
+insert into public.memberships (project_id, user_id, role) values
+  ('c0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000001', 'owner');
+insert into public.tasks (id, project_id, title, type, start_date, end_date, color, sort_order) values
+  ('d0000000-0000-0000-0000-0000000000f1', 'c0000000-0000-0000-0000-000000000002', 'FUITE INTER-PROJETS', 'task', current_date - 1, current_date + 5, '#A855F7', 0),
+  ('d0000000-0000-0000-0000-0000000000f2', 'c0000000-0000-0000-0000-000000000002', 'FUITE INTER-PROJETS BIS', 'task', current_date + 6, current_date + 8, '#A855F7', 1);
+insert into public.dependencies (id, project_id, from_task_id, to_task_id) values
+  ('e0000000-0000-0000-0000-0000000000f1', 'c0000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-0000000000f1', 'd0000000-0000-0000-0000-0000000000f2');

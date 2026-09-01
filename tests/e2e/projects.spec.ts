@@ -13,7 +13,12 @@ test('créer, renommer puis supprimer un projet', async ({ page }) => {
   // (renommage et suppression, qui se pilotent depuis la carte).
   await page.waitForURL(/\/projects\/[0-9a-f-]{36}$/)
   await expect(page.getByRole('heading', { name })).toBeVisible()
-  await page.goto('/projects')
+  // RETOUR PAR NAVIGATION CLIENT, jamais par `page.goto` : un `goto` est un rechargement complet
+  // qui court-circuite le cache routeur et rendrait ce test aveugle. Tel quel, il tombe si
+  // `revalidatePath('/projects')` disparaît de `createProject` — c'est la seule preuve de la
+  // suite que la liste est bien réinvalidée après une création.
+  await page.getByRole('link', { name: '← Projets' }).click()
+  await page.waitForURL('**/projects')
   const card = page.getByRole('article', { name })
   await expect(card).toBeVisible()
   await expect(card.getByText('owner')).toBeVisible()
