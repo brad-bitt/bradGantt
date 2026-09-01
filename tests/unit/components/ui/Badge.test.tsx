@@ -3,11 +3,11 @@ import { Badge } from '@/components/ui/Badge'
 
 describe('Badge', () => {
   it('rend le contenu avec la couleur demandée', () => {
-    render(<Badge color="pink">viewer</Badge>)
-    expect(screen.getByText('viewer')).toHaveClass('bg-pink')
+    render(<Badge color="cyan">viewer</Badge>)
+    expect(screen.getByText('viewer')).toHaveClass('bg-cyan')
   })
-  it('est jaune par défaut', () => {
+  it('est encre par défaut', () => {
     render(<Badge>owner</Badge>)
-    expect(screen.getByText('owner')).toHaveClass('bg-yellow')
+    expect(screen.getByText('owner')).toHaveClass('bg-ink')
   })
 })

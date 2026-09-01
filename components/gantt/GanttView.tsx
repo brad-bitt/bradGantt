@@ -122,7 +122,7 @@ export function GanttView() {
         >
           <div className="sticky top-0 z-30 flex" style={{ height: HEADER_HEIGHT }}>
             <div
-              className="sticky left-0 z-40 flex items-center border-b-[3px] border-r-[3px] border-ink bg-yellow px-3 font-display uppercase"
+              className="sticky left-0 z-40 flex items-center border-b-[3px] border-r-[3px] border-ink bg-cream px-3 font-display uppercase"
               style={{ width: SIDEBAR_WIDTH, minWidth: SIDEBAR_WIDTH }}
             >
               Tâches

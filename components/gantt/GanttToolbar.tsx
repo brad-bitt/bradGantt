@@ -17,7 +17,7 @@ export function GanttToolbar() {
     <div className="flex flex-wrap items-center gap-4 border-b-[3px] border-ink bg-paper px-6 py-3">
       <Link href="/projects" className="font-mono text-sm underline brutal-focus">← Projets</Link>
       <h1 className="text-2xl truncate max-w-md">{name}</h1>
-      {canEdit ? <Badge color={myRole === 'owner' ? 'yellow' : 'blue'}>{myRole}</Badge> : <Badge color="pink">Lecture seule</Badge>}
+      {canEdit ? <Badge color={myRole === 'owner' ? 'violet' : 'blue'}>{myRole}</Badge> : <Badge color="cyan">Lecture seule</Badge>}
       <div className="flex -space-x-2" aria-label="Membres">
         {members.map((m) => <Avatar key={m.userId} name={m.displayName} color={m.color} src={m.avatarUrl} size="sm" />)}
       </div>

@@ -11,7 +11,7 @@ import { toast } from '@/lib/toast/store'
 
 export interface ProjectListItem { id: string; name: string; role: 'owner' | 'editor' | 'viewer'; createdAt: string }
 
-const roleColor: Record<ProjectListItem['role'], BadgeColor> = { owner: 'yellow', editor: 'blue', viewer: 'pink' }
+const roleColor: Record<ProjectListItem['role'], BadgeColor> = { owner: 'violet', editor: 'blue', viewer: 'cyan' }
 
 export function ProjectCard({ project }: { project: ProjectListItem }) {
   const [renaming, setRenaming] = useState(false)

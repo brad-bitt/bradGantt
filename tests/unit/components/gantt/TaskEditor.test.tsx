@@ -24,7 +24,7 @@ function hydrate(tasks: Task[] = [], myRole: Role = 'owner') {
       projectId: 'p1',
       projectName: 'Projet',
       myRole,
-      members: [{ userId: 'u1', role: 'editor', displayName: 'Alice Test', email: 'a@test.local', avatarUrl: null, color: '#FFD500' }],
+      members: [{ userId: 'u1', role: 'editor', displayName: 'Alice Test', email: 'a@test.local', avatarUrl: null, color: '#FF8A3D' }],
       tasks,
       dependencies: [],
       today: TODAY,
@@ -101,7 +101,7 @@ describe('TaskEditor : création', () => {
       startDate: TODAY,
       endDate: '2026-09-17',
       progress: 0,
-      color: '#FFD500',
+      color: '#FF8A3D',
       assigneeId: null,
       parentId: null,
     })
@@ -152,7 +152,7 @@ describe('TaskEditor : création', () => {
   })
 
   it('choisit la couleur suivante de la palette, et respecte celle qu\'on sélectionne', async () => {
-    hydrate([makeTask({ id: 't1', color: '#FFD500' })])
+    hydrate([makeTask({ id: 't1', color: '#FF8A3D' })])
     render(<TaskEditor />)
     open({ mode: 'create', parentId: null, type: 'task' })
     await userEvent.type(screen.getByLabelText('Titre'), 'X')
@@ -165,7 +165,7 @@ describe('TaskEditor : création', () => {
     expect(screen.getByRole('button', { name: 'violet' })).toHaveTextContent('✓')
     expect(screen.getByRole('button', { name: 'rose' })).not.toHaveTextContent('✓')
     await userEvent.click(screen.getByRole('button', { name: 'Créer' }))
-    expect(createTask).toHaveBeenCalledWith(expect.objectContaining({ color: '#A855F7' }))
+    expect(createTask).toHaveBeenCalledWith(expect.objectContaining({ color: '#A78BFA' }))
   })
 
   it('un échec de persistance laisse la modale ouverte', async () => {
@@ -221,7 +221,7 @@ describe('TaskEditor : validation inline', () => {
 describe('TaskEditor : modification', () => {
   const existing = () => makeTask({
     id: 't1', title: 'Cadrage', startDate: '2026-09-10', endDate: '2026-09-12',
-    progress: 20, color: '#3B82F6', assigneeId: null, parentId: null,
+    progress: 20, color: '#5B9DFF', assigneeId: null, parentId: null,
   })
 
   it('n\'envoie QUE les champs réellement modifiés', async () => {

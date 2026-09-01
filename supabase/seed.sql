@@ -30,12 +30,12 @@ insert into public.memberships (project_id, user_id, role) values
   ('c0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000003', 'viewer');
 
 insert into public.tasks (id, project_id, title, type, start_date, end_date, color, sort_order)
-values ('d0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'Cadrage', 'group', current_date, current_date, '#FFD500', 0);
+values ('d0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'Cadrage', 'group', current_date, current_date, '#E9B44C', 0);
 insert into public.tasks (id, project_id, parent_id, title, type, start_date, end_date, color, sort_order, progress, assignee_id) values
-  ('d0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 'Ateliers', 'task', current_date - 3, current_date + 2, '#3B82F6', 0, 60, 'a0000000-0000-0000-0000-000000000002'),
-  ('d0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 'Spécifications', 'task', current_date + 3, current_date + 9, '#FF6B9D', 1, 0, null);
+  ('d0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 'Ateliers', 'task', current_date - 3, current_date + 2, '#5B9DFF', 0, 60, 'a0000000-0000-0000-0000-000000000002'),
+  ('d0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 'Spécifications', 'task', current_date + 3, current_date + 9, '#FF6FA3', 1, 0, null);
 insert into public.tasks (id, project_id, title, type, start_date, end_date, color, sort_order)
-values ('d0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000001', 'Kick-off dev', 'milestone', current_date + 10, current_date + 10, '#22C55E', 1);
+values ('d0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000001', 'Kick-off dev', 'milestone', current_date + 10, current_date + 10, '#3ECF8E', 1);
 insert into public.dependencies (project_id, from_task_id, to_task_id) values
   ('c0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000003'),
   ('c0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000003', 'd0000000-0000-0000-0000-000000000004');
@@ -50,7 +50,7 @@ values ('c0000000-0000-0000-0000-000000000002', 'Projet voisin', 'a0000000-0000-
 insert into public.memberships (project_id, user_id, role) values
   ('c0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000001', 'owner');
 insert into public.tasks (id, project_id, title, type, start_date, end_date, color, sort_order) values
-  ('d0000000-0000-0000-0000-0000000000f1', 'c0000000-0000-0000-0000-000000000002', 'FUITE INTER-PROJETS', 'task', current_date - 1, current_date + 5, '#A855F7', 0),
-  ('d0000000-0000-0000-0000-0000000000f2', 'c0000000-0000-0000-0000-000000000002', 'FUITE INTER-PROJETS BIS', 'task', current_date + 6, current_date + 8, '#A855F7', 1);
+  ('d0000000-0000-0000-0000-0000000000f1', 'c0000000-0000-0000-0000-000000000002', 'FUITE INTER-PROJETS', 'task', current_date - 1, current_date + 5, '#A78BFA', 0),
+  ('d0000000-0000-0000-0000-0000000000f2', 'c0000000-0000-0000-0000-000000000002', 'FUITE INTER-PROJETS BIS', 'task', current_date + 6, current_date + 8, '#A78BFA', 1);
 insert into public.dependencies (id, project_id, from_task_id, to_task_id) values
   ('e0000000-0000-0000-0000-0000000000f1', 'c0000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-0000000000f1', 'd0000000-0000-0000-0000-0000000000f2');

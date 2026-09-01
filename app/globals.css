@@ -1,16 +1,35 @@
 @import "tailwindcss";
 
+/* Palette organisée par REGISTRE : une signification par couleur.
+   Le jaune portait auparavant quatre rôles à la fois (fond d'en-tête, boutons, sélection,
+   première couleur de tâche) — impossible de distinguer une ligne sélectionnée d'une tâche
+   simplement jaune. Il ne sert plus qu'à l'état actif. */
 @theme inline {
+  /* Structure — le décor, qui doit reculer */
   --color-cream: #FDF6E3;
-  --color-ink: #111111;
   --color-paper: #FFFFFF;
+  --color-ink: #111111;
+  --color-ink-soft: #5B554A;
+
+  /* État — le jaune, et rien d'autre : sélection, élément actif */
   --color-yellow: #FFD500;
-  --color-pink: #FF6B9D;
-  --color-blue: #3B82F6;
-  --color-green: #22C55E;
-  --color-orange: #FF8A00;
-  --color-purple: #A855F7;
+
+  /* Repères temporels et sémantique */
+  --color-today: #E5342A;
   --color-danger: #EF4444;
+  --color-band: #F5EBD0;
+
+  /* Données — couleurs de tâches. Calées assez claires pour que le titre en noir reste
+     lisible PAR-DESSUS les hachures d'avancement (noir à 40 %), écartées en teinte ET en
+     clarté pour tenir côte à côte sur un même écran. */
+  --color-tangerine: #FF8A3D;
+  --color-rose: #FF6FA3;
+  --color-blue: #5B9DFF;
+  --color-emerald: #3ECF8E;
+  --color-violet: #A78BFA;
+  --color-cyan: #34D3E0;
+  --color-lime: #B4E45C;
+  --color-ochre: #E9B44C;
 
   --shadow-brutal: 4px 4px 0 #111111;
   --shadow-brutal-lg: 6px 6px 0 #111111;

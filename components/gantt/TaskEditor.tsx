@@ -19,13 +19,17 @@ const TITLES: Record<TaskType, { create: string; edit: string }> = {
 }
 
 /** Noms lisibles des couleurs de la palette : un `aria-label` à « #FF6B9D » n'aide personne. */
+/** Noms lisibles des couleurs de tâches : ce sont les seuls libellés de ces six boutons
+ *  sans texte, donc la seule prise pour un lecteur d'écran comme pour un test. */
 const COLOR_NAMES: Record<string, string> = {
-  '#FFD500': 'jaune',
-  '#FF6B9D': 'rose',
-  '#3B82F6': 'bleu',
-  '#22C55E': 'vert',
-  '#FF8A00': 'orange',
-  '#A855F7': 'violet',
+  '#FF8A3D': 'tangerine',
+  '#FF6FA3': 'rose',
+  '#5B9DFF': 'bleu',
+  '#3ECF8E': 'émeraude',
+  '#A78BFA': 'violet',
+  '#34D3E0': 'cyan',
+  '#B4E45C': 'lime',
+  '#E9B44C': 'ocre',
 }
 
 /** Contrainte `tasks.title` en base : `char_length(trim(title)) between 1 and 200`. */

@@ -10,7 +10,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-yellow text-ink brutal brutal-press',
+  primary: 'bg-ink text-cream brutal brutal-press',
   secondary: 'bg-paper text-ink brutal brutal-press',
   danger: 'bg-danger text-paper brutal brutal-press',
   ghost: 'bg-transparent text-ink border-[3px] border-transparent hover:border-ink',

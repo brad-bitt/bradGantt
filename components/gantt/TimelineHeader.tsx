@@ -1,6 +1,7 @@
 'use client'
 import { useGanttStore } from '@/lib/gantt/store'
 import { monthCells, subCells } from '@/lib/gantt/geometry'
+import { cn } from '@/lib/utils'
 import { useGanttView } from './GanttView'
 
 export function TimelineHeader() {
@@ -10,10 +11,14 @@ export function TimelineHeader() {
   const subs = subCells(layout.range, zoom)
   return (
     <div className="relative border-b-[3px] border-ink bg-paper" style={{ width: layout.width, height: '100%' }}>
-      {months.map((m) => (
+      {/* Même alternance que la grille, pour que l'en-tête et le corps se lisent d'un bloc. */}
+      {months.map((m, i) => (
         <div
           key={m.key}
-          className="absolute top-0 h-7 border-r border-ink/20 px-2 font-display text-xs uppercase leading-7 truncate"
+          className={cn(
+            'absolute top-0 h-7 border-r border-ink/20 px-2 font-display text-xs uppercase leading-7 truncate',
+            i % 2 === 1 && 'bg-band',
+          )}
           style={{ left: m.x, width: m.width }}
         >
           {m.label}

@@ -91,16 +91,29 @@ describe('computeLayout', () => {
     const rowIds = l.rows.map((r) => r.task.id)
     expect(rowIds).toEqual(rectIds)
   })
-  // Performance test: mesure le chemin chaud (cache rempli) pendant un glissement
-  // Ce qui compte pour l'UX : une première image remplit le cache, puis les images suivantes
-  // s'exécutent avec cache chaud. Ce test simule cette séquence avec un aperçu de drag actif.
-  // Sensible à la machine : la charge du CI (autres tests avant) affecte le timing.
-  // Coordinateur a mesuré 8ms en isolation, budget réel 16,7ms/image. Seuil 40ms = 2x budget,
-  // absorbe la charge du CI tout en détectant des régressions sérieuses.
-  // Machine-sensitive: timing varies with system load. Increase threshold if CI is slow.
-  it('performances avec cache chaud : 800 tâches en moyenne sous 40ms par image', () => {
+  // Non-régression de PERFORMANCE, exprimée en RATIO et non en millisecondes.
+  //
+  // La version précédente mesurait un temps absolu (« moins de 40 ms par image »). Elle est
+  // tombée pour de vrai à trois reprises sans qu'aucune régression n'ait eu lieu : mesuré sous
+  // charge sur huit cœurs, le même calcul prenait de 42 à 80 ms. Un test qui crie au loup finit
+  // désactivé, donc ne protège plus rien.
+  //
+  // Ce qu'on veut attraper, c'est une régression de COMPLEXITÉ : que le coût cesse de croître
+  // linéairement avec le nombre de tâches. En comparant 800 tâches à 100 dans la MÊME
+  // exécution, la vitesse de la machine s'annule — les deux tailles en souffrent également.
+  //
+  // Deux précautions, l'une et l'autre nécessaires, mesurées et non supposées :
+  //  - MÉDIANE et non moyenne : un seul pic d'ordonnancement suffisait à faire passer la
+  //    moyenne du ratio de 6 à 11,3 sous charge, soit au-dessus d'une vraie régression ;
+  //  - mesures ALTERNÉES : les deux tailles subissent la même dérive au fil de l'exécution.
+  //
+  // Calibrage constaté sur ce code : 7,7 à 8,2 à vide, 7,9 à 9,0 sous charge de huit
+  // processus. En remplaçant l'index des enfants par un balayage linéaire (la régression O(n²)
+  // que l'optimisation de la tâche 5 a précisément supprimée) : 13,8 à 14,8. Le seuil de 11 se
+  // place entre les deux, avec ~20 % de marge de chaque côté.
+  function frameTimes(taskCount: number): GanttData {
     const tasks: Task[] = []
-    for (let i = 0; i < 800; i++) {
+    for (let i = 0; i < taskCount; i++) {
       tasks.push(
         makeTask({
           id: `t${i}`,
@@ -112,24 +125,31 @@ describe('computeLayout', () => {
         }),
       )
     }
-    const largeData: GanttData = { tasks: indexById(tasks), dependencies: {} }
+    return { tasks: indexById(tasks), dependencies: {} }
+  }
 
-    // Amorce le cache avec un appel initial (hors mesure)
-    computeLayout(largeData, null, 'day', today)
+  it('le coût par image croît linéairement avec le nombre de tâches', () => {
+    const small = frameTimes(100)
+    const large = frameTimes(800)
+    // Amorçage du cache de dates hors mesure : la première image le remplit, ce sont les
+    // suivantes qui comptent pour le confort du glisser-déposer.
+    computeLayout(small, null, 'day', today)
+    computeLayout(large, null, 'day', today)
 
-    // Mesure le chemin chaud : 30 appels avec aperçu de drag actif
-    // (simule un glissement en cours avec mise à jour par image)
-    const times: number[] = []
-    for (let j = 0; j < 30; j++) {
-      const start = performance.now()
-      computeLayout(largeData, { mode: 'move', taskId: 't100', deltaDays: j % 10 }, 'day', today)
-      const elapsed = performance.now() - start
-      times.push(elapsed)
+    const ts: number[] = []
+    const tl: number[] = []
+    for (let j = 0; j < 40; j++) {
+      let s = performance.now()
+      computeLayout(small, { mode: 'move', taskId: 't50', deltaDays: j % 10 }, 'day', today)
+      ts.push(performance.now() - s)
+      s = performance.now()
+      computeLayout(large, { mode: 'move', taskId: 't50', deltaDays: j % 10 }, 'day', today)
+      tl.push(performance.now() - s)
     }
+    const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]
+    const ratio = median(tl) / median(ts)
 
-    // Moyenne sur les 30 appels avec cache chaud
-    const avg = times.reduce((a, b) => a + b, 0) / times.length
-    expect(avg).toBeLessThan(40)
+    expect(ratio).toBeLessThan(11)
   })
 })
 

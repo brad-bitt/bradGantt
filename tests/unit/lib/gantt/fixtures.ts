@@ -12,7 +12,7 @@ export function makeTask(partial: Partial<Task> = {}): Task {
     startDate: '2026-09-01',
     endDate: '2026-09-03',
     progress: 0,
-    color: '#FFD500',
+    color: '#FF8A3D',
     assigneeId: null,
     sortOrder: seq,
     collapsed: false,

@@ -110,7 +110,7 @@ export function Dialog({ open, onClose, title, children, footer }: DialogProps) 
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}
         className="flex max-h-full w-full max-w-lg flex-col bg-paper border-[3px] border-ink shadow-brutal-xl brutal-focus"
         onClick={(e) => e.stopPropagation()}>
-        <header className="flex shrink-0 items-center justify-between border-b-[3px] border-ink px-5 py-3 bg-yellow">
+        <header className="flex shrink-0 items-center justify-between border-b-[3px] border-ink px-5 py-3 bg-cream">
           <h2 id={titleId} className="text-xl">{title}</h2>
           <Button variant="ghost" size="sm" onClick={onClose} aria-label="Fermer">✕</Button>
         </header>

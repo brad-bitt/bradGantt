@@ -38,7 +38,7 @@ select results_eq(
   'profil créé depuis les métadonnées');
 select ok(
   (select color from public.profiles where id = 'a0000000-0000-0000-0000-000000000001')
-    = any (array['#FFD500','#FF6B9D','#3B82F6','#22C55E','#FF8A00','#A855F7']),
+    = any (array['#FF8A3D','#FF6FA3','#5B9DFF','#3ECF8E','#A78BFA','#34D3E0','#B4E45C','#E9B44C']),
   'couleur issue de la palette');
 
 -- create_project : projet + membership owner
