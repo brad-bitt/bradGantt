@@ -7,7 +7,7 @@ export interface AppHeaderProps { displayName: string; color: string; avatarUrl:
 
 export function AppHeader({ displayName, color, avatarUrl }: AppHeaderProps) {
   return (
-    <header className="flex items-center justify-between border-b-[3px] border-ink bg-yellow px-6 py-3">
+    <header className="flex h-14 items-center justify-between border-b-[3px] border-ink bg-yellow px-6 py-3">
       <Link href="/projects" className="font-display text-2xl uppercase brutal-focus">BradGantt</Link>
       <div className="flex items-center gap-4">
         <span className="font-bold hidden sm:inline">{displayName}</span>

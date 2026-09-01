@@ -8,6 +8,12 @@ test('créer, renommer puis supprimer un projet', async ({ page }) => {
   await page.getByRole('button', { name: 'Nouveau projet' }).click()
   await page.getByLabel('Nom du projet').fill(name)
   await page.getByRole('button', { name: 'Créer' }).click()
+  // Depuis la tâche 9 du plan 2, la création emmène directement dans le Gantt du nouveau
+  // projet. On vérifie la redirection, puis on revient à la liste pour la suite du parcours
+  // (renommage et suppression, qui se pilotent depuis la carte).
+  await page.waitForURL(/\/projects\/[0-9a-f-]{36}$/)
+  await expect(page.getByRole('heading', { name })).toBeVisible()
+  await page.goto('/projects')
   const card = page.getByRole('article', { name })
   await expect(card).toBeVisible()
   await expect(card.getByText('owner')).toBeVisible()

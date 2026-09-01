@@ -24,7 +24,7 @@
 }
 
 @layer base {
-  * { border-radius: 0 !important; }
+  * { border-radius: 0; }
   body { @apply bg-cream text-ink font-ui antialiased; }
   h1, h2, h3 { @apply font-display uppercase tracking-tight; }
 }

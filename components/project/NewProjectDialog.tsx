@@ -1,5 +1,6 @@
 'use client'
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Dialog } from '@/components/ui/Dialog'
 import { Input } from '@/components/ui/Input'
@@ -7,6 +8,7 @@ import { createProject } from '@/app/(app)/projects/actions'
 import { toast } from '@/lib/toast/store'
 
 export function NewProjectDialog() {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -17,15 +19,18 @@ export function NewProjectDialog() {
     start(async () => {
       const res = await createProject(name)
       // Politique d'erreur unifiée : validation -> inline dans le formulaire,
-      // persistance -> toast. `revalidatePath('/projects')` côté serveur (dans
-      // createProject) suffit à rafraîchir la liste ; pas besoin de router.refresh().
+      // persistance -> toast.
       // On efface d'abord tout message inline précédent : une erreur de validation
       // suivie d'un échec de persistance ne doit pas laisser les deux affichés à la
       // fois (le message inline resterait affiché sous le toast sinon).
       setError(null)
       if (res.fieldError) { setError(res.fieldError); return }
-      if (res.error) { toast.error(res.error); return }
+      if (res.error || !res.id) { toast.error(res.error ?? 'Création impossible, réessaie.'); return }
       setOpen(false); setName('')
+      // Le plan 1 se contentait de `revalidatePath('/projects')` côté serveur faute de page
+      // projet ; celle-ci existe depuis la tâche 9, on emmène donc l'utilisateur droit dans le
+      // Gantt du projet qu'il vient de créer.
+      router.push(`/projects/${res.id}`)
     })
   }
 

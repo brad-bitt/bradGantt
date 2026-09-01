@@ -20,10 +20,13 @@ test('bob (editor) ne peut ni renommer ni supprimer un projet dont alice est own
   await alicePage.getByRole('button', { name: 'Nouveau projet' }).click()
   await alicePage.getByLabel('Nom du projet').fill(targetName)
   await alicePage.getByRole('button', { name: 'Créer' }).click()
+  // La création redirige vers la page du projet (tâche 9 du plan 2) : l'identifiant se lit
+  // directement dans l'URL, et on revient à la liste pour piloter les cartes.
+  await alicePage.waitForURL(/\/projects\/[0-9a-f-]{36}$/)
+  const targetId = new URL(alicePage.url()).pathname.split('/').pop()!
+  await alicePage.goto('/projects')
   const targetCard = alicePage.getByRole('article', { name: targetName })
   await expect(targetCard).toBeVisible()
-  const targetHref = await targetCard.getByRole('link', { name: targetName }).getAttribute('href')
-  const targetId = targetHref!.split('/').pop()!
 
   // Capture l'ID de la Server Action renameProject via un renommage légitime par alice
   // (owner). Ce même identifiant sert à forger la requête de bob plus bas.
@@ -44,6 +47,8 @@ test('bob (editor) ne peut ni renommer ni supprimer un projet dont alice est own
   await alicePage.getByRole('button', { name: 'Nouveau projet' }).click()
   await alicePage.getByLabel('Nom du projet').fill(throwName)
   await alicePage.getByRole('button', { name: 'Créer' }).click()
+  await alicePage.waitForURL(/\/projects\/[0-9a-f-]{36}$/)
+  await alicePage.goto('/projects')
   const throwCard = alicePage.getByRole('article', { name: throwName })
   await expect(throwCard).toBeVisible()
   const [deleteReq] = await Promise.all([
