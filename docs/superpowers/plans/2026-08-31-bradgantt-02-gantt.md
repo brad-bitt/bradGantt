@@ -746,7 +746,10 @@ git commit -m "feat(gantt): ordonnancement — décalage, resize, bornes, cycles
 type GanttEvent =
   | { type: 'task.created'; task: Task }
   | { type: 'task.updated'; taskId: string; patch: Partial<Omit<Task, 'id' | 'projectId'>> }
-  | { type: 'task.deleted'; taskId: string }
+  // `cascade` vaut true par défaut. `cascade: false` ne retire QUE cette tâche (ses
+  // dépendances partent quand même) : sert à défaire une création sans emporter ce que
+  // l'utilisateur y a rattaché pendant l'écriture.
+  | { type: 'task.deleted'; taskId: string; cascade?: boolean }
   | { type: 'dependency.created'; dependency: Dependency }
   | { type: 'dependency.deleted'; dependencyId: string }
   | { type: 'tasks.reordered'; order: { taskId: string; sortOrder: number }[] }
@@ -811,7 +814,10 @@ import type { Dependency, GanttData, Task } from './types'
 export type GanttEvent =
   | { type: 'task.created'; task: Task }
   | { type: 'task.updated'; taskId: string; patch: Partial<Omit<Task, 'id' | 'projectId'>> }
-  | { type: 'task.deleted'; taskId: string }
+  // `cascade` vaut true par défaut. `cascade: false` ne retire QUE cette tâche (ses
+  // dépendances partent quand même) : sert à défaire une création sans emporter ce que
+  // l'utilisateur y a rattaché pendant l'écriture.
+  | { type: 'task.deleted'; taskId: string; cascade?: boolean }
   | { type: 'dependency.created'; dependency: Dependency }
   | { type: 'dependency.deleted'; dependencyId: string }
   | { type: 'tasks.reordered'; order: { taskId: string; sortOrder: number }[] }
@@ -833,7 +839,9 @@ export function applyEvent(data: GanttData, event: GanttEvent): GanttData {
 
     case 'task.deleted': {
       const removed = new Set<string>([event.taskId])
-      for (const t of Object.values(data.tasks)) if (t.parentId === event.taskId) removed.add(t.id)
+      if (event.cascade !== false) {
+        for (const t of Object.values(data.tasks)) if (t.parentId === event.taskId) removed.add(t.id)
+      }
       const tasks = Object.fromEntries(Object.entries(data.tasks).filter(([id]) => !removed.has(id)))
       const dependencies = Object.fromEntries(
         Object.entries(data.dependencies).filter(([, d]) => !removed.has(d.fromTaskId) && !removed.has(d.toTaskId)),
@@ -1007,10 +1015,10 @@ git commit -m "feat(gantt): calcul de layout avec aperçu du drag et bornes de g
 interface HydratePayload { projectId: string; projectName: string; myRole: Role; members: Member[]; tasks: Task[]; dependencies: Dependency[]; today: string }
 interface GanttState extends GanttData {
   projectId: string; projectName: string; myRole: Role; members: Member[]; today: string
+  epoch: number // incrémenté à chaque hydrate ; sert de garde de contexte au rollback (tâche 8)
   zoom: Zoom; selection: Selection; drag: DragState | null; editor: EditorState
   hydrate(p: HydratePayload): void
   apply(e: GanttEvent): void
-  replaceData(d: GanttData): void
   setZoom(z: Zoom): void; select(s: Selection): void; setDrag(d: DragState | null): void
   openEditor(e: Exclude<EditorState, null>): void; closeEditor(): void
 }
@@ -1047,11 +1055,12 @@ describe('useGanttStore', () => {
     expect(useGanttStore.getState().tasks.a).toBeUndefined()
     expect(Object.keys(useGanttStore.getState().dependencies)).toEqual([])
   })
-  it('replaceData restaure un snapshot', () => {
-    const snapshot = { tasks: useGanttStore.getState().tasks, dependencies: useGanttStore.getState().dependencies }
-    useGanttStore.getState().apply({ type: 'task.deleted', taskId: 'a' })
-    useGanttStore.getState().replaceData(snapshot)
-    expect(useGanttStore.getState().tasks.a).toBeDefined()
+  it('hydrate incrémente epoch à chaque appel, y compris sur le même projet', () => {
+    const before = useGanttStore.getState().epoch
+    useGanttStore.getState().hydrate(payload)
+    expect(useGanttStore.getState().epoch).toBe(before + 1)
+    useGanttStore.getState().hydrate({ ...payload, projectId: 'p2' })
+    expect(useGanttStore.getState().epoch).toBe(before + 2)
   })
   it('selectCanEdit', () => {
     expect(selectCanEdit(useGanttStore.getState())).toBe(true)
@@ -1095,13 +1104,14 @@ export interface GanttState extends GanttData {
   myRole: Role
   members: Member[]
   today: string
+  /** Incrémenté à chaque hydrate : garde de contexte du rollback (voir tâche 8). */
+  epoch: number
   zoom: Zoom
   selection: Selection
   drag: DragState | null
   editor: EditorState
   hydrate: (p: HydratePayload) => void
   apply: (e: GanttEvent) => void
-  replaceData: (d: GanttData) => void
   setZoom: (z: Zoom) => void
   select: (s: Selection) => void
   setDrag: (d: DragState | null) => void
@@ -1115,6 +1125,7 @@ export const useGanttStore = create<GanttState>((set) => ({
   myRole: 'viewer',
   members: [],
   today: '1970-01-01',
+  epoch: 0,
   tasks: {},
   dependencies: {},
   zoom: 'day',
@@ -1122,7 +1133,8 @@ export const useGanttStore = create<GanttState>((set) => ({
   drag: null,
   editor: null,
 
-  hydrate: (p) => set({
+  hydrate: (p) => set((s) => ({
+    epoch: s.epoch + 1,
     projectId: p.projectId,
     projectName: p.projectName,
     myRole: p.myRole,
@@ -1133,9 +1145,8 @@ export const useGanttStore = create<GanttState>((set) => ({
     selection: null,
     drag: null,
     editor: null,
-  }),
+  })),
   apply: (e) => set((s) => applyEvent({ tasks: s.tasks, dependencies: s.dependencies }, e)),
-  replaceData: (d) => set({ tasks: d.tasks, dependencies: d.dependencies }),
   setZoom: (zoom) => set({ zoom }),
   select: (selection) => set({ selection }),
   setDrag: (drag) => set({ drag }),
@@ -1328,6 +1339,14 @@ git commit -m "feat(gantt): repository Supabase et mappers"
 ---
 
 ### Task 8 : Commandes optimistes avec rollback
+
+> **TÂCHE TERMINÉE — la référence est le code, pas ces extraits.** L'implémentation
+> livrée est `lib/gantt/commands.ts` (commits `69a2027`, `3506998`, `7e43f40`). Les
+> extraits ci-dessous datent de la rédaction du plan : le helper `run` et les
+> avertissements ont été corrigés, mais les corps des neuf commandes montrent encore
+> l'ancienne signature à deux arguments `run(event, persist)` et n'expriment pas les
+> événements inverses. En cas de divergence, **le code fait foi**. Les ⚠️ conservés
+> ci-dessous listent les pièges à ne pas rouvrir.
 
 **Files:**
 - Create : `lib/gantt/commands.ts`, `lib/gantt/client-commands.ts`
@@ -1556,6 +1575,11 @@ export function createCommands({ store, repo, notify, newId = () => crypto.rando
    * `inverse` est calculée AVANT l'application et retourne la liste des événements à
    * rejouer pour défaire uniquement cette commande (une suppression en demande
    * plusieurs : la tâche, ses enfants, ses dépendances).
+   *
+   * ⚠️ L'inverse d'une CRÉATION doit être `task.deleted` avec `cascade: false`. Sans
+   * cela le réducteur emporte les enfants directs et les dépendances de la tâche, donc
+   * des entités que l'utilisateur y a rattachées pendant l'écriture et qui existent en
+   * base — le défaut nº2 ci-dessus, réintroduit par la porte de derrière.
    */
   async function run(
     event: GanttEvent,
@@ -1563,16 +1587,18 @@ export function createCommands({ store, repo, notify, newId = () => crypto.rando
     inverse: () => GanttEvent[],
   ): Promise<boolean> {
     const undo = inverse()
-    const projectAtStart = store.getState().projectId
+    const epochAtStart = store.getState().epoch
     store.getState().apply(event)
     try {
       await persist()
       return true
     } catch (error) {
       console.error('[gantt] persistance échouée', error)
-      // Garde de contexte : si le projet a changé pendant l'écriture, l'état affiché
-      // n'est plus celui qu'on voulait corriger — ne rien annuler.
-      if (store.getState().projectId === projectAtStart) {
+      // Garde de contexte : si les données affichées ont été remplacées pendant
+      // l'écriture, ne rien annuler. `epoch` bouge à chaque hydrate, ce qui couvre la
+      // navigation vers un autre projet ET le rechargement du même (sinon on
+      // réinjecterait des fantômes dans des données fraîches venues du serveur).
+      if (store.getState().epoch === epochAtStart) {
         for (const e of undo) store.getState().apply(e)
       }
       notify(PERSIST_ERROR)
@@ -1603,7 +1629,13 @@ export function createCommands({ store, repo, notify, newId = () => crypto.rando
         collapsed: false,
         updatedAt: now(),
       }
-      const ok = await run({ type: 'task.created', task }, () => repo.insertTask(task))
+      // ⚠️ `cascade: false` obligatoire : sinon défaire la création emporte les enfants
+      // et les dépendances que l'utilisateur y a rattachés pendant l'écriture.
+      const ok = await run(
+        { type: 'task.created', task },
+        [{ type: 'task.deleted', taskId: task.id, cascade: false }],
+        () => repo.insertTask(task),
+      )
       return ok ? task : null
     },
 
