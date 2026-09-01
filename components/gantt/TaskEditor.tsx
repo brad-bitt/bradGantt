@@ -87,7 +87,10 @@ function TaskEditorForm({ existing, defaultType, defaultParentId }: {
   const [type, setType] = useState<TaskType>(defaultType)
   const [startDate, setStartDate] = useState(existing?.startDate ?? today)
   const [endDate, setEndDate] = useState(existing?.endDate ?? addDays(today, 2))
-  const [progress, setProgress] = useState(existing?.progress ?? 0)
+  // Saisie conservée en chaîne : convertir à chaque frappe faisait qu'un champ vidé pour être
+  // retapé valait 0, et « Enregistrer » écrivait silencieusement 0 % en base. La conversion
+  // n'a lieu qu'à l'envoi, une fois la saisie validée.
+  const [progress, setProgress] = useState(String(existing?.progress ?? 0))
   const [color, setColor] = useState(() => existing?.color ?? nextColor(Object.values(tasks).map((t) => t.color)))
   const [assigneeId, setAssigneeId] = useState(existing?.assigneeId ?? '')
   const [parentId, setParentId] = useState(defaultParentId ?? '')
@@ -96,6 +99,13 @@ function TaskEditorForm({ existing, defaultType, defaultParentId }: {
 
   const isGroup = type === 'group'
   const isMilestone = type === 'milestone'
+  const losses =
+    isMilestone && existing && existing.type !== 'milestone'
+      ? [
+          ...(existing.endDate > existing.startDate ? [`la fin (${existing.endDate})`] : []),
+          ...(existing.progress > 0 ? [`l'avancement (${existing.progress} %)`] : []),
+        ]
+      : []
   const dialogTitle = TITLES[type][existing ? 'edit' : 'create']
 
   async function submit(e: FormEvent) {
@@ -117,7 +127,7 @@ function TaskEditorForm({ existing, defaultType, defaultParentId }: {
       // Un jalon tient sur un jour (contrainte `tasks_milestone_single_day`) et un groupe comme
       // un jalon n'a pas d'avancement propre : on normalise ici, pas en base.
       endDate: isMilestone ? startDate : endDate,
-      progress: isGroup || isMilestone ? 0 : progress,
+      progress: isGroup || isMilestone ? 0 : Number(progress),
       color,
       assigneeId: assigneeId || null,
       // Un groupe ne peut pas avoir de parent (trigger `check_task_parent`).
@@ -198,6 +208,16 @@ function TaskEditorForm({ existing, defaultType, defaultParentId }: {
         )}
         {errors.dates && <p role="alert" className="text-danger text-sm font-bold">{errors.dates}</p>}
 
+        {/* Convertir une tâche en jalon écrase sa fin et son avancement, en un clic et sans
+            retour possible : repasser en « tâche » ne rend ni l'une ni l'autre. La suppression,
+            elle, demande confirmation — cette perte-là ne doit pas être plus discrète. On nomme
+            les valeurs en jeu plutôt que d'avertir dans le vide. */}
+        {losses.length > 0 && (
+          <p role="status" className="brutal bg-yellow px-3 py-2 text-sm font-bold">
+            Un jalon tient sur un seul jour : {losses.join(' et ')} {losses.length > 1 ? 'seront perdus' : 'sera perdue'}.
+          </p>
+        )}
+
         {!isGroup && !isMilestone && (
           <Input
             label="Avancement"
@@ -205,10 +225,11 @@ function TaskEditorForm({ existing, defaultType, defaultParentId }: {
             min={0}
             max={100}
             value={progress}
-            onChange={(e) => setProgress(Math.max(0, Math.min(100, Number(e.target.value))))}
+            onChange={(e) => setProgress(e.target.value)}
             className="font-mono"
           />
         )}
+        {errors.progress && <p role="alert" className="text-danger text-sm font-bold">{errors.progress}</p>}
 
         <fieldset>
           <legend className="mb-1 font-bold uppercase text-sm">Couleur</legend>

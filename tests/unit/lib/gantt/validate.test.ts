@@ -1,6 +1,6 @@
 import { validateTaskInput } from '@/lib/gantt/validate'
 
-const base = { title: 'X', type: 'task' as const, startDate: '2026-09-01', endDate: '2026-09-03', progress: 0 }
+const base = { title: 'X', type: 'task' as const, startDate: '2026-09-01', endDate: '2026-09-03', progress: '0' }
 
 describe('validateTaskInput', () => {
   it('accepte une entrée valide', () => expect(validateTaskInput(base)).toEqual({ ok: true }))
@@ -14,7 +14,7 @@ describe('validateTaskInput', () => {
   })
 
   it('refuse une fin avant le début', () => {
-    expect(validateTaskInput({ ...base, endDate: '2026-08-31' })).toEqual({ ok: false, errors: { dates: 'La fin doit être après le début' } })
+    expect(validateTaskInput({ ...base, endDate: '2026-08-31' })).toEqual({ ok: false, errors: { dates: 'La fin ne peut pas précéder le début' } })
   })
 
   it('refuse une date invalide', () => {
@@ -28,7 +28,7 @@ describe('validateTaskInput', () => {
   it('cumule les deux erreurs', () => {
     expect(validateTaskInput({ ...base, title: '', endDate: '2026-08-31' })).toEqual({
       ok: false,
-      errors: { title: 'Le titre est requis', dates: 'La fin doit être après le début' },
+      errors: { title: 'Le titre est requis', dates: 'La fin ne peut pas précéder le début' },
     })
   })
 
@@ -43,11 +43,36 @@ describe('validateTaskInput', () => {
   it('valide les dates d\'un groupe comme celles d\'une tâche', () => {
     expect(validateTaskInput({ ...base, type: 'group', endDate: '2000-01-01' })).toEqual({
       ok: false,
-      errors: { dates: 'La fin doit être après le début' },
+      errors: { dates: 'La fin ne peut pas précéder le début' },
     })
   })
 
   it('valide quand même le début d\'un jalon', () => {
     expect(validateTaskInput({ ...base, type: 'milestone', startDate: 'hier' })).toEqual({ ok: false, errors: { dates: 'Dates invalides' } })
+  })
+
+  it('refuse un avancement vide — `Number(\'\')` vaut 0, ce qui écrivait 0 % en silence', () => {
+    expect(validateTaskInput({ ...base, progress: '' })).toEqual({
+      ok: false, errors: { progress: 'L\'avancement doit être un nombre entre 0 et 100' },
+    })
+  })
+
+  it('refuse un avancement non numérique ou hors bornes', () => {
+    for (const progress of ['abc', '-1', '101', '  ']) {
+      expect(validateTaskInput({ ...base, progress })).toEqual({
+        ok: false, errors: { progress: 'L\'avancement doit être un nombre entre 0 et 100' },
+      })
+    }
+  })
+
+  it('accepte les bornes et un décimal', () => {
+    for (const progress of ['0', '100', '42', '7.5']) {
+      expect(validateTaskInput({ ...base, progress })).toEqual({ ok: true })
+    }
+  })
+
+  it('ignore l\'avancement d\'un groupe ou d\'un jalon : leur champ n\'est pas affiché', () => {
+    expect(validateTaskInput({ ...base, type: 'group', progress: '' })).toEqual({ ok: true })
+    expect(validateTaskInput({ ...base, type: 'milestone', progress: '' })).toEqual({ ok: true })
   })
 })

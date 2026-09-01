@@ -199,7 +199,7 @@ describe('TaskEditor : validation inline', () => {
     await userEvent.clear(screen.getByLabelText('Fin'))
     await userEvent.type(screen.getByLabelText('Fin'), '2026-09-01')
     await userEvent.click(screen.getByRole('button', { name: 'Créer' }))
-    expect(within(screen.getByRole('dialog')).getByRole('alert')).toHaveTextContent('La fin doit être après le début')
+    expect(within(screen.getByRole('dialog')).getByRole('alert')).toHaveTextContent('La fin ne peut pas précéder le début')
     expect(createTask).not.toHaveBeenCalled()
   })
 
@@ -322,5 +322,69 @@ describe('TaskEditor : suppression', () => {
     render(<TaskEditor />)
     open({ mode: 'create', parentId: null, type: 'task' })
     expect(screen.queryByRole('button', { name: 'Supprimer' })).not.toBeInTheDocument()
+  })
+})
+
+describe('TaskEditor : pertes de donnée silencieuses', () => {
+  it('un avancement vidé pour être retapé n\'écrit pas 0 %', async () => {
+    const t = makeTask({ id: 't1', title: 'Ateliers', progress: 30 })
+    hydrate([t])
+    render(<TaskEditor />)
+    open({ mode: 'edit', taskId: 't1' })
+
+    // L'utilisateur vide le champ pour saisir une nouvelle valeur, puis enregistre sans avoir
+    // retapé. Avec la conversion à la frappe (`Number('') === 0`), le patch envoyé était
+    // `{ progress: 0 }` : une perte de donnée, sans le moindre message.
+    await userEvent.clear(screen.getByLabelText('Avancement'))
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+
+    expect(updateTask).not.toHaveBeenCalled()
+    expect(within(screen.getByRole('dialog')).getByRole('alert'))
+      .toHaveTextContent('L\'avancement doit être un nombre entre 0 et 100')
+    expect(useGanttStore.getState().editor).not.toBeNull()
+  })
+
+  it('un avancement hors bornes est refusé au lieu d\'être écrêté en silence', async () => {
+    hydrate([makeTask({ id: 't1', progress: 30 })])
+    render(<TaskEditor />)
+    open({ mode: 'edit', taskId: 't1' })
+    await userEvent.clear(screen.getByLabelText('Avancement'))
+    await userEvent.type(screen.getByLabelText('Avancement'), '250')
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+    expect(updateTask).not.toHaveBeenCalled()
+  })
+
+  it('un avancement valide passe et n\'est envoyé qu\'en nombre', async () => {
+    hydrate([makeTask({ id: 't1', progress: 30 })])
+    render(<TaskEditor />)
+    open({ mode: 'edit', taskId: 't1' })
+    await userEvent.clear(screen.getByLabelText('Avancement'))
+    await userEvent.type(screen.getByLabelText('Avancement'), '75')
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+    expect(updateTask).toHaveBeenCalledWith('t1', { progress: 75 })
+  })
+
+  it('convertir une tâche en jalon annonce nommément ce qui sera perdu', async () => {
+    hydrate([makeTask({ id: 't1', startDate: '2026-09-01', endDate: '2026-09-09', progress: 60 })])
+    render(<TaskEditor />)
+    open({ mode: 'edit', taskId: 't1' })
+    expect(screen.queryByRole('status')).toBeNull()
+
+    await userEvent.selectOptions(screen.getByLabelText('Type'), 'milestone')
+    const warning = screen.getByRole('status')
+    expect(warning).toHaveTextContent('2026-09-09')
+    expect(warning).toHaveTextContent('60 %')
+
+    // Et l'avertissement disparaît si l'utilisateur se ravise.
+    await userEvent.selectOptions(screen.getByLabelText('Type'), 'task')
+    expect(screen.queryByRole('status')).toBeNull()
+  })
+
+  it('n\'avertit pas quand la conversion ne détruit rien', async () => {
+    hydrate([makeTask({ id: 't1', startDate: '2026-09-01', endDate: '2026-09-01', progress: 0 })])
+    render(<TaskEditor />)
+    open({ mode: 'edit', taskId: 't1' })
+    await userEvent.selectOptions(screen.getByLabelText('Type'), 'milestone')
+    expect(screen.queryByRole('status')).toBeNull()
   })
 })
