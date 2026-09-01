@@ -18,13 +18,19 @@ export interface GanttState extends GanttData {
   myRole: Role
   members: Member[]
   today: string
+  /**
+   * Compteur incrémenté à chaque `hydrate`. Une commande en vol le capture au départ et
+   * refuse d'annuler si la valeur a changé au retour : entre-temps les données affichées
+   * ont été remplacées (navigation vers un autre projet, ou simple rechargement du même),
+   * et rejouer l'événement inverse réinjecterait des entités périmées dans un état frais.
+   */
+  epoch: number
   zoom: Zoom
   selection: Selection
   drag: DragState | null
   editor: EditorState
   hydrate: (p: HydratePayload) => void
   apply: (e: GanttEvent) => void
-  replaceData: (d: GanttData) => void
   setZoom: (z: Zoom) => void
   select: (s: Selection) => void
   setDrag: (d: DragState | null) => void
@@ -38,6 +44,7 @@ export const useGanttStore = create<GanttState>((set) => ({
   myRole: 'viewer',
   members: [],
   today: '1970-01-01',
+  epoch: 0,
   tasks: {},
   dependencies: {},
   zoom: 'day',
@@ -45,7 +52,8 @@ export const useGanttStore = create<GanttState>((set) => ({
   drag: null,
   editor: null,
 
-  hydrate: (p) => set({
+  hydrate: (p) => set((s) => ({
+    epoch: s.epoch + 1,
     projectId: p.projectId,
     projectName: p.projectName,
     myRole: p.myRole,
@@ -56,9 +64,8 @@ export const useGanttStore = create<GanttState>((set) => ({
     selection: null,
     drag: null,
     editor: null,
-  }),
+  })),
   apply: (e) => set((s) => applyEvent({ tasks: s.tasks, dependencies: s.dependencies }, e)),
-  replaceData: (d) => set({ tasks: d.tasks, dependencies: d.dependencies }),
   setZoom: (zoom) => set({ zoom }),
   select: (selection) => set({ selection }),
   setDrag: (drag) => set({ drag }),

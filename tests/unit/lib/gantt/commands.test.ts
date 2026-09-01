@@ -265,12 +265,32 @@ describe('concurrence : rollback ciblé par événement inverse', () => {
     expect(useGanttStore.getState().tasks['new-id']).toBeDefined()
   })
 
+  it('le rollback d\'une création ne retire que la tâche créée, pas ce qu\'on y a rattaché', async () => {
+    const slow = deferred<void>()
+    const repo = fakeRepo({ insertTask: vi.fn(() => slow.promise) })
+    const { cmd } = setup(repo)
+
+    // création d'un groupe, écriture lente ...
+    const pendingCreate = cmd.createTask({ title: 'Nouveau lot', type: 'group', startDate: '2026-09-01', endDate: '2026-09-10' })
+    // ... pendant laquelle l'utilisateur range la tâche existante 'a' dedans (écriture rapide, réussie)
+    expect(await cmd.updateTask('a', { parentId: 'new-id' })).toBe(true)
+
+    slow.reject(new Error('boom'))
+    expect(await pendingCreate).toBeNull()
+
+    expect(useGanttStore.getState().tasks['new-id']).toBeUndefined()
+    // 'a' et sa dépendance existent en base : les effacer de l'écran serait le défaut nº2
+    expect(useGanttStore.getState().tasks.a).toBeDefined()
+    expect(useGanttStore.getState().dependencies['a->b']).toBeDefined()
+  })
+
   it('ne restaure rien si le projet a changé pendant que la commande était en vol', async () => {
     const slow = deferred<void>()
-    const repo = fakeRepo({ updateTask: vi.fn(() => slow.promise) })
+    const repo = fakeRepo({ deleteTask: vi.fn(() => slow.promise) })
     const { cmd, notify } = setup(repo)
 
-    const pending = cmd.moveTask('a', 2)
+    // suppression : son inverse recrée des entités, donc il se verrait dans un store étranger
+    const pending = cmd.deleteTask('g')
     useGanttStore.getState().hydrate({
       projectId: 'p2', projectName: 'Autre projet', myRole: 'editor', members: [], today: '2026-08-31',
       tasks: [], dependencies: [],
@@ -282,6 +302,26 @@ describe('concurrence : rollback ciblé par événement inverse', () => {
     expect(notify).toHaveBeenCalledWith(PERSIST_ERROR)
     // aucune fuite des données de l'ancien projet dans le projet courant
     expect(Object.keys(useGanttStore.getState().tasks)).toHaveLength(0)
+    expect(Object.keys(useGanttStore.getState().dependencies)).toHaveLength(0)
     expect(useGanttStore.getState().projectId).toBe('p2')
+  })
+
+  it('ne restaure rien si le même projet a été re-hydraté pendant que la commande était en vol', async () => {
+    const slow = deferred<void>()
+    const repo = fakeRepo({ deleteTask: vi.fn(() => slow.promise) })
+    const { cmd, notify } = setup(repo)
+
+    const pending = cmd.deleteTask('g')
+    // rechargement du MÊME projet : côté serveur la suppression avait en fait abouti
+    useGanttStore.getState().hydrate({
+      projectId: 'p1', projectName: 'D', myRole: 'editor', members: [], today: '2026-08-31',
+      tasks: [m], dependencies: [],
+    })
+
+    slow.reject(new Error('boom'))
+    expect(await pending).toBe(false)
+    expect(notify).toHaveBeenCalledWith(PERSIST_ERROR)
+    // pas de fantômes réinjectés dans des données fraîches
+    expect(Object.keys(useGanttStore.getState().tasks)).toEqual(['m'])
   })
 })

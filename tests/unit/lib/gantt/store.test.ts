@@ -22,11 +22,12 @@ describe('useGanttStore', () => {
     expect(useGanttStore.getState().tasks.a).toBeUndefined()
     expect(Object.keys(useGanttStore.getState().dependencies)).toEqual([])
   })
-  it('replaceData restaure un snapshot', () => {
-    const snapshot = { tasks: useGanttStore.getState().tasks, dependencies: useGanttStore.getState().dependencies }
-    useGanttStore.getState().apply({ type: 'task.deleted', taskId: 'a' })
-    useGanttStore.getState().replaceData(snapshot)
-    expect(useGanttStore.getState().tasks.a).toBeDefined()
+  it('hydrate incrémente epoch à chaque appel, y compris sur le même projet', () => {
+    const before = useGanttStore.getState().epoch
+    useGanttStore.getState().hydrate(payload)
+    expect(useGanttStore.getState().epoch).toBe(before + 1)
+    useGanttStore.getState().hydrate({ ...payload, projectId: 'p2' })
+    expect(useGanttStore.getState().epoch).toBe(before + 2)
   })
   it('selectCanEdit', () => {
     expect(selectCanEdit(useGanttStore.getState())).toBe(true)

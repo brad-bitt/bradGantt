@@ -3,7 +3,11 @@ import type { Dependency, GanttData, Task } from './types'
 export type GanttEvent =
   | { type: 'task.created'; task: Task }
   | { type: 'task.updated'; taskId: string; patch: Partial<Omit<Task, 'id' | 'projectId'>> }
-  | { type: 'task.deleted'; taskId: string }
+  // `cascade` vaut true par défaut : supprimer une tâche emporte ses enfants directs.
+  // `cascade: false` ne retire QUE cette tâche (ses dépendances partent quand même : elles
+  // ne peuvent pas survivre sans elle). Sert à défaire une création : la tâche créée doit
+  // disparaître sans emporter ce que l'utilisateur a pu y rattacher pendant l'écriture.
+  | { type: 'task.deleted'; taskId: string; cascade?: boolean }
   | { type: 'dependency.created'; dependency: Dependency }
   | { type: 'dependency.deleted'; dependencyId: string }
   | { type: 'tasks.reordered'; order: { taskId: string; sortOrder: number }[] }
@@ -26,7 +30,9 @@ export function applyEvent(data: GanttData, event: GanttEvent): GanttData {
     case 'task.deleted': {
       if (!data.tasks[event.taskId]) return data
       const removed = new Set<string>([event.taskId])
-      for (const t of Object.values(data.tasks)) if (t.parentId === event.taskId) removed.add(t.id)
+      if (event.cascade !== false) {
+        for (const t of Object.values(data.tasks)) if (t.parentId === event.taskId) removed.add(t.id)
+      }
       const tasks = Object.fromEntries(Object.entries(data.tasks).filter(([id]) => !removed.has(id)))
       const dependencies = Object.fromEntries(
         Object.entries(data.dependencies).filter(([, d]) => !removed.has(d.fromTaskId) && !removed.has(d.toTaskId)),

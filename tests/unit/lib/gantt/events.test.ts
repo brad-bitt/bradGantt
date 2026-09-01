@@ -36,6 +36,17 @@ describe('applyEvent', () => {
     expect(Object.keys(next.tasks)).toEqual(['r'])
     expect(Object.keys(next.dependencies)).toEqual([])
   })
+  it('task.deleted cascade: false ne retire que la tâche visée et ses propres dépendances', () => {
+    const next = applyEvent(base, { type: 'task.deleted', taskId: 'g', cascade: false })
+    expect(next.tasks.g).toBeUndefined()
+    // l'enfant survit (il redeviendra une racine à l'affichage, buildRows remonte les orphelines)
+    expect(next.tasks.c).toBeDefined()
+    expect(next.tasks.r).toBeDefined()
+    // la dépendance qui touche 'g' part (elle ne peut pas survivre sans elle) ...
+    expect(next.dependencies['r->g']).toBeUndefined()
+    // ... celle qui ne la touche pas reste
+    expect(next.dependencies['c->r']).toBeDefined()
+  })
   it('task.deleted ignore un id inconnu (identité référentielle)', () => {
     expect(applyEvent(base, { type: 'task.deleted', taskId: 'zz' })).toBe(base)
   })

@@ -54,13 +54,15 @@ export function createCommands({ store, repo, notify, newId = () => crypto.rando
    * reste — y compris, plus tard, avec des événements distants reçus en temps réel pendant
    * que l'écriture est en vol.
    *
-   * Garde-fou de contexte : si le projet affiché a changé pendant que la commande était en
-   * vol (navigation vers un autre projet), on n'annule rien — l'état affiché n'est plus
-   * celui qu'on voulait corriger, et injecter les données de l'ancien projet corromprait le
-   * nouveau. On signale simplement l'échec.
+   * Garde-fou de contexte : si les données affichées ont été remplacées pendant que la
+   * commande était en vol, on n'annule rien. `epoch` change à chaque `hydrate`, ce qui
+   * couvre les deux cas — navigation vers un autre projet (les entités de l'ancien
+   * corrompraient le nouveau) et rechargement du même projet (l'état frais vient du
+   * serveur, y réinjecter des entités d'avant y ferait réapparaître des fantômes). On
+   * signale simplement l'échec.
    */
   async function run(event: GanttEvent, inverse: GanttEvent[], persist: () => Promise<void>): Promise<boolean> {
-    const projectId = store.getState().projectId
+    const epoch = store.getState().epoch
     store.getState().apply(event)
     try {
       await persist()
@@ -68,7 +70,7 @@ export function createCommands({ store, repo, notify, newId = () => crypto.rando
     } catch (err) {
       // Cause technique préservée pour le diagnostic (RLS, réseau, requête) ; le message utilisateur reste générique.
       console.error(err)
-      if (store.getState().projectId === projectId) {
+      if (store.getState().epoch === epoch) {
         for (const e of inverse) store.getState().apply(e)
       }
       notify(PERSIST_ERROR)
@@ -116,7 +118,12 @@ export function createCommands({ store, repo, notify, newId = () => crypto.rando
       }
       const ok = await run(
         { type: 'task.created', task },
-        [{ type: 'task.deleted', taskId: task.id }],
+        // `cascade: false` : défaire la création ne doit retirer QUE cette tâche. Une
+        // suppression cascadante emporterait ce que l'utilisateur y a rattaché pendant
+        // l'écriture (une tâche existante rangée dans le groupe qu'on est en train de
+        // créer, par exemple) — des entités bien présentes en base disparaîtraient de
+        // l'écran, exactement le défaut que le rollback ciblé corrige.
+        [{ type: 'task.deleted', taskId: task.id, cascade: false }],
         () => repo.insertTask(task),
       )
       return ok ? task : null
