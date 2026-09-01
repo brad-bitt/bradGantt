@@ -105,6 +105,14 @@ export function GanttView() {
             </div>
             <TimelineHeader />
           </div>
+          {/* Message ancré au bord gauche du CONTENEUR défilé, pas au contenu : posé en `absolute`
+              dans la timeline, le recentrage sur aujourd'hui le poussait hors du champ (mesuré à
+              x = -639 sur un projet neuf), et l'utilisateur atterrissait sur une grille nue sans
+              la moindre indication. `sticky left-0` le maintient visible quel que soit le
+              défilement horizontal — même technique que la cellule « Tâches » de l'en-tête. */}
+          {layout.rows.length === 0 && (
+            <p className="sticky left-4 z-20 mt-4 w-fit bg-paper brutal px-4 py-2 font-bold">Aucune tâche pour l&apos;instant.</p>
+          )}
           {/* `flex-1` : le corps prend toute la hauteur restante ; ses deux enfants (sidebar et
               timeline) s'étirent avec lui par `align-items: stretch`, d'où des hauteurs en
               `minHeight` et non plus en `height` fixe. */}
@@ -119,9 +127,6 @@ export function GanttView() {
                 return <TaskBar key={row.task.id} task={row.task} rect={rect} />
               })}
               <DependencyArrows />
-              {layout.rows.length === 0 && (
-                <p className="absolute left-4 top-4 bg-paper brutal px-4 py-2 font-bold">Aucune tâche pour l&apos;instant.</p>
-              )}
             </div>
           </div>
         </div>

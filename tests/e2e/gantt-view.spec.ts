@@ -100,3 +100,19 @@ test('un non-membre obtient une 404', async ({ page }) => {
   const res = await page.goto(DEMO)
   expect(res?.status()).toBe(404)
 })
+
+test('un projet sans tâche affiche son message, dans le champ de vision', async ({ page }) => {
+  await loginAs(page, 'alice')
+  await page.getByRole('button', { name: 'Nouveau projet' }).click()
+  await page.getByLabel('Nom du projet').fill(`Projet vide ${Date.now()}`)
+  await page.getByRole('button', { name: 'Créer' }).click()
+  await page.waitForURL(/\/projects\/[0-9a-f-]{36}$/)
+
+  // `toBeVisible` ne suffit pas : Playwright le tient pour vrai dès que la boîte est non nulle,
+  // même à x = -639. Le message était posé en `absolute` dans la timeline défilée, donc le
+  // recentrage sur aujourd'hui le sortait de l'écran — un projet neuf s'ouvrait sur une grille
+  // nue, sans la moindre indication. C'est bien la présence DANS LE CHAMP DE VISION qu'on exige.
+  const message = page.getByText('Aucune tâche pour l\'instant.')
+  await expect(message).toBeVisible()
+  await expect(message).toBeInViewport()
+})

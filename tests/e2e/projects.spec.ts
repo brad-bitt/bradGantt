@@ -5,6 +5,21 @@ test('créer, renommer puis supprimer un projet', async ({ page }) => {
   await loginAs(page, 'alice')
   const name = `Projet ${Date.now()}`
 
+  // Preuve du réamorçage de la liste après création. Elle ne peut PAS se faire en observant la
+  // page : depuis que la création redirige vers le Gantt (tâche 9 du plan 2), Next 15 refait de
+  // toute façon une requête serveur au retour sur `/projects`, par le lien comme par le bouton
+  // Précédent — retirer `revalidatePath('/projects')` laisse donc la suite verte si l'on se
+  // contente de regarder l'écran. On intercepte donc la réponse de la Server Action elle-même :
+  // avec `revalidatePath`, Next y joint l'arbre « Mes projets » re-rendu, où figure le nom du
+  // projet créé ; sans, la réponse ne porte que l'identifiant.
+  let actionBody = ''
+  await page.route('**/projects', async (route) => {
+    const response = await route.fetch()
+    const body = await response.text()
+    if (route.request().method() === 'POST') actionBody = body
+    await route.fulfill({ response, body })
+  })
+
   await page.getByRole('button', { name: 'Nouveau projet' }).click()
   await page.getByLabel('Nom du projet').fill(name)
   await page.getByRole('button', { name: 'Créer' }).click()
@@ -13,10 +28,11 @@ test('créer, renommer puis supprimer un projet', async ({ page }) => {
   // (renommage et suppression, qui se pilotent depuis la carte).
   await page.waitForURL(/\/projects\/[0-9a-f-]{36}$/)
   await expect(page.getByRole('heading', { name })).toBeVisible()
-  // RETOUR PAR NAVIGATION CLIENT, jamais par `page.goto` : un `goto` est un rechargement complet
-  // qui court-circuite le cache routeur et rendrait ce test aveugle. Tel quel, il tombe si
-  // `revalidatePath('/projects')` disparaît de `createProject` — c'est la seule preuve de la
-  // suite que la liste est bien réinvalidée après une création.
+  // C'est ICI que se joue la garantie : la réponse de l'action porte la liste re-rendue.
+  expect(actionBody).toContain(name)
+  // Retour par navigation client plutôt que par `page.goto` : on reste au plus près du parcours
+  // réel. Ce retour ne prouve rien sur la réinvalidation (voir plus haut), il enchaîne le
+  // parcours renommage/suppression, qui se pilote depuis la carte.
   await page.getByRole('link', { name: '← Projets' }).click()
   await page.waitForURL('**/projects')
   const card = page.getByRole('article', { name })
