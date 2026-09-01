@@ -5,6 +5,7 @@ import { SIDEBAR_WIDTH } from '../../lib/gantt/geometry'
 const DEMO = '/projects/c0000000-0000-0000-0000-000000000001'
 // Second projet du seed, dont alice est aussi owner : il n'existe que pour prouver l'isolation.
 const NEIGHBOUR = '/projects/c0000000-0000-0000-0000-000000000002'
+const DEMO_TASK_ID = 'd0000000-0000-0000-0000-000000000002'
 const NEIGHBOUR_TASK_ID = 'd0000000-0000-0000-0000-0000000000f1'
 const NEIGHBOUR_DEP_ID = 'e0000000-0000-0000-0000-0000000000f1'
 
@@ -45,6 +46,10 @@ test('aucune donnée du projet voisin ne fuit dans le projet démo', async ({ pa
   //    d'un autre projet dont les deux tâches sont absentes ne trace aucune flèche — invisible
   //    dans le DOM, mais bel et bien transmise. Le payload RSC est sérialisé dans la page.
   const html = await page.content()
+  // Contrôle POSITIF d'abord : sans lui, les deux assertions négatives qui suivent passeraient
+  // à vide le jour où Next cesserait d'inliner le flight dans le HTML — et elles sont la SEULE
+  // chose qui attrape une fuite de dépendances, le DOM étant rigoureusement identique.
+  expect(html).toContain(DEMO_TASK_ID)
   expect(html).not.toContain(NEIGHBOUR_TASK_ID)
   expect(html).not.toContain(NEIGHBOUR_DEP_ID)
 })
