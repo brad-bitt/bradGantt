@@ -10,20 +10,7 @@ import { TaskBar } from './TaskBar'
 import { MilestoneMark } from './MilestoneMark'
 import { GroupBar } from './GroupBar'
 import { DependencyArrows } from './DependencyArrows'
-
-type BarDragMode = 'move' | 'resize-start' | 'resize-end'
-
-/**
- * Poignées de glissement des barres, fournies à partir de la tâche 11 (`useTimelineDrag`).
- * Déclarées ici dès maintenant pour que le contexte ait sa forme définitive : la tâche 11
- * n'aura qu'à rendre `drag` obligatoire, pas à réécrire le type.
- */
-export interface TimelineDragHandlers {
-  onBarPointerDown(e: React.PointerEvent, taskId: string, mode: BarDragMode): void
-  onLinkPointerDown(e: React.PointerEvent, fromTaskId: string): void
-  onPointerMove(e: React.PointerEvent): void
-  onPointerUp(e: React.PointerEvent): void
-}
+import { useTimelineDrag, type TimelineDragHandlers } from './useTimelineDrag'
 
 /** Poignées de réordonnancement de la sidebar, fournies à partir de la tâche 13 (`useReorderDrag`). */
 export interface ReorderDragHandlers {
@@ -35,8 +22,7 @@ export interface ReorderDragHandlers {
 export interface GanttViewContextValue {
   layout: Layout
   canEdit: boolean
-  /** Absent tant que la tâche 11 n'a pas branché le glisser-déposer. */
-  drag?: TimelineDragHandlers
+  drag: TimelineDragHandlers
   /** Absent tant que la tâche 13 n'a pas branché le réordonnancement. */
   reorder?: ReorderDragHandlers
 }
@@ -53,8 +39,8 @@ export function GanttView() {
   const projectId = useGanttStore((s) => s.projectId)
   const tasks = useGanttStore((s) => s.tasks)
   const dependencies = useGanttStore((s) => s.dependencies)
-  // `dragState` et non `drag` : la tâche 11 introduit des *handlers* nommés `drag` dans ce
-  // composant, et on ne veut pas d'un renommage tardif du même identifiant.
+  // `dragState` est l'ÉTAT du geste (l'aperçu, qui entre dans `computeLayout`) ; `drag`, plus
+  // bas, en est le jeu de *poignées*. Deux choses distinctes, deux noms distincts.
   const dragState = useGanttStore((s) => s.drag)
   const zoom = useGanttStore((s) => s.zoom)
   const today = useGanttStore((s) => s.today)
@@ -68,12 +54,13 @@ export function GanttView() {
    * ramènerait de force la vue sur aujourd'hui, en travers de ce que fait l'utilisateur.
    */
   const centeredKey = useRef<string | null>(null)
+  const drag = useTimelineDrag(timelineRef)
 
   const layout = useMemo(
     () => computeLayout({ tasks, dependencies }, dragState, zoom, today),
     [tasks, dependencies, dragState, zoom, today],
   )
-  const value = useMemo<GanttViewContextValue>(() => ({ layout, canEdit }), [layout, canEdit])
+  const value = useMemo<GanttViewContextValue>(() => ({ layout, canEdit, drag }), [layout, canEdit, drag])
 
   // Sans recentrage, la vue s'ouvre sur `scrollLeft = 0`, soit un mois avant la première tâche :
   // l'écran principal de l'application paraît vide, y compris juste après la création d'un projet.
@@ -118,7 +105,18 @@ export function GanttView() {
               `minHeight` et non plus en `height` fixe. */}
           <div className="flex flex-1">
             <Sidebar />
-            <div ref={timelineRef} className="relative" style={{ width: layout.width, minHeight: Math.max(layout.height, 1) }}>
+            {/* Le suivi et le relâchement du geste sont écoutés ici, pas sur la barre : dès le
+                premier pixel parcouru le pointeur en sort. `onPointerCancel` a son PROPRE
+                gestionnaire : un geste repris par le système n'a jamais été relâché par
+                l'utilisateur, il s'abandonne au lieu de s'enregistrer. */}
+            <div
+              ref={timelineRef}
+              className="relative"
+              style={{ width: layout.width, minHeight: Math.max(layout.height, 1) }}
+              onPointerMove={drag.onPointerMove}
+              onPointerUp={drag.onPointerUp}
+              onPointerCancel={drag.onPointerCancel}
+            >
               <TimelineGrid />
               {layout.rows.map((row) => {
                 const rect = layout.rects[row.task.id]

@@ -1,21 +1,23 @@
 'use client'
-import { useGanttStore, selectCanEdit } from '@/lib/gantt/store'
+import { useGanttStore } from '@/lib/gantt/store'
 import type { Rect, Task } from '@/lib/gantt/types'
 import { cn } from '@/lib/utils'
+import { useGanttView } from './GanttView'
 
 export function MilestoneMark({ task, rect }: { task: Task; rect: Rect }) {
   const selected = useGanttStore((s) => s.selection?.kind === 'task' && s.selection.id === task.id)
-  const select = useGanttStore((s) => s.select)
   const openEditor = useGanttStore((s) => s.openEditor)
-  const canEdit = useGanttStore(selectCanEdit)
+  const { drag, canEdit } = useGanttView()
   const size = rect.height * 0.75
   return (
     <div
       data-task-id={task.id}
       title={`${task.title} — ${task.startDate}`}
-      className="absolute flex items-center select-none"
+      // Un jalon se déplace mais ne se redimensionne pas : il tient sur un jour par contrainte
+      // de base (`tasks_milestone_single_day`), et `resizeTask` le refuse déjà. Pas de poignée.
+      className={cn('absolute flex items-center select-none touch-none', canEdit && 'cursor-grab active:cursor-grabbing')}
       style={{ left: rect.x + rect.width / 2 - size / 2, top: rect.y, width: size, height: rect.height }}
-      onClick={() => select({ kind: 'task', id: task.id })}
+      onPointerDown={(e) => drag.onBarPointerDown(e, task.id, 'move')}
       onDoubleClick={() => canEdit && openEditor({ mode: 'edit', taskId: task.id })}
     >
       <div
