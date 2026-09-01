@@ -1,11 +1,13 @@
 'use client'
-import { useGanttStore } from '@/lib/gantt/store'
+import { useGanttStore, selectCanEdit } from '@/lib/gantt/store'
 import type { Rect, Task } from '@/lib/gantt/types'
 import { cn } from '@/lib/utils'
 
 export function TaskBar({ task, rect }: { task: Task; rect: Rect }) {
   const selected = useGanttStore((s) => s.selection?.kind === 'task' && s.selection.id === task.id)
   const select = useGanttStore((s) => s.select)
+  const openEditor = useGanttStore((s) => s.openEditor)
+  const canEdit = useGanttStore(selectCanEdit)
   return (
     <div
       data-task-id={task.id}
@@ -16,6 +18,7 @@ export function TaskBar({ task, rect }: { task: Task; rect: Rect }) {
       )}
       style={{ left: rect.x, top: rect.y, width: rect.width, height: rect.height, backgroundColor: task.color }}
       onClick={() => select({ kind: 'task', id: task.id })}
+      onDoubleClick={() => canEdit && openEditor({ mode: 'edit', taskId: task.id })}
     >
       <div
         className="absolute inset-y-0 left-0 bg-[repeating-linear-gradient(45deg,#111_0_4px,transparent_4px_8px)] opacity-40"

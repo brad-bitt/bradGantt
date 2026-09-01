@@ -101,15 +101,23 @@ export function Dialog({ open, onClose, title, children, footer }: DialogProps) 
   if (!open) return null
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-ink/40 p-4" onClick={onClose}>
+      {/* `max-h-full` + colonne flex : une modale plus haute que la fenêtre débordait des deux
+          côtés à la fois — l'overlay est en `fixed`, la page ne défile donc pas, et NI le titre
+          NI les boutons du pied n'étaient atteignables. Mesuré sur l'éditeur de tâche en
+          1280x600 : titre à y = -54 (hors écran par le haut), « Créer » à y = 611 pour une
+          fenêtre de 600 px de haut — formulaire impossible à valider autrement qu'au clavier.
+          Header et pied restent donc ancrés, seul le contenu défile. */}
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}
-        className="bg-paper border-[3px] border-ink shadow-brutal-xl w-full max-w-lg brutal-focus"
+        className="flex max-h-full w-full max-w-lg flex-col bg-paper border-[3px] border-ink shadow-brutal-xl brutal-focus"
         onClick={(e) => e.stopPropagation()}>
-        <header className="flex items-center justify-between border-b-[3px] border-ink px-5 py-3 bg-yellow">
+        <header className="flex shrink-0 items-center justify-between border-b-[3px] border-ink px-5 py-3 bg-yellow">
           <h2 id={titleId} className="text-xl">{title}</h2>
           <Button variant="ghost" size="sm" onClick={onClose} aria-label="Fermer">✕</Button>
         </header>
-        <div ref={contentRef} className="px-5 py-4">{children}</div>
-        {footer && <footer className="flex justify-end gap-3 border-t-[3px] border-ink px-5 py-3">{footer}</footer>}
+        {/* `min-h-0` : sans lui, un enfant flex refuse de rétrécir sous sa hauteur de contenu et
+            `overflow-y-auto` n'a jamais rien à faire défiler. */}
+        <div ref={contentRef} className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
+        {footer && <footer className="flex shrink-0 justify-end gap-3 border-t-[3px] border-ink px-5 py-3">{footer}</footer>}
       </div>
     </div>
   )
