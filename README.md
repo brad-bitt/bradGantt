@@ -89,6 +89,27 @@ commentaire dans `lib/e2e.ts`).
 `npm run test:db` et `npm run db:types` nécessitent la stack Supabase locale démarrée
 (`npx supabase start`).
 
+## Production
+
+- **Hébergement** : Vercel, projet `brad-gantt` → https://brad-gantt.vercel.app
+  (déploiement auto à chaque push ; sur le plan Hobby, le commit HEAD doit être
+  signé `leo.peyre95@gmail.com`, sinon Vercel bloque silencieusement le build).
+- **Supabase cloud** : projet `vnwpgehxwcomhsgctqsl` (compte principal, région
+  eu-central-1) — migré le 2026-09-03 depuis l'ancien compte secondaire
+  (schéma + données + comptes `auth.users`, sauvegardes dans
+  `~/Bureau/Projets/.backups-supabase/`).
+- **Variables Vercel** : `NEXT_PUBLIC_SUPABASE_URL` et
+  `NEXT_PUBLIC_SUPABASE_ANON_KEY` (clé anon « legacy ») du projet cloud.
+- **Lier le CLI au projet cloud** (après un clone ou si `supabase/.temp` pointe
+  encore sur l'ancien projet) :
+  ```bash
+  npx supabase login
+  npx supabase link --project-ref vnwpgehxwcomhsgctqsl
+  ```
+- **Auth Google** : provider activé dans le dashboard Supabase ; l'URI de
+  redirection `https://vnwpgehxwcomhsgctqsl.supabase.co/auth/v1/callback` est
+  déclarée dans le client OAuth de la console Google Cloud.
+
 ## Architecture
 
 Le détail des choix de conception vit dans `docs/superpowers/` :
