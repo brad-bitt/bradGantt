@@ -295,6 +295,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invitation: { Args: { p_token: string }; Returns: string }
       create_project: {
         Args: { p_name: string }
         Returns: {
@@ -310,6 +311,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      find_invitee_profile: {
+        Args: { p_email: string; p_project_id: string }
+        Returns: string
+      }
       is_member: {
         Args: {
           p_min_role: Database["public"]["Enums"]["member_role"]
@@ -317,6 +322,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      shares_project: { Args: { p_other_id: string }; Returns: boolean }
     }
     Enums: {
       member_role: "owner" | "editor" | "viewer"
