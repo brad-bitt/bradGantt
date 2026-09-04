@@ -12,15 +12,22 @@ export function GanttToolbar() {
   const myRole = useGanttStore((s) => s.myRole)
   const canEdit = useGanttStore(selectCanEdit)
   const openEditor = useGanttStore((s) => s.openEditor)
+  const setMembersDialogOpen = useGanttStore((s) => s.setMembersDialogOpen)
 
   return (
     <div className="flex flex-wrap items-center gap-4 border-b-[3px] border-ink bg-paper px-6 py-3">
       <Link href="/projects" className="font-mono text-sm underline brutal-focus">← Projets</Link>
       <h1 className="text-2xl truncate max-w-md">{name}</h1>
       {canEdit ? <Badge color={myRole === 'owner' ? 'violet' : 'blue'}>{myRole}</Badge> : <Badge color="cyan">Lecture seule</Badge>}
-      <div className="flex -space-x-2" aria-label="Membres">
-        {members.map((m) => <Avatar key={m.userId} name={m.displayName} color={m.color} src={m.avatarUrl} size="sm" />)}
-      </div>
+      {/* La pile d'avatars devient la porte d'entrée du dialog : c'est déjà là qu'on regarde
+          pour savoir qui travaille sur le projet. Le mot « Membres » l'accompagne, une pile
+          d'avatars ne se lit pas comme un bouton. */}
+      <button type="button" onClick={() => setMembersDialogOpen(true)} aria-label="Membres" className="flex items-center gap-2 brutal-focus">
+        <span className="flex -space-x-2">
+          {members.map((m) => <Avatar key={m.userId} name={m.displayName} color={m.color} src={m.avatarUrl} size="sm" />)}
+        </span>
+        <span className="font-bold uppercase text-sm underline">Membres</span>
+      </button>
       <div className="ml-auto flex items-center gap-3">
         <ZoomControls />
         {canEdit && (

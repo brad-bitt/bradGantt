@@ -4,6 +4,7 @@ import { useGanttStore, type HydratePayload } from '@/lib/gantt/store'
 import { GanttToolbar } from './GanttToolbar'
 import { GanttView } from './GanttView'
 import { TaskEditor } from './TaskEditor'
+import { MembersDialog } from '@/components/project/MembersDialog'
 
 export function GanttPage({ payload }: { payload: HydratePayload }) {
   const hydrate = useGanttStore((s) => s.hydrate)
@@ -20,6 +21,7 @@ export function GanttPage({ payload }: { payload: HydratePayload }) {
       <GanttToolbar />
       <GanttView />
       <TaskEditor />
+      <MembersDialog />
     </div>
   )
 }
