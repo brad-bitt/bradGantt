@@ -55,7 +55,10 @@ export function SidebarRow({ row }: { row: Row }) {
       ) : (
         <span className="w-4 shrink-0" />
       )}
-      {task.type === 'group' ? (
+      {/* Le repli n'est PAS un pli d'affichage : `collapsed` est persisté et partagé par tout le
+          projet. Un lecteur en voit donc l'état, sans pouvoir le changer — le bouton deviendrait
+          une commande refusée par la RLS, c'est-à-dire un toast d'erreur à chaque clic. */}
+      {task.type === 'group' && canEdit ? (
         <button
           type="button"
           aria-label={task.collapsed ? 'Déplier' : 'Replier'}
@@ -64,6 +67,8 @@ export function SidebarRow({ row }: { row: Row }) {
         >
           {task.collapsed ? '▸' : '▾'}
         </button>
+      ) : task.type === 'group' ? (
+        <span className="w-5 shrink-0 text-center font-mono text-ink/60" aria-hidden>{task.collapsed ? '▸' : '▾'}</span>
       ) : (
         <span className="w-5 shrink-0" />
       )}
