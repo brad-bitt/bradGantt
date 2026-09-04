@@ -80,7 +80,7 @@ commentaire dans `lib/e2e.ts`).
 | Commande              | Ce qu'elle fait                                              |
 | ---------------------- | ------------------------------------------------------------- |
 | `npm test`             | Tests unitaires (Vitest + Testing Library)                    |
-| `npm run test:db`      | Tests pgTAP sur le schéma et les policies RLS (base locale)   |
+| `npm run test:db`      | Tests pgTAP : schéma, policies RLS, `accept_invitation` (base locale) |
 | `npm run test:e2e`     | Tests end-to-end (Playwright, pilote `npm run dev` sur :3100) |
 | `npm run typecheck`    | Vérification TypeScript (`tsc --noEmit`)                      |
 | `npm run lint`         | ESLint                                                         |
@@ -88,6 +88,33 @@ commentaire dans `lib/e2e.ts`).
 
 `npm run test:db` et `npm run db:types` nécessitent la stack Supabase locale démarrée
 (`npx supabase start`).
+
+## Membres et invitations
+
+Le propriétaire d'un projet ouvre le dialog **Membres** (la pile d'avatars dans la barre du
+projet) pour inviter, changer un rôle (`editor` / `viewer`) ou retirer quelqu'un. La ligne
+`owner` est intouchable : pas de transfert de propriété dans cette version.
+
+Inviter une adresse suit deux chemins :
+
+- **le compte existe** → la personne devient membre immédiatement et reçoit un email
+  « tu as été ajouté » ;
+- **le compte n'existe pas** → une invitation à token est enregistrée, la personne reçoit un
+  lien `/invite/<token>`. L'invitation reste visible et révocable tant qu'elle n'est pas
+  acceptée.
+
+Ouvrir le lien vaut acceptation : la fonction SQL `accept_invitation` vérifie que l'adresse du
+compte connecté est bien celle de l'invitation (sans tenir compte de la casse), ajoute la
+membership et consomme le token. Sous un autre compte, la page propose « Changer de compte ».
+
+**Emails.** Sans `RESEND_API_KEY`, ils sont écrits dans la console du serveur — le lien
+d'invitation y reste lisible, le flux complet se joue donc en local sans compte Resend. Avec une
+clé, `EMAIL_FROM` doit utiliser un domaine vérifié chez Resend : le domaine de bac à sable
+`onboarding@resend.dev` n'écrit qu'à l'adresse du compte Resend lui-même.
+
+**En mode test seulement** (`E2E_ENABLED=1`), la route d'invitation renvoie le lien dans sa
+réponse et le formulaire l'affiche. Ce lien est un jeton d'accès au projet : il ne sort jamais
+de la boîte mail en production.
 
 ## Production
 
@@ -99,7 +126,15 @@ commentaire dans `lib/e2e.ts`).
   (schéma + données + comptes `auth.users`, sauvegardes dans
   `~/Bureau/Projets/.backups-supabase/`).
 - **Variables Vercel** : `NEXT_PUBLIC_SUPABASE_URL` et
-  `NEXT_PUBLIC_SUPABASE_ANON_KEY` (clé anon « legacy ») du projet cloud.
+  `NEXT_PUBLIC_SUPABASE_ANON_KEY` (clé anon « legacy ») du projet cloud,
+  `NEXT_PUBLIC_SITE_URL` (l'URL publique, sans quoi les liens d'invitation
+  pointeraient sur l'origine de la requête), et pour les emails d'invitation
+  `RESEND_API_KEY` + `EMAIL_FROM` sur un domaine vérifié. Sans clé Resend,
+  l'application fonctionne mais les invitations partent dans les journaux
+  Vercel au lieu d'une boîte mail.
+- **Migrations** : `npx supabase db push` applique à la base cloud les migrations
+  absentes de son historique. Une migration ne doit donc jamais être antidatée
+  par rapport à la dernière déjà appliquée.
 - **Lier le CLI au projet cloud** (après un clone ou si `supabase/.temp` pointe
   encore sur l'ancien projet) :
   ```bash
