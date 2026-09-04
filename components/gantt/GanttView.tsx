@@ -11,6 +11,7 @@ import { MilestoneMark } from './MilestoneMark'
 import { GroupBar } from './GroupBar'
 import { DependencyArrows } from './DependencyArrows'
 import { useTimelineDrag, type TimelineDragHandlers } from './useTimelineDrag'
+import { useKeyboardShortcuts } from './useKeyboardShortcuts'
 
 /** Poignées de réordonnancement de la sidebar, fournies à partir de la tâche 13 (`useReorderDrag`). */
 export interface ReorderDragHandlers {
@@ -45,6 +46,7 @@ export function GanttView() {
   const zoom = useGanttStore((s) => s.zoom)
   const today = useGanttStore((s) => s.today)
   const canEdit = useGanttStore(selectCanEdit)
+  const select = useGanttStore((s) => s.select)
   const timelineRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   /**
@@ -61,6 +63,7 @@ export function GanttView() {
    */
   const [viewportWidth, setViewportWidth] = useState<number | null>(null)
   const drag = useTimelineDrag(timelineRef)
+  useKeyboardShortcuts()
 
   useLayoutEffect(() => {
     const el = scrollRef.current
@@ -154,6 +157,10 @@ export function GanttView() {
               ref={timelineRef}
               className="relative"
               style={{ width: layout.width, minHeight: Math.max(layout.height, 1) }}
+              // Clic sur le FOND de la timeline (et non sur une barre) : on désélectionne. Le
+              // test `e.target === e.currentTarget` suffit parce que `TimelineGrid` est en
+              // `pointer-events-none` — le clic entre deux barres atteint bien ce conteneur.
+              onPointerDown={(e) => { if (e.target === e.currentTarget) select(null) }}
               onPointerMove={drag.onPointerMove}
               onPointerUp={drag.onPointerUp}
               onPointerCancel={drag.onPointerCancel}

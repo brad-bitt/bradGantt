@@ -1,5 +1,6 @@
 'use client'
 import { useGanttStore } from '@/lib/gantt/store'
+import { LINK_HANDLE_PX } from '@/lib/gantt/geometry'
 import type { Rect, Task } from '@/lib/gantt/types'
 import { cn } from '@/lib/utils'
 import { useGanttView } from './GanttView'
@@ -24,7 +25,21 @@ export function MilestoneMark({ task, rect }: { task: Task; rect: Rect }) {
         className={cn('rotate-45 border-[3px] border-ink shadow-brutal', selected && 'outline-[3px] outline-dashed outline-ink outline-offset-2')}
         style={{ width: size, height: size, backgroundColor: task.color }}
       />
-      <span className="absolute left-full ml-3 whitespace-nowrap text-sm font-bold">{task.title}</span>
+      {/* Le conteneur du jalon n'a pas de bordure — contrairement à la barre, `-LINK_HANDLE_PX`
+          suffit ici à poser la pastille juste à droite du losange. */}
+      {canEdit && (
+        <button
+          type="button"
+          aria-label="Créer une dépendance"
+          style={{ width: LINK_HANDLE_PX, height: LINK_HANDLE_PX, right: -LINK_HANDLE_PX }}
+          className="absolute top-1/2 z-20 -translate-y-1/2 border-[3px] border-ink bg-paper cursor-crosshair hover:bg-yellow"
+          onPointerDown={(e) => drag.onLinkPointerDown(e, task.id)}
+          onClick={(e) => e.stopPropagation()}
+        />
+      )}
+      {/* `ml-6` et non `ml-3` : la poignée de liaison déborde de 16 px à droite du losange et
+          passait par-dessus les premières lettres du titre. */}
+      <span className="absolute left-full ml-6 whitespace-nowrap text-sm font-bold">{task.title}</span>
     </div>
   )
 }

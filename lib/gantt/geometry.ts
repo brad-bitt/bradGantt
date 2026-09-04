@@ -31,6 +31,18 @@ export const DRAG_THRESHOLD_PX = 4
  */
 export const BAR_BORDER_PX = 3
 
+/**
+ * Côté de la poignée de liaison, en pixels — doit rester égal au `size-4` de son bouton.
+ *
+ * Elle se pose ENTIÈREMENT hors de la barre : décalée de `LINK_HANDLE_PX + BAR_BORDER_PX`, son
+ * bord gauche tombe exactement sur le bord droit visible. À `-16 px` seulement, elle mordait sur
+ * la bordure — un enfant absolu se positionne sur la boîte de PADDING, donc à l'intérieur du
+ * liseré — et son `z-20` y recouvrait la poignée de redimensionnement, qui au zoom mois n'a que
+ * ces trois pixels-là (`resizeHandleWidth` sur une barre de 12 px) : la barre gardait l'air
+ * redimensionnable sans l'être.
+ */
+export const LINK_HANDLE_PX = 16
+
 type Dated = { startDate: string; endDate: string }
 
 export function computeRange(tasks: Dated[], today: string): Range {

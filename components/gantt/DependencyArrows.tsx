@@ -7,6 +7,7 @@ export function DependencyArrows() {
   const deps = useGanttStore((s) => s.dependencies)
   const selection = useGanttStore((s) => s.selection)
   const select = useGanttStore((s) => s.select)
+  const drag = useGanttStore((s) => s.drag)
   const { layout } = useGanttView()
 
   return (
@@ -38,6 +39,13 @@ export function DependencyArrows() {
           </g>
         )
       })}
+      {/* Aperçu du lien en cours de tracé : de la source jusqu'au pointeur. En pointillé, pour
+          qu'on ne le confonde pas avec une dépendance déjà enregistrée. La source repliée dans un
+          groupe fermé n'a pas de rectangle — on ne trace alors rien. */}
+      {drag?.mode === 'link' && layout.rects[drag.fromTaskId] && (() => {
+        const r = layout.rects[drag.fromTaskId]
+        return <line x1={r.x + r.width} y1={r.y + r.height / 2} x2={drag.x} y2={drag.y} stroke="#111111" strokeWidth={3} strokeDasharray="6 4" />
+      })()}
     </svg>
   )
 }

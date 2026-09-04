@@ -1,6 +1,6 @@
 'use client'
 import { useGanttStore } from '@/lib/gantt/store'
-import { BAR_BORDER_PX, resizeHandleWidth } from '@/lib/gantt/geometry'
+import { BAR_BORDER_PX, LINK_HANDLE_PX, resizeHandleWidth } from '@/lib/gantt/geometry'
 import type { Rect, Task } from '@/lib/gantt/types'
 import { cn } from '@/lib/utils'
 import { useGanttView } from './GanttView'
@@ -54,6 +54,17 @@ export function TaskBar({ task, rect }: { task: Task; rect: Rect }) {
             className="absolute z-10 cursor-ew-resize"
             style={{ width: handle, right: -BAR_BORDER_PX, top: -BAR_BORDER_PX, bottom: -BAR_BORDER_PX }}
             onPointerDown={(e) => drag.onBarPointerDown(e, task.id, 'resize-end')}
+          />
+          {/* Posée entièrement HORS de la barre : voir `LINK_HANDLE_PX`. Un décalage exprimé en
+              classe (`-right-4`) ne le permet pas — il faut y ajouter l'épaisseur de la bordure. */}
+          <button
+            type="button"
+            aria-label="Créer une dépendance"
+            style={{ width: LINK_HANDLE_PX, height: LINK_HANDLE_PX, right: -(LINK_HANDLE_PX + BAR_BORDER_PX) }}
+            className="absolute top-1/2 z-20 -translate-y-1/2 border-[3px] border-ink bg-paper cursor-crosshair hover:bg-yellow"
+            onPointerDown={(e) => drag.onLinkPointerDown(e, task.id)}
+            // Le geste se joue au pointeur ; le clic qui le suit ne doit pas remonter à la barre.
+            onClick={(e) => e.stopPropagation()}
           />
         </>
       )}
