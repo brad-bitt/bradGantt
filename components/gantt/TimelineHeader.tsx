@@ -1,14 +1,17 @@
 'use client'
 import { useGanttStore } from '@/lib/gantt/store'
-import { monthCells, subCells } from '@/lib/gantt/geometry'
+import { PX_PER_DAY, dateToX, monthCells, subCells } from '@/lib/gantt/geometry'
 import { cn } from '@/lib/utils'
 import { useGanttView } from './GanttView'
 
 export function TimelineHeader() {
   const zoom = useGanttStore((s) => s.zoom)
+  const today = useGanttStore((s) => s.today)
   const { layout } = useGanttView()
   const months = monthCells(layout.range, zoom)
   const subs = subCells(layout.range, zoom)
+  const todayInRange = today >= layout.range.start && today <= layout.range.end
+  const todayX = dateToX(today, layout.range, zoom) + PX_PER_DAY[zoom] / 2 - 1.5
   return (
     <div className="relative border-b-[3px] border-ink bg-paper" style={{ width: layout.width, height: '100%' }}>
       {/* Même alternance que la grille, pour que l'en-tête et le corps se lisent d'un bloc. */}
@@ -35,6 +38,11 @@ export function TimelineHeader() {
           {c.width >= 24 ? c.label : ''}
         </div>
       ))}
+      {/* La ligne du jour s'arrête désormais avec la grille ; ce talon la prolonge dans l'en-tête,
+          qui reste collé en haut. Après un défilement vertical, c'est lui qui dit où l'on est. */}
+      {todayInRange && (
+        <div className="absolute bottom-0 z-10 bg-today" style={{ left: todayX, width: 3, height: 14 }} aria-hidden />
+      )}
     </div>
   )
 }

@@ -32,7 +32,10 @@ export function SidebarRow({ row }: { row: Row }) {
     <div
       data-row-task-id={task.id}
       className={cn(
-        'flex items-center gap-2 border-b border-ink/20 pr-2 select-none',
+        'group/row flex items-center gap-2 border-b border-ink/20 pr-2 select-none',
+        // La ligne de groupe se distingue par un fond, pas par un trait de plus : elle coiffe ses
+        // enfants, la sidebar doit le dire sans ajouter de bordure au décompte.
+        task.type === 'group' && 'bg-band',
         selected && 'bg-yellow',
         isDropTarget && 'shadow-[inset_0_3px_0_#111]',
       )}
@@ -46,7 +49,9 @@ export function SidebarRow({ row }: { row: Row }) {
         <button
           type="button"
           aria-label="Réordonner"
-          className="w-4 shrink-0 cursor-grab font-mono leading-none text-ink/40 active:cursor-grabbing brutal-focus"
+          // Même règle que la poignée de liaison : l'opacité tombe, le bouton reste. La colonne
+          // garde donc sa largeur, et la ligne ne sursaute pas au passage de la souris.
+          className="w-4 shrink-0 cursor-grab font-mono leading-none text-ink/40 opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 active:cursor-grabbing brutal-focus"
           onPointerDown={(e) => reorder.onGripPointerDown(e, task.id)}
           onClick={(e) => e.stopPropagation()}
         >
@@ -79,7 +84,7 @@ export function SidebarRow({ row }: { row: Row }) {
         <button
           type="button"
           aria-label="Ajouter une tâche au groupe"
-          className="size-6 shrink-0 border-[3px] border-ink bg-paper font-bold leading-none hover:bg-yellow brutal-focus"
+          className="size-6 shrink-0 border-[3px] border-ink bg-paper font-bold leading-none opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 hover:bg-yellow brutal-focus"
           onClick={(e) => { e.stopPropagation(); openEditor({ mode: 'create', parentId: task.id, type: 'task' }) }}
         >
           +

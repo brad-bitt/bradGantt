@@ -12,13 +12,18 @@ export function GroupBar({ task, rect }: { task: Task; rect: Rect }) {
     <div
       data-task-id={task.id}
       title={task.title}
-      className={cn('absolute bg-ink select-none', selected && 'outline-[3px] outline-dashed outline-ink outline-offset-2')}
-      style={{ left: rect.x, top: rect.y + rect.height / 2 - 5, width: rect.width, height: 10 }}
+      // Un groupe RÉSUME ses enfants : il ne doit pas peser plus lourd qu'eux. Le trait de 10 px
+      // en encre pleine, terminé par deux losanges, dominait des barres de tâche pourtant
+      // porteuses de l'information. Il devient une équerre fine en encre douce — même empan,
+      // même lecture, un cran en retrait.
+      className={cn('absolute bg-ink-soft select-none', selected && 'outline-[3px] outline-dashed outline-ink outline-offset-2')}
+      style={{ left: rect.x, top: rect.y + rect.height / 2 - 3, width: rect.width, height: 6 }}
       onClick={() => select({ kind: 'task', id: task.id })}
       onDoubleClick={() => canEdit && openEditor({ mode: 'edit', taskId: task.id })}
     >
-      <span className="absolute -left-[3px] -top-[3px] size-4 rotate-45 bg-ink" aria-hidden />
-      <span className="absolute -right-[3px] -top-[3px] size-4 rotate-45 bg-ink" aria-hidden />
+      {/* Montants d'extrémité : ils bornent l'empan du groupe sans le fermer comme un objet. */}
+      <span className="absolute left-0 -top-[6px] h-[18px] w-[3px] bg-ink-soft" aria-hidden />
+      <span className="absolute right-0 -top-[6px] h-[18px] w-[3px] bg-ink-soft" aria-hidden />
     </div>
   )
 }

@@ -22,7 +22,7 @@ export function TaskBar({ task, rect }: { task: Task; rect: Rect }) {
         // barre. Le rognage du titre est assuré par le `truncate` du <span>, à qui `min-w-0`
         // donne le droit de rétrécir sous sa largeur de contenu (un enfant flex ne le fait pas
         // de lui-même).
-        'absolute flex items-center border-[3px] border-ink shadow-brutal select-none touch-none',
+        'group/bar absolute flex items-center border-[3px] border-ink shadow-brutal select-none touch-none',
         canEdit && 'cursor-grab active:cursor-grabbing',
         selected && 'outline-[3px] outline-dashed outline-ink outline-offset-2',
       )}
@@ -33,7 +33,7 @@ export function TaskBar({ task, rect }: { task: Task; rect: Rect }) {
       onDoubleClick={() => canEdit && openEditor({ mode: 'edit', taskId: task.id })}
     >
       <div
-        className="absolute inset-y-0 left-0 bg-[repeating-linear-gradient(45deg,#111_0_4px,transparent_4px_8px)] opacity-40"
+        className="absolute inset-y-0 left-0 bg-[repeating-linear-gradient(45deg,#111_0_4px,transparent_4px_8px)] opacity-25"
         style={{ width: `${task.progress}%` }}
         aria-hidden
       />
@@ -57,11 +57,20 @@ export function TaskBar({ task, rect }: { task: Task; rect: Rect }) {
           />
           {/* Posée entièrement HORS de la barre : voir `LINK_HANDLE_PX`. Un décalage exprimé en
               classe (`-right-4`) ne le permet pas — il faut y ajouter l'épaisseur de la bordure. */}
+          {/* Invisible au repos : une pastille blanche par barre, en permanence, se lisait comme
+              un artefact détaché du dessin. C'est l'OPACITÉ qui tombe, pas le rendu — la pastille
+              reste dans le document, donc la zone de saisie du geste ne bouge pas d'un pixel
+              selon qu'on survole ou non. Elle revient au survol, au clavier et sur la barre
+              sélectionnée, les trois manières d'avoir cette barre « en main ». */}
           <button
             type="button"
             aria-label="Créer une dépendance"
             style={{ width: LINK_HANDLE_PX, height: LINK_HANDLE_PX, right: -(LINK_HANDLE_PX + BAR_BORDER_PX) }}
-            className="absolute top-1/2 z-20 -translate-y-1/2 border-[3px] border-ink bg-paper cursor-crosshair hover:bg-yellow"
+            className={cn(
+              'absolute top-1/2 z-20 -translate-y-1/2 border-[3px] border-ink bg-paper cursor-crosshair hover:bg-yellow',
+              'opacity-0 transition-opacity group-hover/bar:opacity-100 focus-visible:opacity-100',
+              selected && 'opacity-100',
+            )}
             onPointerDown={(e) => drag.onLinkPointerDown(e, task.id)}
             // Le geste se joue au pointeur ; le clic qui le suit ne doit pas remonter à la barre.
             onClick={(e) => e.stopPropagation()}

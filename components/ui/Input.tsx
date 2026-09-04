@@ -29,7 +29,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       <input
         ref={ref}
         id={inputId}
-        className={cn('bg-paper border-[3px] border-ink px-3 py-2 font-ui brutal-focus placeholder:text-ink/40', error && 'border-danger', className)}
+        className={cn('bg-paper border-[3px] border-ink px-3 py-2 font-ui brutal-focus-field placeholder:text-ink/40', error && 'border-danger', className)}
         {...props}
         aria-invalid={error ? 'true' : props['aria-invalid']}
         aria-describedby={error ? errorId : props['aria-describedby']}

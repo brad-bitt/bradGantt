@@ -52,4 +52,9 @@
   .brutal { @apply border-[3px] border-ink shadow-brutal; }
   .brutal-focus { @apply outline-none focus-visible:outline-[3px] focus-visible:outline-dashed focus-visible:outline-ink focus-visible:outline-offset-2; }
   .brutal-press { @apply transition-[box-shadow,transform] duration-75 hover:shadow-brutal-lg active:shadow-none active:translate-x-1 active:translate-y-1; }
+  /* Focus d'un CHAMP. Le contour pointillé de `brutal-focus` ajoute un second trait parallèle
+     à la bordure de 3 px de l'input : deux lignes pour un seul état. Ici, la bordure reste seule
+     et c'est l'ombre portée qui passe au jaune — le jaune ne signifie que « actif », et l'ombre
+     est déjà le vocabulaire du système. */
+  .brutal-focus-field { @apply outline-none focus-visible:shadow-[4px_4px_0_var(--color-yellow)]; }
 }

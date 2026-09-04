@@ -35,6 +35,10 @@ export function DependencyArrows() {
           >
             {/* Tracé transparent épais : cible de clic confortable sur une flèche de 2,5 px. */}
             <path d={path} stroke="transparent" strokeWidth={14} fill="none" />
+            {/* Halo crème sous le trait. Une flèche d'encre passant sur une barre colorée, une
+                bande de week-end ou une autre flèche disparaissait dans le fond ; le liseré clair
+                la détache de tout ce qu'elle traverse, sans l'épaissir. */}
+            <path d={path} stroke="#FDF6E3" strokeWidth={selected ? 7 : 5} strokeLinecap="round" fill="none" />
             <path d={path} stroke="#111111" strokeWidth={selected ? 4 : 2.5} strokeDasharray={selected ? '6 4' : undefined} fill="none" markerEnd="url(#arrow-head)" />
           </g>
         )

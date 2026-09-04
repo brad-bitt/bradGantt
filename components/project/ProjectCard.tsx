@@ -26,16 +26,16 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
   }
 
   return (
-    <article aria-label={project.name} className="bg-paper brutal p-5 flex flex-col gap-4 hover:shadow-brutal-lg transition-shadow">
+    <article aria-label={project.name} className="bg-paper brutal p-4 flex flex-col gap-2 hover:shadow-brutal-lg transition-shadow">
       <div className="flex items-start justify-between gap-3">
         <Link href={`/projects/${project.id}`} className="font-display text-xl uppercase leading-tight brutal-focus">{project.name}</Link>
         <Badge color={roleColor[project.role]}>{project.role}</Badge>
       </div>
-      <p className="font-mono text-xs">Créé le {format(new Date(project.createdAt), 'd MMM yyyy', { locale: fr })}</p>
+      <p className="font-mono text-xs text-ink-soft">Créé le {format(new Date(project.createdAt), 'd MMM yyyy', { locale: fr })}</p>
       {project.role === 'owner' && (
-        <div className="flex gap-2">
+        <div className="mt-1 flex gap-2">
           <Button size="sm" variant="secondary" onClick={() => setRenaming(true)}>Renommer</Button>
-          <Button size="sm" variant="danger" onClick={remove}>Supprimer</Button>
+          <Button size="sm" variant="danger-quiet" onClick={remove}>Supprimer</Button>
         </div>
       )}
       {renaming && <RenameProjectDialog projectId={project.id} currentName={project.name} open onClose={() => setRenaming(false)} />}

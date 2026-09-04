@@ -70,6 +70,31 @@ test('créer une dépendance par drag, refuser le cycle, supprimer au clavier', 
   await expect(page.locator('svg [data-dep-id]')).toHaveCount(0)
 })
 
+/**
+ * La poignée de liaison est cachée par l'OPACITÉ, jamais par un rendu conditionnel : l'écrire
+ * `{hovered && <button/>}` la ferait apparaître sous le pointeur au moment même où l'on presse,
+ * et le geste partirait d'un élément qui vient de naître. Ce test tient cette distinction — il
+ * échoue si la poignée quitte le document au repos, alors que l'œil ne verrait aucune différence.
+ */
+test('la poignée de liaison est invisible au repos et reste saisissable', async ({ page }) => {
+  const handle = page.locator('[data-task-id]', { hasText: 'A' }).getByRole('button', { name: 'Créer une dépendance' })
+
+  // Pointeur à l'écart de toute barre.
+  await page.mouse.move(5, 5)
+  await expect(handle).toHaveCSS('opacity', '0')
+  // Toujours dans le document, et à sa taille : c'est ce qui garde la cible du geste stable.
+  const box = (await handle.boundingBox())!
+  expect(box.width).toBeGreaterThan(0)
+
+  // Elle se montre au survol de la barre, pas seulement d'elle-même.
+  await page.locator('[data-task-id]', { hasText: 'A' }).hover()
+  await expect(handle).toHaveCSS('opacity', '1')
+
+  // Et le geste aboutit depuis la position mesurée au repos.
+  await linkByDrag(page, 'A', 'B')
+  await expect(page.locator('svg [data-dep-id]')).toHaveCount(1)
+})
+
 test('Suppr supprime la tâche sélectionnée après confirmation, Échap désélectionne', async ({ page }) => {
   const a = page.locator('[data-task-id]', { hasText: 'A' })
   await a.click()

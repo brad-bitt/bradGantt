@@ -16,7 +16,7 @@ export function MilestoneMark({ task, rect }: { task: Task; rect: Rect }) {
       title={`${task.title} — ${task.startDate}`}
       // Un jalon se déplace mais ne se redimensionne pas : il tient sur un jour par contrainte
       // de base (`tasks_milestone_single_day`), et `resizeTask` le refuse déjà. Pas de poignée.
-      className={cn('absolute flex items-center select-none touch-none', canEdit && 'cursor-grab active:cursor-grabbing')}
+      className={cn('group/ms absolute flex items-center select-none touch-none', canEdit && 'cursor-grab active:cursor-grabbing')}
       style={{ left: rect.x + rect.width / 2 - size / 2, top: rect.y, width: size, height: rect.height }}
       onPointerDown={(e) => drag.onBarPointerDown(e, task.id, 'move')}
       onDoubleClick={() => canEdit && openEditor({ mode: 'edit', taskId: task.id })}
@@ -32,7 +32,11 @@ export function MilestoneMark({ task, rect }: { task: Task; rect: Rect }) {
           type="button"
           aria-label="Créer une dépendance"
           style={{ width: LINK_HANDLE_PX, height: LINK_HANDLE_PX, right: -LINK_HANDLE_PX }}
-          className="absolute top-1/2 z-20 -translate-y-1/2 border-[3px] border-ink bg-paper cursor-crosshair hover:bg-yellow"
+          className={cn(
+            'absolute top-1/2 z-20 -translate-y-1/2 border-[3px] border-ink bg-paper cursor-crosshair hover:bg-yellow',
+            'opacity-0 transition-opacity group-hover/ms:opacity-100 focus-visible:opacity-100',
+            selected && 'opacity-100',
+          )}
           onPointerDown={(e) => drag.onLinkPointerDown(e, task.id)}
           onClick={(e) => e.stopPropagation()}
         />
