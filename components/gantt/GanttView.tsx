@@ -12,20 +12,13 @@ import { GroupBar } from './GroupBar'
 import { DependencyArrows } from './DependencyArrows'
 import { useTimelineDrag, type TimelineDragHandlers } from './useTimelineDrag'
 import { useKeyboardShortcuts } from './useKeyboardShortcuts'
-
-/** Poignées de réordonnancement de la sidebar, fournies à partir de la tâche 13 (`useReorderDrag`). */
-export interface ReorderDragHandlers {
-  onGripPointerDown(e: React.PointerEvent, taskId: string): void
-  onPointerMove(e: React.PointerEvent): void
-  onPointerUp(e: React.PointerEvent): void
-}
+import { useReorderDrag, type ReorderDragHandlers } from './useReorderDrag'
 
 export interface GanttViewContextValue {
   layout: Layout
   canEdit: boolean
   drag: TimelineDragHandlers
-  /** Absent tant que la tâche 13 n'a pas branché le réordonnancement. */
-  reorder?: ReorderDragHandlers
+  reorder: ReorderDragHandlers
 }
 
 export const GanttViewContext = createContext<GanttViewContextValue | null>(null)
@@ -63,6 +56,7 @@ export function GanttView() {
    */
   const [viewportWidth, setViewportWidth] = useState<number | null>(null)
   const drag = useTimelineDrag(timelineRef)
+  const reorder = useReorderDrag()
   useKeyboardShortcuts()
 
   useLayoutEffect(() => {
@@ -90,7 +84,7 @@ export function GanttView() {
     () => computeLayout({ tasks, dependencies }, dragState, zoom, today, visibleTimelineWidth),
     [tasks, dependencies, dragState, zoom, today, visibleTimelineWidth],
   )
-  const value = useMemo<GanttViewContextValue>(() => ({ layout, canEdit, drag }), [layout, canEdit, drag])
+  const value = useMemo<GanttViewContextValue>(() => ({ layout, canEdit, drag, reorder }), [layout, canEdit, drag, reorder])
 
   // Sans recentrage, la vue s'ouvre sur `scrollLeft = 0`, soit un mois avant la première tâche :
   // l'écran principal de l'application paraît vide, y compris juste après la création d'un projet.
