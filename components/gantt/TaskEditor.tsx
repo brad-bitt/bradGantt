@@ -241,7 +241,7 @@ function TaskEditorForm({ existing, defaultType, defaultParentId, afterTaskId }:
             elle, demande confirmation — cette perte-là ne doit pas être plus discrète. On nomme
             les valeurs en jeu plutôt que d'avertir dans le vide. */}
         {losses.length > 0 && (
-          <p role="status" className="brutal bg-yellow px-3 py-2 text-sm font-bold">
+          <p role="status" className="brutal bg-yellow px-3 py-2 text-sm font-bold text-on-data">
             Un jalon tient sur un seul jour : {losses.join(' et ')} {losses.length > 1 ? 'seront perdus' : 'sera perdue'}.
           </p>
         )}
@@ -297,7 +297,7 @@ function TaskEditorForm({ existing, defaultType, defaultParentId, afterTaskId }:
                     calculé à `none` sur la pastille sélectionnée). Renoncer à `brutal-focus`
                     aurait coûté l'indicateur de focus clavier, seul repère sur ces six
                     boutons sans texte. */}
-                {color === c && <span aria-hidden className="font-display text-base leading-none text-ink">✓</span>}
+                {color === c && <span aria-hidden className="font-display text-base leading-none text-on-data">✓</span>}
               </button>
             ))}
           </div>

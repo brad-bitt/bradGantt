@@ -64,7 +64,7 @@ export function GanttSummary() {
           className="relative block h-4 w-24 border-[3px] border-ink bg-paper"
         >
           <span
-            className="absolute inset-y-0 left-0 bg-[repeating-linear-gradient(45deg,#111_0_4px,transparent_4px_8px)] opacity-40"
+            className="absolute inset-y-0 left-0 hatch opacity-40"
             style={{ width: `${summary.progress}%` }}
           />
         </span>

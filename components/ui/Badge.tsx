@@ -2,15 +2,16 @@ import { cn } from '@/lib/utils'
 
 export type BadgeColor = 'violet' | 'blue' | 'cyan' | 'rose' | 'emerald' | 'yellow' | 'ink'
 
-// Texte encre partout : les couleurs sont calées assez claires pour ça, et l'uniformité
-// évite qu'un badge paraisse plus « important » qu'un autre à cause de son contraste.
+// Texte `on-data` (encre noire fixe) sur toute couleur : les couleurs sont calées assez claires
+// pour ça, l'uniformité évite qu'un badge paraisse plus « important » qu'un autre, et le thème
+// sombre ne doit pas y poser une encre crème.
 const colors: Record<BadgeColor, string> = {
-  violet: 'bg-violet text-ink',
-  blue: 'bg-blue text-ink',
-  cyan: 'bg-cyan text-ink',
-  rose: 'bg-rose text-ink',
-  emerald: 'bg-emerald text-ink',
-  yellow: 'bg-yellow text-ink',
+  violet: 'bg-violet text-on-data',
+  blue: 'bg-blue text-on-data',
+  cyan: 'bg-cyan text-on-data',
+  rose: 'bg-rose text-on-data',
+  emerald: 'bg-emerald text-on-data',
+  yellow: 'bg-yellow text-on-data',
   ink: 'bg-ink text-cream',
 }
 

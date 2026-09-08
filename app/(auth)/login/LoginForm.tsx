@@ -31,7 +31,7 @@ export function LoginForm({ next }: { next: string | null }) {
     else setSent(true)
   }
 
-  if (sent) return <p className="bg-emerald border-[3px] border-ink p-4 font-bold">Lien envoyé ! Ouvre ta boîte mail ({email}).</p>
+  if (sent) return <p className="bg-emerald text-on-data border-[3px] border-ink p-4 font-bold">Lien envoyé ! Ouvre ta boîte mail ({email}).</p>
 
   return (
     <div className="space-y-6">

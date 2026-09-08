@@ -36,8 +36,8 @@ export function SidebarRow({ row }: { row: Row }) {
         // La ligne de groupe se distingue par un fond, pas par un trait de plus : elle coiffe ses
         // enfants, la sidebar doit le dire sans ajouter de bordure au décompte.
         task.type === 'group' && 'bg-band',
-        selected && 'bg-yellow',
-        isDropTarget && 'shadow-[inset_0_3px_0_#111]',
+        selected && 'bg-yellow text-on-data',
+        isDropTarget && 'shadow-[inset_0_3px_0_var(--color-ink)]',
       )}
       style={{ height: ROW_HEIGHT, paddingLeft: depth === 1 ? 32 : 8 }}
       onClick={() => select({ kind: 'task', id: task.id })}
@@ -89,7 +89,7 @@ export function SidebarRow({ row }: { row: Row }) {
           type="button"
           aria-label={`Ajouter après « ${task.title} »`}
           title={`Ajouter après « ${task.title} »`}
-          className="size-6 shrink-0 border-[3px] border-ink bg-paper font-mono text-xs leading-none opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 hover:bg-yellow brutal-focus"
+          className="size-6 shrink-0 border-[3px] border-ink bg-paper font-mono text-xs leading-none opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 hover:bg-yellow hover:text-on-data brutal-focus"
           onClick={(e) => {
             e.stopPropagation()
             openEditor({
@@ -107,7 +107,7 @@ export function SidebarRow({ row }: { row: Row }) {
         <button
           type="button"
           aria-label="Ajouter une tâche au groupe"
-          className="size-6 shrink-0 border-[3px] border-ink bg-paper font-bold leading-none opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 hover:bg-yellow brutal-focus"
+          className="size-6 shrink-0 border-[3px] border-ink bg-paper font-bold leading-none opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 hover:bg-yellow hover:text-on-data brutal-focus"
           onClick={(e) => { e.stopPropagation(); openEditor({ mode: 'create', parentId: task.id, type: 'task' }) }}
         >
           +

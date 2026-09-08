@@ -12,11 +12,11 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const variants: Record<Variant, string> = {
   primary: 'bg-ink text-cream brutal brutal-press',
   secondary: 'bg-paper text-ink brutal brutal-press',
-  danger: 'bg-danger text-paper brutal brutal-press',
+  danger: 'bg-danger text-on-data brutal brutal-press',
   /* Destructif, mais pas criard au repos. Sur une liste de projets, « Supprimer » en aplat
      rouge était l'élément le plus visible de l'écran alors que c'est l'action la plus rare :
      l'accent va à la confirmation, pas à la tentation. */
-  'danger-quiet': 'bg-paper text-danger brutal brutal-press hover:bg-danger hover:text-paper',
+  'danger-quiet': 'bg-paper text-danger brutal brutal-press hover:bg-danger hover:text-on-data',
   ghost: 'bg-transparent text-ink border-[3px] border-transparent hover:border-ink',
 }
 

@@ -22,7 +22,7 @@ export function ZoomControls() {
           aria-pressed={zoom === l.value}
           className={cn(
             'px-3 py-1 font-bold uppercase text-sm border-r-[3px] border-ink last:border-r-0 brutal-focus',
-            zoom === l.value ? 'bg-ink text-paper' : 'hover:bg-yellow',
+            zoom === l.value ? 'bg-ink text-paper' : 'hover:bg-yellow hover:text-on-data',
           )}
         >
           {l.label}

@@ -1,5 +1,6 @@
 import { LoginForm } from './LoginForm'
 import { GanttPreview } from '@/components/layout/GanttPreview'
+import { ThemeToggle } from '@/components/layout/ThemeToggle'
 
 const ARGUMENTS = [
   { n: '01', title: 'À plusieurs', body: 'Invite ton équipe en lecture ou en écriture. Chacun voit la frise bouger.' },
@@ -14,13 +15,14 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     // le document, donc en haut sur mobile et premier au clavier. La colonne de droite n'est
     // qu'une vitrine, elle ne doit jamais s'interposer avant le champ de connexion.
     <main className="relative flex min-h-screen flex-col items-center justify-center p-6 pb-16">
+      <ThemeToggle className="absolute right-6 top-6" />
       <div className="grid w-full max-w-6xl items-center gap-10 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-16">
         <div className="w-full bg-paper brutal shadow-brutal-xl p-8 space-y-6">
           {/* Même filet jaune que dans l'en-tête de l'application : on arrive sur la même marque
               qu'on retrouvera une fois connecté. */}
           <h1 className="text-4xl decoration-yellow decoration-4 underline underline-offset-8">BradGantt</h1>
           <p className="font-bold">Connecte-toi pour retrouver tes projets.</p>
-          {error && <p role="alert" className="bg-danger text-paper border-[3px] border-ink p-3 font-bold">Connexion impossible, réessaie.</p>}
+          {error && <p role="alert" className="bg-danger text-on-data border-[3px] border-ink p-3 font-bold">Connexion impossible, réessaie.</p>}
           <LoginForm next={next ?? null} />
         </div>
 

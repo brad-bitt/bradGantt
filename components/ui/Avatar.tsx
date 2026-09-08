@@ -17,7 +17,7 @@ export function Avatar({ name, color, src, size = 'md', className }: AvatarProps
   }
   return (
     <span title={name} style={{ backgroundColor: color }}
-      className={cn('inline-flex items-center justify-center border-[3px] border-ink font-display', dim, className)}>
+      className={cn('inline-flex items-center justify-center border-[3px] border-ink font-display text-on-data', dim, className)}>
       {initials(name)}
     </span>
   )

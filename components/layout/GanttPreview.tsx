@@ -25,9 +25,9 @@ const STUB = 6
 export function GanttPreview() {
   return (
     <div aria-hidden className="bg-paper brutal shadow-brutal-lg select-none">
-      <div className="flex items-center justify-between border-b-[3px] border-ink bg-ink px-3 py-1.5">
-        <span className="font-display text-xs uppercase text-cream">Refonte du site</span>
-        <span className="font-mono text-[10px] text-cream/70">SEPT — DÉC</span>
+      <div className="flex items-center justify-between border-b-[3px] border-ink bg-header px-3 py-1.5 text-on-header">
+        <span className="font-display text-xs uppercase">Refonte du site</span>
+        <span className="font-mono text-[10px] opacity-70">SEPT — DÉC</span>
       </div>
 
       {/* Piste interne : toutes les abscisses en pourcentage se mesurent SUR ELLE et non sur le
@@ -75,10 +75,10 @@ export function GanttPreview() {
             }}
           >
             <span
-              className="absolute inset-y-0 left-0 bg-[repeating-linear-gradient(45deg,#111_0_4px,transparent_4px_8px)] opacity-25"
+              className="absolute inset-y-0 left-0 hatch-data opacity-25"
               style={{ width: `${bar.progress}%` }}
             />
-            <span className="relative truncate px-1.5 text-[10px] font-bold">{bar.label}</span>
+            <span className="relative truncate px-1.5 text-[10px] font-bold text-on-data">{bar.label}</span>
           </div>
         ))}
 

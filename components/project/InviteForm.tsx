@@ -44,7 +44,7 @@ export function InviteForm({ projectId }: { projectId: string }) {
       <Button type="submit" disabled={busy}>Inviter</Button>
       {inviteUrl && (
         // Uniquement en mode test : la route ne renvoie `inviteUrl` que sous `E2E_ENABLED`.
-        <p className="bg-yellow border-[3px] border-ink p-2 font-mono text-xs break-all" data-testid="invite-url">
+        <p className="bg-yellow text-on-data border-[3px] border-ink p-2 font-mono text-xs break-all" data-testid="invite-url">
           Lien d&apos;invitation (mode test) : {inviteUrl}
         </p>
       )}

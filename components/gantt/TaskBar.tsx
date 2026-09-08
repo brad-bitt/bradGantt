@@ -33,7 +33,7 @@ export function TaskBar({ task, rect }: { task: Task; rect: Rect }) {
       onDoubleClick={() => canEdit && openEditor({ mode: 'edit', taskId: task.id })}
     >
       <div
-        className="absolute inset-y-0 left-0 bg-[repeating-linear-gradient(45deg,#111_0_4px,transparent_4px_8px)] opacity-25"
+        className="absolute inset-y-0 left-0 hatch-data opacity-25"
         style={{ width: `${task.progress}%` }}
         aria-hidden
       />
@@ -77,7 +77,7 @@ export function TaskBar({ task, rect }: { task: Task; rect: Rect }) {
           />
         </>
       )}
-      <span className="relative min-w-0 truncate px-2 text-sm font-bold">{task.title}</span>
+      <span className="relative min-w-0 truncate px-2 text-sm font-bold text-on-data">{task.title}</span>
     </div>
   )
 }

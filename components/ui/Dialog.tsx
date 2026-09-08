@@ -100,7 +100,7 @@ export function Dialog({ open, onClose, title, children, footer }: DialogProps) 
 
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-ink/40 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       {/* `max-h-full` + colonne flex : une modale plus haute que la fenêtre débordait des deux
           côtés à la fois — l'overlay est en `fixed`, la page ne défile donc pas, et NI le titre
           NI les boutons du pied n'étaient atteignables. Mesuré sur l'éditeur de tâche en

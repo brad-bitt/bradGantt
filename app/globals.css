@@ -3,13 +3,28 @@
 /* Palette organisée par REGISTRE : une signification par couleur.
    Le jaune portait auparavant quatre rôles à la fois (fond d'en-tête, boutons, sélection,
    première couleur de tâche) — impossible de distinguer une ligne sélectionnée d'une tâche
-   simplement jaune. Il ne sert plus qu'à l'état actif. */
-@theme inline {
+   simplement jaune. Il ne sert plus qu'à l'état actif.
+
+   Les couleurs et les ombres sont dans un `@theme` NON inline : les utilitaires générés
+   (`bg-ink`, `shadow-brutal`…) référencent alors `var(--color-…)` au lieu d'inscrire la valeur,
+   ce qui permet au thème sombre de les redéfinir plus bas d'un seul bloc. Les polices restent
+   en `inline` : elles renvoient aux variables de next/font posées sur <html>. */
+@theme {
   /* Structure — le décor, qui doit reculer */
   --color-cream: #FDF6E3;
   --color-paper: #FFFFFF;
   --color-ink: #111111;
   --color-ink-soft: #5B554A;
+
+  /* En-tête de l'application : sombre dans les DEUX thèmes. Avec `bg-ink`, le thème sombre
+     l'aurait inversé en bandeau crème au sommet d'une page noire. */
+  --color-header: #111111;
+  --color-on-header: #FDF6E3;
+
+  /* Texte posé SUR une couleur de données ou sur le jaune : toujours de l'encre noire, quel que
+     soit le thème. Les huit couleurs de tâches sont calées pour un texte noir, et elles ne
+     changent pas la nuit — `text-ink` deviendrait crème sur tangerine. */
+  --color-on-data: #111111;
 
   /* État — le jaune, et rien d'autre : sélection, élément actif */
   --color-yellow: #FFD500;
@@ -21,7 +36,7 @@
 
   /* Données — couleurs de tâches. Calées assez claires pour que le titre en noir reste
      lisible PAR-DESSUS les hachures d'avancement (noir à 40 %), écartées en teinte ET en
-     clarté pour tenir côte à côte sur un même écran. */
+     clarté pour tenir côte à côte sur un même écran. Identiques dans les deux thèmes. */
   --color-tangerine: #FF8A3D;
   --color-rose: #FF6FA3;
   --color-blue: #5B9DFF;
@@ -31,15 +46,35 @@
   --color-lime: #B4E45C;
   --color-ochre: #E9B44C;
 
-  --shadow-brutal: 4px 4px 0 #111111;
-  --shadow-brutal-lg: 6px 6px 0 #111111;
-  --shadow-brutal-xl: 8px 8px 0 #111111;
+  /* Ombres en encre : elles suivent le thème avec elle. */
+  --shadow-brutal: 4px 4px 0 var(--color-ink);
+  --shadow-brutal-lg: 6px 6px 0 var(--color-ink);
+  --shadow-brutal-xl: 8px 8px 0 var(--color-ink);
+}
 
+@theme inline {
   --font-display: var(--font-archivo-black), Impact, sans-serif;
   --font-ui: var(--font-space-grotesk), system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 
   --radius: 0;
+}
+
+/* Thème sombre : la structure s'inverse (encre claire, fonds sombres), les données ne bougent
+   pas. Piloté par l'attribut `data-theme` posé sur <html> avant le premier rendu (voir le
+   script du layout racine), jamais par `prefers-color-scheme` directement : c'est le script
+   qui tranche entre le choix enregistré et le réglage du système, le CSS n'a qu'une source. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-cream: #161513;
+  --color-paper: #201F1B;
+  --color-ink: #F2EBD9;
+  --color-ink-soft: #A79F8D;
+  --color-header: #0D0D0C;
+  --color-on-header: #F2EBD9;
+  --color-band: #2A2823;
+  --color-today: #FF5C52;
+  --color-danger: #F87171;
 }
 
 @layer base {
@@ -50,7 +85,7 @@
      qui pose son propre fond crème opaque par-dessus. */
   body {
     @apply bg-cream text-ink font-ui antialiased;
-    background-image: radial-gradient(rgba(17, 17, 17, 0.09) 1.2px, transparent 1.2px);
+    background-image: radial-gradient(color-mix(in srgb, var(--color-ink) 9%, transparent) 1.2px, transparent 1.2px);
     background-size: 22px 22px;
   }
   h1, h2, h3 { @apply font-display uppercase tracking-tight; }
@@ -65,4 +100,9 @@
      et c'est l'ombre portée qui passe au jaune — le jaune ne signifie que « actif », et l'ombre
      est déjà le vocabulaire du système. */
   .brutal-focus-field { @apply outline-none focus-visible:shadow-[4px_4px_0_var(--color-yellow)]; }
+  /* Hachures d'avancement. Deux variantes pour deux supports : `.hatch-data` sur une barre de
+     couleur (encre noire fixe, comme le texte qui la surmonte), `.hatch` sur un fond de
+     structure (encre du thème, sinon les hachures disparaissent la nuit). */
+  .hatch-data { background-image: repeating-linear-gradient(45deg, #111111 0 4px, transparent 4px 8px); }
+  .hatch { background-image: repeating-linear-gradient(45deg, var(--color-ink) 0 4px, transparent 4px 8px); }
 }
