@@ -129,3 +129,56 @@ export function reorderSiblings(siblings: Task[], movedId: string, targetIndex: 
 export function nextSortOrder(siblings: Task[]): number {
   return siblings.length ? Math.max(...siblings.map((s) => s.sortOrder)) + 1 : 0
 }
+
+export interface InsertAfterPlan {
+  /** `sortOrder` à donner à la nouvelle tâche. */
+  sortOrder: number
+  /** Frères à renuméroter pour lui faire de la place. Vide si l'ancre est la dernière. */
+  shifts: { taskId: string; sortOrder: number }[]
+}
+
+/**
+ * Ordre d'insertion d'une nouvelle tâche JUSTE APRÈS `anchorId` dans sa fratrie.
+ *
+ * Renumérote la fratrie de 0 à n comme `reorderSiblings`, plutôt que d'incrémenter les
+ * `sortOrder` existants : ces derniers peuvent être troués (une suppression laisse un trou) et
+ * un simple +1 sur les suivants produirait alors deux frères au même rang. `buildRows` trie par
+ * `sortOrder` puis, à égalité, par un critère qui n'a rien à voir avec l'intention de
+ * l'utilisateur — la nouvelle tâche apparaîtrait au petit bonheur avant ou après sa voisine.
+ *
+ * `shifts` ne contient que les frères dont le rang change VRAIMENT : sur une fratrie déjà
+ * numérotée sans trou et une ancre en dernière position, il est vide et aucune écriture de
+ * réordonnancement n'est émise.
+ *
+ * Retourne `null` si l'ancre n'appartient pas à la fratrie fournie — l'appelant n'a alors rien
+ * à insérer « après » et doit se rabattre sur `nextSortOrder`.
+ */
+export function planInsertAfter(siblings: Task[], anchorId: string): InsertAfterPlan | null {
+  const ordered = [...siblings].sort(byOrder)
+  const idx = ordered.findIndex((t) => t.id === anchorId)
+  if (idx === -1) return null
+  const shifts = ordered
+    .slice(idx + 1)
+    // `+ 2` : le rang final d'un frère qui suit est son index dans la fratrie triée
+    // (`idx + 1 + i`) décalé d'un cran par la nouvelle tâche.
+    .map((t, i) => ({ taskId: t.id, sortOrder: idx + 2 + i }))
+    .filter((o) => siblings.find((t) => t.id === o.taskId)!.sortOrder !== o.sortOrder)
+  return { sortOrder: idx + 1, shifts }
+}
+
+/**
+ * Dates AFFICHÉES de `anchor` : pour un groupe non vide, l'empan de ses enfants, et non ses
+ * dates stockées.
+ *
+ * Les deux diffèrent : `computeLayout` recalcule l'empan d'un groupe à chaque rendu et ne
+ * réécrit jamais les colonnes `start_date` / `end_date` de la ligne. Enchaîner une tâche
+ * « après » un groupe à partir de ses dates stockées la placerait donc à une date que personne
+ * n'a jamais vue à l'écran (celle de la création du groupe, typiquement).
+ */
+export function anchorBounds(tasks: Task[], anchor: Task): Dated {
+  if (anchor.type === 'group') {
+    const bounds = groupBounds(tasks.filter((t) => t.parentId === anchor.id))
+    if (bounds) return bounds
+  }
+  return { startDate: anchor.startDate, endDate: anchor.endDate }
+}

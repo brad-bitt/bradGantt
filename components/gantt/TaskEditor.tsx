@@ -4,11 +4,15 @@ import { useGanttStore, selectCanEdit } from '@/lib/gantt/store'
 import { getGanttCommands } from '@/lib/gantt/client-commands'
 import { validateTaskInput, type TaskErrors } from '@/lib/gantt/validate'
 import { TASK_COLORS, nextColor } from '@/lib/gantt/palette'
-import { addDays } from '@/lib/gantt/dates'
+import { format } from 'date-fns'
+import { fr } from 'date-fns/locale'
+import { addDays, parseDate } from '@/lib/gantt/dates'
+import { anchorBounds } from '@/lib/gantt/scheduling'
 import type { Task, TaskType } from '@/lib/gantt/types'
 import { Dialog } from '@/components/ui/Dialog'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
+import { Checkbox } from '@/components/ui/Checkbox'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 
@@ -55,13 +59,15 @@ export function TaskEditor() {
 
   return (
     <TaskEditorForm
-      // La clé remonte le MODE et le TYPE, pas seulement l'identifiant : sans le type, passer de
-      // « + Tâche » à « + Jalon » sans fermer la modale réutiliserait l'état du formulaire
-      // précédent (`create`/`create` ont le même identifiant : aucun).
-      key={editor.mode === 'edit' ? `edit:${editor.taskId}` : `create:${editor.type}:${editor.parentId ?? ''}`}
+      // La clé remonte le MODE, le TYPE et l'ANCRE, pas seulement l'identifiant : sans le type,
+      // passer de « + Tâche » à « + Jalon » sans fermer la modale réutiliserait l'état du
+      // formulaire précédent (`create`/`create` ont le même identifiant : aucun) ; sans l'ancre,
+      // enchaîner après une deuxième tâche garderait les dates calculées pour la première.
+      key={editor.mode === 'edit' ? `edit:${editor.taskId}` : `create:${editor.type}:${editor.parentId ?? ''}:${editor.afterTaskId ?? ''}`}
       existing={existing}
       defaultType={editor.mode === 'create' ? editor.type : existing!.type}
       defaultParentId={editor.mode === 'create' ? editor.parentId : existing!.parentId}
+      afterTaskId={editor.mode === 'create' ? (editor.afterTaskId ?? null) : null}
     />
   )
 }
@@ -76,10 +82,11 @@ function changedFields(before: Task, next: TaskPatch): TaskPatch {
   return out as TaskPatch
 }
 
-function TaskEditorForm({ existing, defaultType, defaultParentId }: {
+function TaskEditorForm({ existing, defaultType, defaultParentId, afterTaskId }: {
   existing?: Task
   defaultType: TaskType
   defaultParentId: string | null
+  afterTaskId: string | null
 }) {
   const closeEditor = useGanttStore((s) => s.closeEditor)
   const members = useGanttStore((s) => s.members)
@@ -87,10 +94,22 @@ function TaskEditorForm({ existing, defaultType, defaultParentId }: {
   const today = useGanttStore((s) => s.today)
   const groups = Object.values(tasks).filter((t) => t.type === 'group' && t.id !== existing?.id)
 
+  const anchor = afterTaskId ? tasks[afterTaskId] : undefined
+  /**
+   * Départ par défaut : le LENDEMAIN de la fin de l'ancre — c'est le sens de « après ». Pour un
+   * groupe, `anchorBounds` prend l'empan de ses enfants et non ses dates stockées, sans quoi la
+   * suite d'une phase se placerait à une date que personne n'a vue à l'écran.
+   */
+  const anchorEnd = anchor ? anchorBounds(Object.values(tasks), anchor).endDate : null
+  const defaultStart = anchorEnd ? addDays(anchorEnd, 1) : today
+
   const [title, setTitle] = useState(existing?.title ?? '')
   const [type, setType] = useState<TaskType>(defaultType)
-  const [startDate, setStartDate] = useState(existing?.startDate ?? today)
-  const [endDate, setEndDate] = useState(existing?.endDate ?? addDays(today, 2))
+  const [startDate, setStartDate] = useState(existing?.startDate ?? defaultStart)
+  const [endDate, setEndDate] = useState(existing?.endDate ?? addDays(defaultStart, 2))
+  // Cochée par défaut : cliquer « après » exprime déjà un enchaînement, la flèche ne fait que
+  // le rendre visible sur le diagramme. Décocher reste possible pour un simple voisinage.
+  const [link, setLink] = useState(true)
   // Saisie conservée en chaîne : convertir à chaque frappe faisait qu'un champ vidé pour être
   // retapé valait 0, et « Enregistrer » écrivait silencieusement 0 % en base. La conversion
   // n'a lieu qu'à l'envoi, une fois la saisie validée.
@@ -145,7 +164,12 @@ function TaskEditorForm({ existing, defaultType, defaultParentId }: {
       // d'ailleurs un patch vide, et laisser la modale ouverte sur ce refus serait incompréhensible.
       ok = Object.keys(patch).length === 0 ? true : await cmd.updateTask(existing.id, patch)
     } else {
-      ok = (await cmd.createTask(fields)) !== null
+      ok = (await cmd.createTask({
+        ...fields,
+        // Un groupe ne s'enchaîne pas à un autre par une flèche : c'est un contenant, son
+        // empan est déduit de ses enfants. L'insertion dans l'ordre, elle, vaut pour les deux.
+        ...(anchor ? { after: { taskId: anchor.id, link: link && !isGroup } } : {}),
+      })) !== null
     }
     setBusy(false)
     if (ok) closeEditor()
@@ -234,6 +258,22 @@ function TaskEditorForm({ existing, defaultType, defaultParentId }: {
           />
         )}
         {errors.progress && <p role="alert" className="text-danger text-sm font-bold">{errors.progress}</p>}
+
+        {anchor && !existing && (
+          <div className="brutal bg-band px-3 py-2 space-y-2">
+            <p className="text-sm font-bold">
+              Enchaînée après « {anchor.title} », qui se termine le{' '}
+              {format(parseDate(anchorEnd!), 'd MMMM yyyy', { locale: fr })}.
+            </p>
+            {!isGroup && (
+              <Checkbox
+                label="Lier à la tâche précédente"
+                checked={link}
+                onChange={(e) => setLink(e.target.checked)}
+              />
+            )}
+          </div>
+        )}
 
         <fieldset>
           <legend className="mb-1 font-bold uppercase text-sm">Couleur</legend>

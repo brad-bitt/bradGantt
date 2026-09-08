@@ -1,4 +1,4 @@
-import { shiftDates, resizeDates, groupBounds, wouldCreateCycle, checkLink, buildRows, reorderSiblings, nextSortOrder, siblingsOf } from '@/lib/gantt/scheduling'
+import { shiftDates, resizeDates, groupBounds, wouldCreateCycle, checkLink, buildRows, reorderSiblings, nextSortOrder, siblingsOf, planInsertAfter, anchorBounds } from '@/lib/gantt/scheduling'
 import { makeTask, makeDep } from './fixtures'
 
 describe('shiftDates / resizeDates', () => {
@@ -109,5 +109,64 @@ describe('ordre', () => {
   it('nextSortOrder', () => {
     expect(nextSortOrder([])).toBe(0)
     expect(nextSortOrder([a, c])).toBe(3)
+  })
+})
+
+describe('planInsertAfter', () => {
+  it("place la nouvelle tâche juste après l'ancre et renumérote la suite", () => {
+    const siblings = [
+      makeTask({ id: 'a', sortOrder: 0 }),
+      makeTask({ id: 'b', sortOrder: 1 }),
+      makeTask({ id: 'c', sortOrder: 2 }),
+    ]
+    expect(planInsertAfter(siblings, 'a')).toEqual({
+      sortOrder: 1,
+      shifts: [{ taskId: 'b', sortOrder: 2 }, { taskId: 'c', sortOrder: 3 }],
+    })
+  })
+
+  it("n'a rien à décaler quand l'ancre est la dernière", () => {
+    const siblings = [makeTask({ id: 'a', sortOrder: 0 }), makeTask({ id: 'b', sortOrder: 1 })]
+    expect(planInsertAfter(siblings, 'b')).toEqual({ sortOrder: 2, shifts: [] })
+  })
+
+  it('normalise des ordres troués sans les laisser en double', () => {
+    const siblings = [
+      makeTask({ id: 'a', sortOrder: 0 }),
+      makeTask({ id: 'b', sortOrder: 5 }),
+      makeTask({ id: 'c', sortOrder: 9 }),
+    ]
+    const plan = planInsertAfter(siblings, 'a')!
+    const orders = [plan.sortOrder, ...plan.shifts.map((s) => s.sortOrder)]
+    expect(new Set(orders).size).toBe(orders.length)
+    expect(plan.sortOrder).toBe(1)
+  })
+
+  it('trie les frères avant de chercher, quel que soit leur ordre de tableau', () => {
+    const siblings = [makeTask({ id: 'c', sortOrder: 2 }), makeTask({ id: 'a', sortOrder: 0 }), makeTask({ id: 'b', sortOrder: 1 })]
+    expect(planInsertAfter(siblings, 'a')?.shifts).toEqual([{ taskId: 'b', sortOrder: 2 }, { taskId: 'c', sortOrder: 3 }])
+  })
+
+  it("retourne null si l'ancre n'est pas dans la fratrie", () => {
+    expect(planInsertAfter([makeTask({ id: 'a', sortOrder: 0 })], 'zzz')).toBeNull()
+  })
+})
+
+describe('anchorBounds', () => {
+  const group = makeTask({ id: 'g', type: 'group', startDate: '2026-01-01', endDate: '2026-01-02' })
+  const child1 = makeTask({ id: 'c1', parentId: 'g', startDate: '2026-09-01', endDate: '2026-09-03' })
+  const child2 = makeTask({ id: 'c2', parentId: 'g', startDate: '2026-09-04', endDate: '2026-09-08' })
+
+  it("d'une tâche simple : ses propres dates", () => {
+    const t = makeTask({ id: 't', startDate: '2026-09-01', endDate: '2026-09-05' })
+    expect(anchorBounds([t], t)).toEqual({ startDate: '2026-09-01', endDate: '2026-09-05' })
+  })
+
+  it("d'un groupe : l'empan de ses enfants, pas ses dates stockées", () => {
+    expect(anchorBounds([group, child1, child2], group)).toEqual({ startDate: '2026-09-01', endDate: '2026-09-08' })
+  })
+
+  it("d'un groupe vide : ses dates stockées", () => {
+    expect(anchorBounds([group], group)).toEqual({ startDate: '2026-01-01', endDate: '2026-01-02' })
   })
 })

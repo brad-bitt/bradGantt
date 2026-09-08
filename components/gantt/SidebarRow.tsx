@@ -80,6 +80,29 @@ export function SidebarRow({ row }: { row: Row }) {
       {task.type === 'milestone' && <span className="size-3 shrink-0 rotate-45 bg-ink" aria-hidden />}
       <span className={cn('flex-1 truncate text-sm', task.type === 'group' && 'font-display uppercase')}>{task.title}</span>
       {assignee && <Avatar name={assignee.displayName} color={assignee.color} src={assignee.avatarUrl} size="sm" />}
+      {/* Enchaînement. Sur une tâche ou un jalon : une TÂCHE frère, insérée juste après et liée
+          par défaut. Sur un groupe : un GROUPE, c'est-à-dire la phase suivante — le bouton « + »
+          voisin couvre déjà le besoin d'ajouter une tâche DANS ce groupe, et un groupe ne peut
+          de toute façon pas être l'enfant d'un autre. */}
+      {canEdit && (
+        <button
+          type="button"
+          aria-label={`Ajouter après « ${task.title} »`}
+          title={`Ajouter après « ${task.title} »`}
+          className="size-6 shrink-0 border-[3px] border-ink bg-paper font-mono text-xs leading-none opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 hover:bg-yellow brutal-focus"
+          onClick={(e) => {
+            e.stopPropagation()
+            openEditor({
+              mode: 'create',
+              parentId: task.type === 'group' ? null : task.parentId,
+              type: task.type === 'group' ? 'group' : 'task',
+              afterTaskId: task.id,
+            })
+          }}
+        >
+          ↳
+        </button>
+      )}
       {task.type === 'group' && canEdit && (
         <button
           type="button"

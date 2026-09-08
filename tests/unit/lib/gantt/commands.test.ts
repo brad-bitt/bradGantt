@@ -51,6 +51,66 @@ describe('createTask', () => {
     expect(repo.insertTask).toHaveBeenCalledWith(expect.objectContaining({ id: 'new-id' }))
     expect(notify).not.toHaveBeenCalled()
   })
+  it("insère juste après l'ancre et lie à la précédente", async () => {
+    const { cmd, repo } = setup()
+    // `a` et `b` sont frères sous le groupe `g`, aux rangs 0 et 1.
+    const t = await cmd.createTask({
+      title: 'Suite', type: 'task', startDate: '2026-09-04', endDate: '2026-09-06',
+      parentId: 'g', after: { taskId: 'a', link: true },
+    })
+    expect(t?.sortOrder).toBe(1)
+    const state = useGanttStore.getState()
+    expect(state.tasks['b'].sortOrder).toBe(2)
+    expect(repo.reorderTasks).toHaveBeenCalledWith([{ taskId: 'b', sortOrder: 2 }])
+    expect(Object.values(state.dependencies)).toContainEqual(
+      expect.objectContaining({ fromTaskId: 'a', toTaskId: 'new-id' }),
+    )
+    expect(repo.insertDependency).toHaveBeenCalledWith(expect.objectContaining({ fromTaskId: 'a', toTaskId: 'new-id' }))
+  })
+
+  it('insère après sans lier quand le lien est refusé par l’utilisateur', async () => {
+    const { cmd, repo } = setup()
+    await cmd.createTask({
+      title: 'Suite', type: 'task', startDate: '2026-09-04', endDate: '2026-09-06',
+      parentId: 'g', after: { taskId: 'a', link: false },
+    })
+    expect(repo.insertDependency).not.toHaveBeenCalled()
+    expect(useGanttStore.getState().tasks['new-id'].sortOrder).toBe(1)
+  })
+
+  it("n'émet aucun réordonnancement quand l'ancre est la dernière de sa fratrie", async () => {
+    const { cmd, repo } = setup()
+    await cmd.createTask({
+      title: 'Suite', type: 'task', startDate: '2026-09-04', endDate: '2026-09-06',
+      parentId: 'g', after: { taskId: 'b', link: false },
+    })
+    expect(repo.reorderTasks).not.toHaveBeenCalled()
+    expect(useGanttStore.getState().tasks['new-id'].sortOrder).toBe(2)
+  })
+
+  it("ajoute en fin de fratrie si l'ancre a disparu entre-temps", async () => {
+    const { cmd } = setup()
+    const t = await cmd.createTask({
+      title: 'Suite', type: 'task', startDate: '2026-09-04', endDate: '2026-09-06',
+      parentId: 'g', after: { taskId: 'disparue', link: true },
+    })
+    expect(t?.sortOrder).toBe(2)
+    expect(Object.values(useGanttStore.getState().dependencies)).toHaveLength(1)
+  })
+
+  it('un échec de persistance défait la tâche, le lien ET les rangs décalés', async () => {
+    const { cmd, notify } = setup(fakeRepo({ insertDependency: vi.fn().mockRejectedValue(new Error('boom')) }))
+    await cmd.createTask({
+      title: 'Suite', type: 'task', startDate: '2026-09-04', endDate: '2026-09-06',
+      parentId: 'g', after: { taskId: 'a', link: true },
+    })
+    const state = useGanttStore.getState()
+    expect(state.tasks['new-id']).toBeUndefined()
+    expect(state.tasks['b'].sortOrder).toBe(1)
+    expect(Object.values(state.dependencies)).toHaveLength(1)
+    expect(notify).toHaveBeenCalledWith(PERSIST_ERROR)
+  })
+
   it('force endDate = startDate pour un jalon', async () => {
     const { cmd } = setup()
     const t = await cmd.createTask({ title: 'J', type: 'milestone', startDate: '2026-09-01', endDate: '2026-09-09' })

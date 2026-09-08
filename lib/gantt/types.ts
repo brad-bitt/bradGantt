@@ -51,4 +51,12 @@ export type DragState =
 
 export type Selection = { kind: 'task'; id: string } | { kind: 'dependency'; id: string } | null
 
-export type EditorState = { mode: 'edit'; taskId: string } | { mode: 'create'; parentId: string | null; type: TaskType } | null
+export type EditorState =
+  | { mode: 'edit'; taskId: string }
+  /**
+   * `afterTaskId` : la tâche est ENCHAÎNÉE après celle-ci — dates pré-remplies au lendemain de
+   * sa fin, rang juste après elle dans la fratrie, et proposition de dépendance. `null` pour
+   * une création ordinaire, qui atterrit en fin de liste.
+   */
+  | { mode: 'create'; parentId: string | null; type: TaskType; afterTaskId?: string | null }
+  | null
