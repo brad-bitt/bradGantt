@@ -118,6 +118,19 @@ les groupes sont exclus de tous les calculs : leurs colonnes `start_date` / `end
 jamais réécrites quand leurs enfants bougent, c'est `computeLayout` qui recalcule leur empan à
 l'affichage. La liste des projets réutilise la même fonction pour la vignette de chaque carte.
 
+## Marque et icônes
+
+Le signe (trois barres en escalier sur un carré d'encre) vit en deux exemplaires qui doivent
+rester identiques : `components/layout/Logo.tsx` pour l'interface et `app/icon.svg` pour le
+favicon. `node scripts/make-icons.mjs` en dérive `app/favicon.ico` (16/32/48) et
+`app/apple-icon.png` (180) avec `sharp`, qui vient des dépendances de Next ; les fichiers
+produits sont versionnés. L'aperçu de lien (`app/opengraph-image.tsx`) est généré par `next/og`
+et va chercher Archivo Black chez Google Fonts au moment du rendu, avec repli sur la police
+système sans réseau.
+
+Le nom s'écrit « BradGantt », en casse mixte et sans soulignement : le jaune ne signifie plus
+que « actif », partout.
+
 ## Téléphone
 
 Sous 640 px de large, la vue est dite **compacte** (`COMPACT_BREAKPOINT` dans `lib/gantt/geometry.ts`) :
