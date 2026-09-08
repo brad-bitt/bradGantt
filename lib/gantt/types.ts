@@ -58,5 +58,21 @@ export type EditorState =
    * sa fin, rang juste après elle dans la fratrie, et proposition de dépendance. `null` pour
    * une création ordinaire, qui atterrit en fin de liste.
    */
-  | { mode: 'create'; parentId: string | null; type: TaskType; afterTaskId?: string | null }
+  | {
+      mode: 'create'
+      parentId: string | null
+      type: TaskType
+      afterTaskId?: string | null
+      /** Premier jour proposé (clic droit sur la frise : « Nouvelle tâche ici »). */
+      startDate?: string
+    }
   | null
+
+/** Ce sur quoi le menu contextuel a été ouvert. */
+export type MenuTarget =
+  | { kind: 'task'; id: string }
+  | { kind: 'dependency'; id: string }
+  | { kind: 'timeline'; date: string }
+
+/** Menu contextuel ouvert : position écran du clic et cible. `null` quand il est fermé. */
+export type ContextMenuState = { x: number; y: number; target: MenuTarget } | null

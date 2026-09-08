@@ -4,11 +4,13 @@ import { LINK_HANDLE_PX } from '@/lib/gantt/geometry'
 import type { Rect, Task } from '@/lib/gantt/types'
 import { cn } from '@/lib/utils'
 import { useGanttView } from './GanttView'
+import { useOpenContextMenu } from './ContextMenu'
 
 export function MilestoneMark({ task, rect }: { task: Task; rect: Rect }) {
   const selected = useGanttStore((s) => s.selection?.kind === 'task' && s.selection.id === task.id)
   const openEditor = useGanttStore((s) => s.openEditor)
   const { drag, canEdit } = useGanttView()
+  const openMenu = useOpenContextMenu()
   const size = rect.height * 0.75
   return (
     <div
@@ -20,6 +22,7 @@ export function MilestoneMark({ task, rect }: { task: Task; rect: Rect }) {
       style={{ left: rect.x + rect.width / 2 - size / 2, top: rect.y, width: size, height: rect.height }}
       onPointerDown={(e) => drag.onBarPointerDown(e, task.id, 'move')}
       onDoubleClick={() => canEdit && openEditor({ mode: 'edit', taskId: task.id })}
+      onContextMenu={(e) => openMenu(e, { kind: 'task', id: task.id })}
     >
       <div
         className={cn('rotate-45 border-[3px] border-ink shadow-brutal', selected && 'outline-[3px] outline-dashed outline-ink outline-offset-2')}

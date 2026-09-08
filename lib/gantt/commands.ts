@@ -38,6 +38,8 @@ export interface GanttCommands {
   unlinkTasks(depId: string): Promise<boolean>
   toggleGroup(groupId: string): Promise<boolean>
   reorderTask(taskId: string, targetIndex: number): Promise<boolean>
+  /** Copie d'une tâche ou d'un jalon, rangée juste après l'original. Refusé pour un groupe. */
+  duplicateTask(taskId: string): Promise<Task | null>
 }
 
 export interface CommandDeps {
@@ -104,7 +106,10 @@ export function createCommands({ store, repo, notify, newId = () => crypto.rando
     }
   }
 
-  return {
+  // Objet nommé et non littéral retourné à la volée : `duplicateTask` appelle `createTask`, et
+  // une référence explicite survit à une déstructuration (`const { duplicateTask } = cmd`) là où
+  // `this` ne survivrait pas.
+  const commands: GanttCommands = {
     async createTask(input) {
       const s = store.getState()
       const parentId = input.type === 'group' ? null : (input.parentId ?? null)
@@ -242,6 +247,25 @@ export function createCommands({ store, repo, notify, newId = () => crypto.rando
       return run(built.forward, built.inverse, () => repo.updateTask(groupId, patch))
     },
 
+    async duplicateTask(taskId) {
+      const t = store.getState().tasks[taskId]
+      // Un groupe ne se duplique pas : copier son contenant sans ses enfants donnerait un groupe
+      // vide au même nom, et copier les enfants relève d'une autre commande.
+      if (!t || t.type === 'group') return null
+      return commands.createTask({
+        title: `${t.title} (copie)`,
+        type: t.type,
+        startDate: t.startDate,
+        endDate: t.endDate,
+        color: t.color,
+        assigneeId: t.assigneeId,
+        progress: t.progress,
+        parentId: t.parentId,
+        // Rangée juste après l'original, sans flèche : une copie n'attend pas son modèle.
+        after: { taskId: t.id, link: false },
+      })
+    },
+
     reorderTask(taskId, targetIndex) {
       const t = store.getState().tasks[taskId]
       if (!t) return Promise.resolve(false)
@@ -257,4 +281,5 @@ export function createCommands({ store, repo, notify, newId = () => crypto.rando
       )
     },
   }
+  return commands
 }

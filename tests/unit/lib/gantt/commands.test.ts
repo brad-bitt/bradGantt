@@ -42,6 +42,22 @@ function setup(repo = fakeRepo()) {
   return { cmd, repo, notify }
 }
 
+describe('duplicateTask', () => {
+  it("copie une tâche juste après l'original, sans lien, avec « (copie) » au titre", async () => {
+    const { cmd, repo } = setup()
+    const copy = await cmd.duplicateTask('a')
+    expect(copy).toMatchObject({ title: `${a.title} (copie)`, startDate: a.startDate, endDate: a.endDate, color: a.color, parentId: 'g', sortOrder: 1 })
+    expect(useGanttStore.getState().tasks['b'].sortOrder).toBe(2)
+    expect(repo.insertDependency).not.toHaveBeenCalled()
+  })
+  it('refuse un groupe et une tâche inconnue', async () => {
+    const { cmd, repo } = setup()
+    expect(await cmd.duplicateTask('g')).toBeNull()
+    expect(await cmd.duplicateTask('zzz')).toBeNull()
+    expect(repo.insertTask).not.toHaveBeenCalled()
+  })
+})
+
 describe('createTask', () => {
   it('ajoute au store, persiste, choisit couleur et sortOrder', async () => {
     const { cmd, repo, notify } = setup()

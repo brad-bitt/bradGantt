@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useGanttStore, selectCanEdit } from '@/lib/gantt/store'
 import { computeLayout, type Layout } from '@/lib/gantt/layout'
-import { COMPACT_BREAKPOINT, HEADER_HEIGHT, dateToX, initialScrollLeft, sidebarWidthFor } from '@/lib/gantt/geometry'
+import { COMPACT_BREAKPOINT, HEADER_HEIGHT, dateToX, initialScrollLeft, sidebarWidthFor, xToDate } from '@/lib/gantt/geometry'
 import { Sidebar } from './Sidebar'
 import { TimelineHeader } from './TimelineHeader'
 import { TimelineGrid } from './TimelineGrid'
@@ -11,6 +11,7 @@ import { MilestoneMark } from './MilestoneMark'
 import { GroupBar } from './GroupBar'
 import { DependencyArrows } from './DependencyArrows'
 import { EmptyProject } from './EmptyProject'
+import { useOpenContextMenu } from './ContextMenu'
 import { useTimelineDrag, type TimelineDragHandlers } from './useTimelineDrag'
 import { useKeyboardShortcuts } from './useKeyboardShortcuts'
 import { useReorderDrag, type ReorderDragHandlers } from './useReorderDrag'
@@ -62,6 +63,7 @@ export function GanttView() {
   const [viewportWidth, setViewportWidth] = useState<number | null>(null)
   const drag = useTimelineDrag(timelineRef)
   const reorder = useReorderDrag()
+  const openMenu = useOpenContextMenu()
   useKeyboardShortcuts()
 
   useLayoutEffect(() => {
@@ -172,6 +174,13 @@ export function GanttView() {
               // test `e.target === e.currentTarget` suffit parce que `TimelineGrid` est en
               // `pointer-events-none` — le clic entre deux barres atteint bien ce conteneur.
               onPointerDown={(e) => { if (e.target === e.currentTarget) select(null) }}
+              // Clic droit sur le FOND : le menu propose de créer ici, à la date sous le pointeur.
+              // Sur une barre, c'est la barre qui ouvre le sien et l'événement n'arrive pas ici.
+              onContextMenu={(e) => {
+                if (e.target !== e.currentTarget) return
+                const rect = e.currentTarget.getBoundingClientRect()
+                openMenu(e, { kind: 'timeline', date: xToDate(e.clientX - rect.left, layout.range, zoom) })
+              }}
               onPointerMove={drag.onPointerMove}
               onPointerUp={drag.onPointerUp}
               onPointerCancel={drag.onPointerCancel}

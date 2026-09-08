@@ -63,11 +63,12 @@ export function TaskEditor() {
       // passer de « + Tâche » à « + Jalon » sans fermer la modale réutiliserait l'état du
       // formulaire précédent (`create`/`create` ont le même identifiant : aucun) ; sans l'ancre,
       // enchaîner après une deuxième tâche garderait les dates calculées pour la première.
-      key={editor.mode === 'edit' ? `edit:${editor.taskId}` : `create:${editor.type}:${editor.parentId ?? ''}:${editor.afterTaskId ?? ''}`}
+      key={editor.mode === 'edit' ? `edit:${editor.taskId}` : `create:${editor.type}:${editor.parentId ?? ''}:${editor.afterTaskId ?? ''}:${editor.startDate ?? ''}`}
       existing={existing}
       defaultType={editor.mode === 'create' ? editor.type : existing!.type}
       defaultParentId={editor.mode === 'create' ? editor.parentId : existing!.parentId}
       afterTaskId={editor.mode === 'create' ? (editor.afterTaskId ?? null) : null}
+      presetStart={editor.mode === 'create' ? (editor.startDate ?? null) : null}
     />
   )
 }
@@ -82,11 +83,13 @@ function changedFields(before: Task, next: TaskPatch): TaskPatch {
   return out as TaskPatch
 }
 
-function TaskEditorForm({ existing, defaultType, defaultParentId, afterTaskId }: {
+function TaskEditorForm({ existing, defaultType, defaultParentId, afterTaskId, presetStart }: {
   existing?: Task
   defaultType: TaskType
   defaultParentId: string | null
   afterTaskId: string | null
+  /** Premier jour proposé par l'appelant (clic droit sur la frise), prioritaire sur l'ancre. */
+  presetStart: string | null
 }) {
   const closeEditor = useGanttStore((s) => s.closeEditor)
   const members = useGanttStore((s) => s.members)
@@ -101,7 +104,7 @@ function TaskEditorForm({ existing, defaultType, defaultParentId, afterTaskId }:
    * suite d'une phase se placerait à une date que personne n'a vue à l'écran.
    */
   const anchorEnd = anchor ? anchorBounds(Object.values(tasks), anchor).endDate : null
-  const defaultStart = anchorEnd ? addDays(anchorEnd, 1) : today
+  const defaultStart = presetStart ?? (anchorEnd ? addDays(anchorEnd, 1) : today)
 
   const [title, setTitle] = useState(existing?.title ?? '')
   const [type, setType] = useState<TaskType>(defaultType)

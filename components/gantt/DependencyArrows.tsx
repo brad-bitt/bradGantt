@@ -2,6 +2,7 @@
 import { useGanttStore } from '@/lib/gantt/store'
 import { arrowPath } from '@/lib/gantt/geometry'
 import { useGanttView } from './GanttView'
+import { useOpenContextMenu } from './ContextMenu'
 
 export function DependencyArrows() {
   const deps = useGanttStore((s) => s.dependencies)
@@ -9,6 +10,7 @@ export function DependencyArrows() {
   const select = useGanttStore((s) => s.select)
   const drag = useGanttStore((s) => s.drag)
   const { layout } = useGanttView()
+  const openMenu = useOpenContextMenu()
 
   return (
     // Le SVG ne capte rien par défaut (`pointer-events-none`) pour laisser passer les clics
@@ -32,6 +34,7 @@ export function DependencyArrows() {
             data-dep-id={d.id}
             className="pointer-events-auto cursor-pointer"
             onClick={(e) => { e.stopPropagation(); select({ kind: 'dependency', id: d.id }) }}
+            onContextMenu={(e) => openMenu(e, { kind: 'dependency', id: d.id })}
           >
             {/* Tracé transparent épais : cible de clic confortable sur une flèche de 2,5 px. */}
             <path d={path} stroke="transparent" strokeWidth={14} fill="none" />

@@ -4,11 +4,13 @@ import { BAR_BORDER_PX, LINK_HANDLE_PX, resizeHandleWidth } from '@/lib/gantt/ge
 import type { Rect, Task } from '@/lib/gantt/types'
 import { cn } from '@/lib/utils'
 import { useGanttView } from './GanttView'
+import { useOpenContextMenu } from './ContextMenu'
 
 export function TaskBar({ task, rect }: { task: Task; rect: Rect }) {
   const selected = useGanttStore((s) => s.selection?.kind === 'task' && s.selection.id === task.id)
   const openEditor = useGanttStore((s) => s.openEditor)
   const { drag, canEdit } = useGanttView()
+  const openMenu = useOpenContextMenu()
   // Bornée au quart de la barre : à 8 px fixes, les deux poignées mangeaient toute barre plus
   // étroite que 16 px et il ne restait plus rien à saisir pour la déplacer (au zoom mois, une
   // tâche de 3 jours fait 12 px). Il reste désormais au moins la moitié de la barre.
@@ -31,6 +33,7 @@ export function TaskBar({ task, rect }: { task: Task; rect: Rect }) {
       // La sélection reste assurée (le hook la pose même pour un lecteur).
       onPointerDown={(e) => drag.onBarPointerDown(e, task.id, 'move')}
       onDoubleClick={() => canEdit && openEditor({ mode: 'edit', taskId: task.id })}
+      onContextMenu={(e) => openMenu(e, { kind: 'task', id: task.id })}
     >
       <div
         className="absolute inset-y-0 left-0 hatch-data opacity-25"

@@ -2,12 +2,14 @@
 import { useGanttStore, selectCanEdit } from '@/lib/gantt/store'
 import type { Rect, Task } from '@/lib/gantt/types'
 import { cn } from '@/lib/utils'
+import { useOpenContextMenu } from './ContextMenu'
 
 export function GroupBar({ task, rect }: { task: Task; rect: Rect }) {
   const selected = useGanttStore((s) => s.selection?.kind === 'task' && s.selection.id === task.id)
   const select = useGanttStore((s) => s.select)
   const openEditor = useGanttStore((s) => s.openEditor)
   const canEdit = useGanttStore(selectCanEdit)
+  const openMenu = useOpenContextMenu()
   return (
     <div
       data-task-id={task.id}
@@ -20,6 +22,7 @@ export function GroupBar({ task, rect }: { task: Task; rect: Rect }) {
       style={{ left: rect.x, top: rect.y + rect.height / 2 - 3, width: rect.width, height: 6 }}
       onClick={() => select({ kind: 'task', id: task.id })}
       onDoubleClick={() => canEdit && openEditor({ mode: 'edit', taskId: task.id })}
+      onContextMenu={(e) => openMenu(e, { kind: 'task', id: task.id })}
     >
       {/* Montants d'extrémité : ils bornent l'empan du groupe sans le fermer comme un objet. */}
       <span className="absolute left-0 -top-[6px] h-[18px] w-[3px] bg-ink-soft" aria-hidden />

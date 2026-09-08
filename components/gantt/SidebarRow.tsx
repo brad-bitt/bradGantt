@@ -7,6 +7,7 @@ import type { Row } from '@/lib/gantt/types'
 import { Avatar } from '@/components/ui/Avatar'
 import { cn } from '@/lib/utils'
 import { useGanttView } from './GanttView'
+import { useOpenContextMenu } from './ContextMenu'
 
 export function SidebarRow({ row }: { row: Row }) {
   const { task, depth } = row
@@ -27,6 +28,7 @@ export function SidebarRow({ row }: { row: Row }) {
   const select = useGanttStore((s) => s.select)
   const openEditor = useGanttStore((s) => s.openEditor)
   const assignee = useGanttStore((s) => s.members.find((m) => m.userId === task.assigneeId))
+  const openMenu = useOpenContextMenu()
 
   return (
     <div
@@ -45,6 +47,7 @@ export function SidebarRow({ row }: { row: Row }) {
       style={{ height: ROW_HEIGHT, paddingLeft: depth === 1 ? (compact ? 20 : 32) : 8 }}
       onClick={() => select({ kind: 'task', id: task.id })}
       onDoubleClick={() => canEdit && openEditor({ mode: 'edit', taskId: task.id })}
+      onContextMenu={(e) => openMenu(e, { kind: 'task', id: task.id })}
     >
       {/* Largeur réservée même pour un lecteur : sans elle, les colonnes de la sidebar se
           décaleraient d'un rôle à l'autre. */}

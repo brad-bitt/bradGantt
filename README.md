@@ -102,6 +102,14 @@ ou un premier groupe. Une fois la première ligne posée, trois gestes suffisent
 - **déplacer** — glisser une barre la décale, glisser ses bords l'allonge ;
 - **lier** — tirer la pastille du bord droit d'une barre vers une autre crée la flèche.
 
+Le **clic droit** ouvre un menu sur tout objet du diagramme (`components/gantt/ContextMenu.tsx`) :
+sur une tâche ou un jalon — modifier, ajouter après, dupliquer, supprimer ; sur un groupe —
+modifier, ajouter une tâche dedans, groupe suivant, replier ou déplier, supprimer ; sur une
+flèche — supprimer le lien ; sur le fond de la frise — nouvelle tâche, nouveau jalon ou nouveau
+groupe, datés du jour sous le pointeur. Le clic droit sélectionne sa cible, le menu se parcourt
+aux flèches et se ferme à Échap ; un lecteur n'a pas de menu, le navigateur garde le sien.
+`buildMenuItems` est une fonction pure de l'état, testée sans DOM.
+
 L'insertion « après » renumérote la fratrie de 0 à n plutôt que d'incrémenter les rangs suivants :
 des `sort_order` troués (une suppression en laisse) donneraient sinon deux frères au même rang, et
 l'ordre d'affichage deviendrait arbitraire. Voir `planInsertAfter` dans `lib/gantt/scheduling.ts`.

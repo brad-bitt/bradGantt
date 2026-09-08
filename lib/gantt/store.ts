@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Dependency, DragState, EditorState, GanttData, Member, Role, Selection, Task, Zoom } from './types'
+import type { ContextMenuState, Dependency, DragState, EditorState, GanttData, Member, Role, Selection, Task, Zoom } from './types'
 import { applyEvent, indexById, type GanttEvent } from './events'
 import type { PendingInvitation } from '@/lib/invitations/types'
 
@@ -33,6 +33,7 @@ export interface GanttState extends GanttData {
   selection: Selection
   drag: DragState | null
   editor: EditorState
+  menu: ContextMenuState
   membersDialogOpen: boolean
   hydrate: (p: HydratePayload) => void
   apply: (e: GanttEvent) => void
@@ -41,6 +42,8 @@ export interface GanttState extends GanttData {
   setDrag: (d: DragState | null) => void
   openEditor: (e: Exclude<EditorState, null>) => void
   closeEditor: () => void
+  openMenu: (menu: Exclude<ContextMenuState, null>) => void
+  closeMenu: () => void
   setMembersDialogOpen: (open: boolean) => void
 }
 
@@ -58,6 +61,7 @@ export const useGanttStore = create<GanttState>((set) => ({
   selection: null,
   drag: null,
   editor: null,
+  menu: null,
   membersDialogOpen: false,
 
   hydrate: (p) => set((s) => ({
@@ -73,6 +77,7 @@ export const useGanttStore = create<GanttState>((set) => ({
     selection: null,
     drag: null,
     editor: null,
+    menu: null,
     // `membersDialogOpen` n'est VOLONTAIREMENT pas réinitialisé : chaque changement de rôle ou
     // de membre appelle `router.refresh()`, donc `hydrate`. Le remettre à `false` refermerait
     // le dialog sous les doigts de l'owner à chaque modification qu'il vient de faire.
@@ -83,6 +88,8 @@ export const useGanttStore = create<GanttState>((set) => ({
   setDrag: (drag) => set({ drag }),
   openEditor: (editor) => set({ editor }),
   closeEditor: () => set({ editor: null }),
+  openMenu: (menu) => set({ menu }),
+  closeMenu: () => set({ menu: null }),
   setMembersDialogOpen: (membersDialogOpen) => set({ membersDialogOpen }),
 }))
 

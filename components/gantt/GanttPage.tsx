@@ -5,6 +5,7 @@ import { GanttToolbar } from './GanttToolbar'
 import { GanttView } from './GanttView'
 import { GanttSummary } from './GanttSummary'
 import { RotateHint } from './RotateHint'
+import { ContextMenu } from './ContextMenu'
 import { TaskEditor } from './TaskEditor'
 import { MembersDialog } from '@/components/project/MembersDialog'
 
@@ -25,6 +26,7 @@ export function GanttPage({ payload }: { payload: HydratePayload }) {
       <GanttView />
       <GanttSummary />
       <TaskEditor />
+      <ContextMenu />
       <MembersDialog />
     </div>
   )
