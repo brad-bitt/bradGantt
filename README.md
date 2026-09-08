@@ -106,12 +106,32 @@ L'insertion « après » renumérote la fratrie de 0 à n plutôt que d'incréme
 des `sort_order` troués (une suppression en laisse) donneraient sinon deux frères au même rang, et
 l'ordre d'affichage deviendrait arbitraire. Voir `planInsertAfter` dans `lib/gantt/scheduling.ts`.
 
+Un projet vide propose aussi trois **modèles** (`lib/gantt/templates.ts`) : lancement produit,
+sprint de deux semaines, événement. Un modèle est daté depuis le jour où on l'applique et créé
+ligne par ligne avec les commandes ordinaires (`lib/gantt/apply-template.ts`) : moins de dix
+lignes, et chaque commande porte déjà l'optimisme, le retour arrière et le toast d'erreur.
+
 Sous le diagramme, une **barre de synthèse** (`lib/gantt/summary.ts`) donne le nombre de tâches, de
 groupes et de jalons, la période couverte, l'avancement global, le prochain jalon et le nombre de
 tâches en retard. L'avancement y est pondéré par la **durée** et non par le nombre de tâches, et
 les groupes sont exclus de tous les calculs : leurs colonnes `start_date` / `end_date` ne sont
 jamais réécrites quand leurs enfants bougent, c'est `computeLayout` qui recalcule leur empan à
 l'affichage. La liste des projets réutilise la même fonction pour la vignette de chaque carte.
+
+## Thème sombre
+
+La bascule est dans l'en-tête (et en haut à droite de la page de connexion). Un choix explicite
+est enregistré dans `localStorage` ; sans choix, la page suit le réglage du système, y compris
+quand il change en cours de session. Un script inséré en tête du `<body>` par le layout racine
+pose `data-theme` sur `<html>` avant le premier rendu, pour éviter l'éclair clair d'une page
+sombre (`components/layout/ThemeToggle.tsx`).
+
+Les couleurs sont des jetons Tailwind dans un `@theme` non inline (`app/globals.css`) : les
+utilitaires référencent `var(--color-…)`, et le bloc `:root[data-theme="dark"]` les redéfinit.
+Seule la STRUCTURE s'inverse (crème, papier, encre, bandes). Les couleurs de tâches et le jaune ne
+changent pas, et le texte posé sur elles utilise le jeton `on-data` (encre noire fixe) — `text-ink`
+deviendrait crème sur tangerine la nuit. L'en-tête a ses propres jetons (`header`, `on-header`)
+pour rester sombre dans les deux thèmes.
 
 ## Membres et invitations
 

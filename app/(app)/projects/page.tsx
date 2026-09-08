@@ -23,23 +23,28 @@ export default async function ProjectsPage() {
     .order('created_at', { ascending: false })
 
   const rows = data ?? []
-  const ids = rows.map((p) => p.id)
 
-  // DEUX lectures groupées pour toute la page, jamais une par carte : `in(...)` sur l'ensemble
-  // des identifiants garde le coût constant quel que soit le nombre de projets. Les tâches ne
-  // ramènent que les colonnes dont la synthèse et la vignette ont besoin — le reste (assigné,
-  // rang, repli) n'est lu qu'en ouvrant le projet.
-  // La RLS restreint déjà les deux tables aux projets dont on est membre ; le filtre `in` ne
-  // fait que borner la lecture à ceux qu'on affiche.
-  const [tasksRes, membersRes] = ids.length
+  // DEUX lectures groupées pour toute la page, jamais une par carte. Les tâches ne ramènent que
+  // les colonnes dont la synthèse et la vignette ont besoin — le reste (assigné, rang, repli)
+  // n'est lu qu'en ouvrant le projet.
+  //
+  // SANS filtre `in(project_id, …)` : la RLS restreint déjà les deux tables aux projets dont on
+  // est membre, c'est-à-dire exactement ceux que la page liste. Le filtre était donc redondant,
+  // et il cassait la page au-delà d'environ 170 projets — la bibliothèque encode chaque
+  // identifiant entre guillemets, l'URL dépassait les 8 Ko acceptés par PostgREST et la lecture
+  // revenait en « URI too long » : toutes les cartes se rendaient vides d'un coup.
+  const [tasksRes, membersRes] = rows.length
     ? await Promise.all([
-        supabase.from('tasks').select('project_id, type, title, start_date, end_date, progress, color').in('project_id', ids),
-        supabase.from('memberships').select('project_id, user_id, role, profiles(display_name, email, avatar_url, color)').in('project_id', ids),
+        supabase.from('tasks').select('project_id, type, title, start_date, end_date, progress, color'),
+        supabase.from('memberships').select('project_id, user_id, role, profiles(display_name, email, avatar_url, color)'),
       ])
-    : [{ data: [] }, { data: [] }]
+    : [{ data: [], error: null }, { data: [], error: null }]
 
   // Un échec de ces lectures d'appoint ne doit PAS priver l'utilisateur de sa liste de projets :
   // les cartes se rendent alors sans chiffres ni avatars, ce qui reste un écran utilisable.
+  // Politique d'erreur du projet : la cause technique part au journal serveur, l'écran reste muet.
+  if (tasksRes.error) console.error('[projects] lecture "tasks" en échec :', tasksRes.error.message)
+  if (membersRes.error) console.error('[projects] lecture "memberships" en échec :', membersRes.error.message)
   const tasksByProject = new Map<string, CardTask[]>()
   for (const t of tasksRes.data ?? []) {
     const list = tasksByProject.get(t.project_id) ?? []
