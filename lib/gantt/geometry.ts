@@ -8,6 +8,26 @@ export const ROW_HEIGHT = 44
 export const HEADER_HEIGHT = 56
 export const BAR_INSET = 8
 export const SIDEBAR_WIDTH = 300
+/**
+ * Sous cette largeur de conteneur (en pixels), la vue est dite COMPACTE : sidebar réduite,
+ * retraits resserrés. Même seuil que le `sm:` de Tailwind, pour que le CSS et la géométrie
+ * basculent ensemble.
+ */
+export const COMPACT_BREAKPOINT = 640
+/** Plancher de la sidebar compacte : en dessous, un titre de tâche n'a plus que quelques lettres. */
+export const SIDEBAR_MIN_WIDTH = 140
+
+/**
+ * Largeur de la sidebar pour un conteneur de `viewportWidth` pixels.
+ *
+ * Sur un téléphone, les 300 px fixes laissaient 90 px de timeline : la sidebar prend alors un
+ * peu moins de la moitié de l'écran, jamais moins de `SIDEBAR_MIN_WIDTH`. `null` (largeur pas
+ * encore mesurée) vaut la largeur de bureau, comme avant la mesure.
+ */
+export function sidebarWidthFor(viewportWidth: number | null): number {
+  if (viewportWidth === null || viewportWidth >= COMPACT_BREAKPOINT) return SIDEBAR_WIDTH
+  return Math.max(SIDEBAR_MIN_WIDTH, Math.min(SIDEBAR_WIDTH, Math.round(viewportWidth * 0.45)))
+}
 export const RESIZE_HANDLE_PX = 8
 /**
  * Distance à parcourir avant qu'une pression ne devienne un glissement. Sous ce seuil le geste
@@ -203,7 +223,7 @@ export function arrowPath(from: Rect, to: Rect): string {
  * Fonction pure et bornée à zéro : sur une plage courte (`todayX` proche de 0) ou un conteneur
  * plus étroit que la sidebar, elle ne renvoie jamais de valeur négative.
  */
-export function initialScrollLeft(todayX: number, viewportWidth: number): number {
-  const visible = Math.max(viewportWidth - SIDEBAR_WIDTH, 0)
+export function initialScrollLeft(todayX: number, viewportWidth: number, sidebarWidth = SIDEBAR_WIDTH): number {
+  const visible = Math.max(viewportWidth - sidebarWidth, 0)
   return Math.max(0, todayX - visible / 4)
 }

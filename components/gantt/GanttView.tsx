@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useGanttStore, selectCanEdit } from '@/lib/gantt/store'
 import { computeLayout, type Layout } from '@/lib/gantt/layout'
-import { HEADER_HEIGHT, SIDEBAR_WIDTH, dateToX, initialScrollLeft } from '@/lib/gantt/geometry'
+import { COMPACT_BREAKPOINT, HEADER_HEIGHT, dateToX, initialScrollLeft, sidebarWidthFor } from '@/lib/gantt/geometry'
 import { Sidebar } from './Sidebar'
 import { TimelineHeader } from './TimelineHeader'
 import { TimelineGrid } from './TimelineGrid'
@@ -20,6 +20,10 @@ export interface GanttViewContextValue {
   canEdit: boolean
   drag: TimelineDragHandlers
   reorder: ReorderDragHandlers
+  /** Largeur courante de la sidebar : 300 px au bureau, réduite sur un écran étroit. */
+  sidebarWidth: number
+  /** Écran étroit (téléphone) : retraits resserrés, carte d'accueil pleine largeur. */
+  compact: boolean
 }
 
 export const GanttViewContext = createContext<GanttViewContextValue | null>(null)
@@ -77,15 +81,22 @@ export function GanttView() {
     return () => observer.disconnect()
   }, [])
 
+  // La sidebar se resserre sur un écran étroit : à 300 px fixes, un téléphone de 390 px ne
+  // montrait que 90 px de timeline. Dérivée de la même mesure que la largeur visible.
+  const sidebarWidth = sidebarWidthFor(viewportWidth)
+  const compact = viewportWidth !== null && viewportWidth < COMPACT_BREAKPOINT
   // Largeur visible de la TIMELINE : le conteneur moins la sidebar collante qui en masque
   // les premiers pixels. Bornée à zéro pour un conteneur plus étroit que la sidebar.
-  const visibleTimelineWidth = Math.max((viewportWidth ?? 0) - SIDEBAR_WIDTH, 0)
+  const visibleTimelineWidth = Math.max((viewportWidth ?? 0) - sidebarWidth, 0)
 
   const layout = useMemo(
     () => computeLayout({ tasks, dependencies }, dragState, zoom, today, visibleTimelineWidth),
     [tasks, dependencies, dragState, zoom, today, visibleTimelineWidth],
   )
-  const value = useMemo<GanttViewContextValue>(() => ({ layout, canEdit, drag, reorder }), [layout, canEdit, drag, reorder])
+  const value = useMemo<GanttViewContextValue>(
+    () => ({ layout, canEdit, drag, reorder, sidebarWidth, compact }),
+    [layout, canEdit, drag, reorder, sidebarWidth, compact],
+  )
 
   // Sans recentrage, la vue s'ouvre sur `scrollLeft = 0`, soit un mois avant la première tâche :
   // l'écran principal de l'application paraît vide, y compris juste après la création d'un projet.
@@ -98,8 +109,8 @@ export function GanttView() {
     const key = `${projectId}:${zoom}`
     if (centeredKey.current === key) return
     centeredKey.current = key
-    el.scrollLeft = initialScrollLeft(dateToX(today, layout.range, zoom), el.clientWidth)
-  }, [projectId, zoom, today, layout.range, viewportWidth])
+    el.scrollLeft = initialScrollLeft(dateToX(today, layout.range, zoom), el.clientWidth, sidebarWidth)
+  }, [projectId, zoom, today, layout.range, viewportWidth, sidebarWidth])
 
   return (
     <GanttViewContext.Provider value={value}>
@@ -116,12 +127,12 @@ export function GanttView() {
         <div
           data-testid="gantt-content"
           className="relative flex min-h-full flex-col"
-          style={{ width: SIDEBAR_WIDTH + layout.width }}
+          style={{ width: sidebarWidth + layout.width }}
         >
           <div className="sticky top-0 z-30 flex" style={{ height: HEADER_HEIGHT }}>
             <div
               className="sticky left-0 z-40 flex items-center border-b-[3px] border-r-[3px] border-ink bg-cream px-3 font-display uppercase"
-              style={{ width: SIDEBAR_WIDTH, minWidth: SIDEBAR_WIDTH }}
+              style={{ width: sidebarWidth, minWidth: sidebarWidth }}
             >
               Tâches
             </div>

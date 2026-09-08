@@ -37,7 +37,9 @@ export function GanttSummary() {
   return (
     <div
       data-testid="gantt-summary"
-      className="flex shrink-0 flex-wrap items-center gap-x-6 gap-y-2 border-t-[3px] border-ink bg-paper px-6 py-2"
+      // `hidden sm:flex` : sur un téléphone, la barre repliée sur quatre lignes mangeait le tiers de
+      // la hauteur ; la carte du projet dans la liste porte déjà ces chiffres.
+      className="hidden shrink-0 flex-wrap items-center gap-x-6 gap-y-2 border-t-[3px] border-ink bg-paper px-6 py-2 sm:flex short:hidden"
     >
       <Stat label="Tâches">{summary.taskCount}</Stat>
       {summary.groupCount > 0 && <Stat label="Groupes">{summary.groupCount}</Stat>}

@@ -1,11 +1,11 @@
 'use client'
-import { ROW_HEIGHT, SIDEBAR_WIDTH } from '@/lib/gantt/geometry'
+import { ROW_HEIGHT } from '@/lib/gantt/geometry'
 import { useGanttStore } from '@/lib/gantt/store'
 import { useGanttView } from './GanttView'
 import { SidebarRow } from './SidebarRow'
 
 export function Sidebar() {
-  const { layout, canEdit, reorder } = useGanttView()
+  const { layout, canEdit, reorder, sidebarWidth, compact } = useGanttView()
   const openEditor = useGanttStore((s) => s.openEditor)
   return (
     // Le suivi et le relâchement du geste sont écoutés ICI, pas sur la poignée : dès le premier
@@ -15,7 +15,7 @@ export function Sidebar() {
     <div
       data-testid="gantt-sidebar"
       className="sticky left-0 z-20 touch-none border-r-[3px] border-ink bg-paper"
-      style={{ width: SIDEBAR_WIDTH, minWidth: SIDEBAR_WIDTH }}
+      style={{ width: sidebarWidth, minWidth: sidebarWidth }}
       onPointerMove={reorder.onPointerMove}
       onPointerUp={reorder.onPointerUp}
       onPointerCancel={reorder.onPointerUp}
@@ -29,8 +29,8 @@ export function Sidebar() {
         <button
           type="button"
           data-testid="sidebar-add-row"
-          className="flex w-full items-center gap-2 border-b border-dashed border-ink/30 pl-8 pr-2 text-left font-bold text-sm text-ink-soft hover:bg-band hover:text-ink brutal-focus"
-          style={{ height: ROW_HEIGHT }}
+          className="flex w-full items-center gap-2 border-b border-dashed border-ink/30 pr-2 text-left font-bold text-sm text-ink-soft hover:bg-band hover:text-ink brutal-focus"
+          style={{ height: ROW_HEIGHT, paddingLeft: compact ? 12 : 32 }}
           onClick={() => openEditor({ mode: 'create', parentId: null, type: 'task' })}
         >
           <span aria-hidden className="font-mono">+</span>

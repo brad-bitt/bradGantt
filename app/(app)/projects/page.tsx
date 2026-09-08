@@ -90,7 +90,7 @@ export default async function ProjectsPage() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl p-8 space-y-8">
+    <main className="mx-auto max-w-7xl p-4 space-y-6 sm:p-8 sm:space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1">
           {/* La date du jour en surtitre : c'est un tableau de bord, il dit quand on le regarde. */}

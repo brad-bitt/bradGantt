@@ -118,6 +118,22 @@ les groupes sont exclus de tous les calculs : leurs colonnes `start_date` / `end
 jamais réécrites quand leurs enfants bougent, c'est `computeLayout` qui recalcule leur empan à
 l'affichage. La liste des projets réutilise la même fonction pour la vignette de chaque carte.
 
+## Téléphone
+
+Sous 640 px de large, la vue est dite **compacte** (`COMPACT_BREAKPOINT` dans `lib/gantt/geometry.ts`) :
+la sidebar prend un peu moins de la moitié de l'écran au lieu de 300 px fixes (`sidebarWidthFor`),
+les retraits se resserrent, l'avatar d'assigné et la barre de synthèse s'effacent, le zoom
+n'affiche que ses initiales. Sur un appareil sans survol (variante Tailwind `touch:`, soit
+`@media (hover: none)`), les commandes révélées au survol — poignées de liaison et de
+réordonnancement, boutons `↳` et `+` — sont visibles en permanence : par l'opacité, comme au
+bureau, jamais par un rendu conditionnel.
+
+En portrait, un bandeau invite à tourner le téléphone : en paysage, la largeur repasse au-dessus
+du seuil et la vue retrouve sa mise en page de bureau (la variante `short:`, `max-height: 500px`,
+efface alors ce qui n'est pas le diagramme). Le bandeau se ferme pour la session.
+
+Les tests `tests/e2e/mobile.spec.ts` tournent en émulation Pixel 7 (portrait puis paysage).
+
 ## Thème sombre
 
 La bascule est dans l'en-tête (et en haut à droite de la page de connexion). Un choix explicite

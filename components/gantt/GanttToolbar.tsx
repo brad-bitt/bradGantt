@@ -15,9 +15,9 @@ export function GanttToolbar() {
   const setMembersDialogOpen = useGanttStore((s) => s.setMembersDialogOpen)
 
   return (
-    <div className="flex flex-wrap items-center gap-4 border-b-[3px] border-ink bg-paper px-6 py-3">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b-[3px] border-ink bg-paper px-3 py-2 sm:gap-4 sm:px-6 sm:py-3 short:py-1">
       <Link href="/projects" className="font-mono text-sm underline brutal-focus">← Projets</Link>
-      <h1 className="text-2xl truncate max-w-md">{name}</h1>
+      <h1 className="max-w-md truncate text-xl sm:text-2xl">{name}</h1>
       {canEdit ? <Badge color={myRole === 'owner' ? 'violet' : 'blue'}>{myRole}</Badge> : <Badge color="cyan">Lecture seule</Badge>}
       {/* La pile d'avatars devient la porte d'entrée du dialog : c'est déjà là qu'on regarde
           pour savoir qui travaille sur le projet. Le mot « Membres » l'accompagne, une pile
@@ -28,7 +28,7 @@ export function GanttToolbar() {
         </span>
         <span className="font-bold uppercase text-sm underline">Membres</span>
       </button>
-      <div className="ml-auto flex items-center gap-3">
+      <div className="ml-auto flex flex-wrap items-center gap-2 sm:gap-3">
         <ZoomControls />
         {canEdit && (
           <>

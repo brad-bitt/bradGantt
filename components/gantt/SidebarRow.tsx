@@ -10,7 +10,7 @@ import { useGanttView } from './GanttView'
 
 export function SidebarRow({ row }: { row: Row }) {
   const { task, depth } = row
-  const { canEdit, reorder } = useGanttView()
+  const { canEdit, reorder, compact } = useGanttView()
   const selected = useGanttStore((s) => s.selection?.kind === 'task' && s.selection.id === task.id)
   /**
    * Cette ligne est la place VISÉE par le geste en cours. Le sélecteur retourne un booléen et
@@ -32,14 +32,17 @@ export function SidebarRow({ row }: { row: Row }) {
     <div
       data-row-task-id={task.id}
       className={cn(
-        'group/row flex items-center gap-2 border-b border-ink/20 pr-2 select-none',
+        'group/row flex items-center border-b border-ink/20 pr-2 select-none',
+        // Sur un écran étroit, chaque pixel d'interligne est pris sur le titre.
+        compact ? 'gap-1' : 'gap-2',
         // La ligne de groupe se distingue par un fond, pas par un trait de plus : elle coiffe ses
         // enfants, la sidebar doit le dire sans ajouter de bordure au décompte.
         task.type === 'group' && 'bg-band',
         selected && 'bg-yellow text-on-data',
         isDropTarget && 'shadow-[inset_0_3px_0_var(--color-ink)]',
       )}
-      style={{ height: ROW_HEIGHT, paddingLeft: depth === 1 ? 32 : 8 }}
+      // Retrait d'enfant resserré sur un écran étroit : 32 px, c'est un quart d'une sidebar compacte.
+      style={{ height: ROW_HEIGHT, paddingLeft: depth === 1 ? (compact ? 20 : 32) : 8 }}
       onClick={() => select({ kind: 'task', id: task.id })}
       onDoubleClick={() => canEdit && openEditor({ mode: 'edit', taskId: task.id })}
     >
@@ -51,7 +54,7 @@ export function SidebarRow({ row }: { row: Row }) {
           aria-label="Réordonner"
           // Même règle que la poignée de liaison : l'opacité tombe, le bouton reste. La colonne
           // garde donc sa largeur, et la ligne ne sursaute pas au passage de la souris.
-          className="w-4 shrink-0 cursor-grab font-mono leading-none text-ink/40 opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 active:cursor-grabbing brutal-focus"
+          className="w-4 shrink-0 cursor-grab font-mono leading-none text-ink/40 opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 touch:opacity-100 active:cursor-grabbing brutal-focus"
           onPointerDown={(e) => reorder.onGripPointerDown(e, task.id)}
           onClick={(e) => e.stopPropagation()}
         >
@@ -74,12 +77,15 @@ export function SidebarRow({ row }: { row: Row }) {
         </button>
       ) : task.type === 'group' ? (
         <span className="w-5 shrink-0 text-center font-mono text-ink/60" aria-hidden>{task.collapsed ? '▸' : '▾'}</span>
-      ) : (
+      ) : !compact ? (
+        // Colonne du chevron réservée sur une ligne de tâche, pour aligner les titres — au bureau
+        // seulement : sur un téléphone, ces 20 px de vide sont un cinquième du titre.
         <span className="w-5 shrink-0" />
-      )}
+      ) : null}
       {task.type === 'milestone' && <span className="size-3 shrink-0 rotate-45 bg-ink" aria-hidden />}
       <span className={cn('flex-1 truncate text-sm', task.type === 'group' && 'font-display uppercase')}>{task.title}</span>
-      {assignee && <Avatar name={assignee.displayName} color={assignee.color} src={assignee.avatarUrl} size="sm" />}
+      {/* L'assigné reste lisible dans l'éditeur : sur un écran étroit, son avatar cède la place au titre. */}
+      {assignee && !compact && <Avatar name={assignee.displayName} color={assignee.color} src={assignee.avatarUrl} size="sm" />}
       {/* Enchaînement. Sur une tâche ou un jalon : une TÂCHE frère, insérée juste après et liée
           par défaut. Sur un groupe : un GROUPE, c'est-à-dire la phase suivante — le bouton « + »
           voisin couvre déjà le besoin d'ajouter une tâche DANS ce groupe, et un groupe ne peut
@@ -89,7 +95,7 @@ export function SidebarRow({ row }: { row: Row }) {
           type="button"
           aria-label={`Ajouter après « ${task.title} »`}
           title={`Ajouter après « ${task.title} »`}
-          className="size-6 shrink-0 border-[3px] border-ink bg-paper font-mono text-xs leading-none opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 hover:bg-yellow hover:text-on-data brutal-focus"
+          className="size-6 shrink-0 border-[3px] border-ink bg-paper font-mono text-xs leading-none opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 touch:opacity-100 hover:bg-yellow hover:text-on-data brutal-focus"
           onClick={(e) => {
             e.stopPropagation()
             openEditor({
@@ -107,7 +113,7 @@ export function SidebarRow({ row }: { row: Row }) {
         <button
           type="button"
           aria-label="Ajouter une tâche au groupe"
-          className="size-6 shrink-0 border-[3px] border-ink bg-paper font-bold leading-none opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 hover:bg-yellow hover:text-on-data brutal-focus"
+          className="size-6 shrink-0 border-[3px] border-ink bg-paper font-bold leading-none opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 touch:opacity-100 hover:bg-yellow hover:text-on-data brutal-focus"
           onClick={(e) => { e.stopPropagation(); openEditor({ mode: 'create', parentId: task.id, type: 'task' }) }}
         >
           +

@@ -52,6 +52,12 @@
   --shadow-brutal-xl: 8px 8px 0 var(--color-ink);
 }
 
+/* Variante « toucher » : un appareil sans survol. Les commandes révélées au survol (poignées,
+   boutons de ligne) y sont visibles en permanence, sinon elles n'existent pas. */
+@custom-variant touch (@media (hover: none));
+/* Variante « fenêtre basse » : un téléphone en paysage. Ce qui n'est pas le diagramme s'efface. */
+@custom-variant short (@media (max-height: 500px));
+
 @theme inline {
   --font-display: var(--font-archivo-black), Impact, sans-serif;
   --font-ui: var(--font-space-grotesk), system-ui, sans-serif;

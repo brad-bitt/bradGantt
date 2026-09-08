@@ -34,7 +34,7 @@ export function MilestoneMark({ task, rect }: { task: Task; rect: Rect }) {
           style={{ width: LINK_HANDLE_PX, height: LINK_HANDLE_PX, right: -LINK_HANDLE_PX }}
           className={cn(
             'absolute top-1/2 z-20 -translate-y-1/2 border-[3px] border-ink bg-paper cursor-crosshair hover:bg-yellow',
-            'opacity-0 transition-opacity group-hover/ms:opacity-100 focus-visible:opacity-100',
+            'opacity-0 transition-opacity group-hover/ms:opacity-100 focus-visible:opacity-100 touch:opacity-100',
             selected && 'opacity-100',
           )}
           onPointerDown={(e) => drag.onLinkPointerDown(e, task.id)}

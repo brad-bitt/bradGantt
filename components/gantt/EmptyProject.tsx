@@ -1,11 +1,11 @@
 'use client'
 import { useState } from 'react'
 import { useGanttStore, selectCanEdit } from '@/lib/gantt/store'
-import { SIDEBAR_WIDTH } from '@/lib/gantt/geometry'
 import { TEMPLATES, instantiate, type ProjectTemplate } from '@/lib/gantt/templates'
 import { applyTemplate } from '@/lib/gantt/apply-template'
 import { Button } from '@/components/ui/Button'
 import { MiniGantt } from '@/components/project/MiniGantt'
+import { useGanttView } from './GanttView'
 
 /**
  * Écran d'accueil d'un projet sans aucune tâche.
@@ -26,6 +26,9 @@ export function EmptyProject() {
   const canEdit = useGanttStore(selectCanEdit)
   const openEditor = useGanttStore((s) => s.openEditor)
   const today = useGanttStore((s) => s.today)
+  // Sur un écran étroit, la carte couvre la sidebar (vide, par définition) et prend toute la
+  // largeur ; au bureau, elle se pose à droite de la colonne des tâches.
+  const { sidebarWidth, compact } = useGanttView()
   // Identifiant du modèle en cours d'application : les autres boutons se désactivent, et la
   // carte disparaît d'elle-même dès la première ligne créée.
   const [applying, setApplying] = useState<string | null>(null)
@@ -39,8 +42,8 @@ export function EmptyProject() {
   return (
     <div
       data-testid="gantt-empty"
-      className="pointer-events-auto sticky w-fit max-w-3xl bg-paper brutal shadow-brutal-lg p-6 space-y-5"
-      style={{ left: SIDEBAR_WIDTH + 16 }}
+      className="pointer-events-auto sticky w-fit max-w-3xl bg-paper brutal shadow-brutal-lg p-4 sm:p-6 space-y-5"
+      style={compact ? { left: 12, maxWidth: 'calc(100vw - 24px)' } : { left: sidebarWidth + 16 }}
     >
       <h2 className="text-2xl">Ce projet est vide</h2>
       {canEdit ? (

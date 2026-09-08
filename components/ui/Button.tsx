@@ -34,7 +34,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ref={ref}
       type={type}
       className={cn(
-        'inline-flex items-center justify-center gap-2 font-ui font-bold uppercase tracking-wide brutal-focus disabled:opacity-50 disabled:pointer-events-none',
+        // `whitespace-nowrap` : dans une barre qui replie ses boutons, un bouton ne se casse pas
+        // en deux lignes, c'est la barre qui passe à la ligne.
+        'inline-flex items-center justify-center gap-2 whitespace-nowrap font-ui font-bold uppercase tracking-wide brutal-focus disabled:opacity-50 disabled:pointer-events-none',
         variants[variant],
         sizes[size],
         className,

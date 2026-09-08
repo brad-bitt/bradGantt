@@ -4,6 +4,7 @@ import { useGanttStore, type HydratePayload } from '@/lib/gantt/store'
 import { GanttToolbar } from './GanttToolbar'
 import { GanttView } from './GanttView'
 import { GanttSummary } from './GanttSummary'
+import { RotateHint } from './RotateHint'
 import { TaskEditor } from './TaskEditor'
 import { MembersDialog } from '@/components/project/MembersDialog'
 
@@ -18,8 +19,9 @@ export function GanttPage({ payload }: { payload: HydratePayload }) {
 
   if (!ready) return <div className="p-8 font-mono">Chargement…</div>
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem)]">
+    <div className="flex flex-col h-[calc(100dvh-3.5rem)]">
       <GanttToolbar />
+      <RotateHint />
       <GanttView />
       <GanttSummary />
       <TaskEditor />

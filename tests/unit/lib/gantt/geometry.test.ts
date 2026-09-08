@@ -1,6 +1,7 @@
 import {
   PX_PER_DAY, ROW_HEIGHT, BAR_INSET, computeRange, dateToX, xToDate, pxToDays, barRect,
   timelineWidth, dayColumns, monthCells, subCells, arrowPath, initialScrollLeft, SIDEBAR_WIDTH,
+  sidebarWidthFor, COMPACT_BREAKPOINT, SIDEBAR_MIN_WIDTH,
   RESIZE_HANDLE_PX, resizeHandleWidth, extendRangeToWidth,
 } from '@/lib/gantt/geometry'
 import type { Zoom } from '@/lib/gantt/types'
@@ -234,3 +235,28 @@ function verifyPathNoIntersection(path: string, from: { x: number; y: number; wi
     }
   }
 }
+
+describe('sidebarWidthFor', () => {
+  it('garde la largeur de bureau tant que le conteneur n’est pas mesuré ou est large', () => {
+    expect(sidebarWidthFor(null)).toBe(SIDEBAR_WIDTH)
+    expect(sidebarWidthFor(1280)).toBe(SIDEBAR_WIDTH)
+    expect(sidebarWidthFor(COMPACT_BREAKPOINT)).toBe(SIDEBAR_WIDTH)
+  })
+  it('se resserre sous le seuil compact, un peu sous la moitié de l’écran', () => {
+    const w = sidebarWidthFor(390)
+    expect(w).toBeLessThan(390 / 2)
+    expect(w).toBeGreaterThanOrEqual(SIDEBAR_MIN_WIDTH)
+    // Il reste plus de la moitié de l'écran pour la timeline.
+    expect(390 - w).toBeGreaterThan(195)
+  })
+  it('ne descend jamais sous le plancher lisible', () => {
+    expect(sidebarWidthFor(200)).toBe(SIDEBAR_MIN_WIDTH)
+  })
+})
+
+describe('initialScrollLeft avec une sidebar compacte', () => {
+  it('mesure le quart de contexte sur la largeur réellement visible', () => {
+    // 390 de conteneur, 176 de sidebar => 214 visibles, quart = 53,5.
+    expect(initialScrollLeft(1200, 390, 176)).toBe(1200 - 53.5)
+  })
+})

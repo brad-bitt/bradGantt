@@ -14,7 +14,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     // Deux colonnes à partir de `lg`, empilées en dessous : le formulaire reste EN PREMIER dans
     // le document, donc en haut sur mobile et premier au clavier. La colonne de droite n'est
     // qu'une vitrine, elle ne doit jamais s'interposer avant le champ de connexion.
-    <main className="relative flex min-h-screen flex-col items-center justify-center p-6 pb-16">
+    <main className="relative flex min-h-screen flex-col items-center justify-center p-4 pt-20 pb-16 sm:p-6 sm:pt-20 lg:pt-6">
       <ThemeToggle className="absolute right-6 top-6" />
       <div className="grid w-full max-w-6xl items-center gap-10 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-16">
         <div className="w-full bg-paper brutal shadow-brutal-xl p-8 space-y-6">
@@ -30,7 +30,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           {/* Le titre porte la promesse, en caractères d'affichage et sur trois lignes : c'est
               la seule fois où le site parle de lui, autant que ça se voie. Le mot-clé est
               souligné du filet jaune de la marque, pas d'un aplat. */}
-          <h2 className="text-4xl leading-[1.05] sm:text-5xl lg:text-6xl">
+          <h2 className="text-3xl leading-[1.05] sm:text-5xl lg:text-6xl">
             Des Gantt partagés,
             <br />
             <span className="decoration-yellow decoration-[6px] underline underline-offset-8">brutalement</span> simples.
