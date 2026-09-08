@@ -111,4 +111,7 @@
      structure (encre du thème, sinon les hachures disparaissent la nuit). */
   .hatch-data { background-image: repeating-linear-gradient(45deg, #111111 0 4px, transparent 4px 8px); }
   .hatch { background-image: repeating-linear-gradient(45deg, var(--color-ink) 0 4px, transparent 4px 8px); }
+  /* Graduation d'un jour dans la grille : un pointillé vertical, 3 px de trait pour 5 px de vide,
+     en encre à 35 %. Plus léger qu'un trait plein, et il marque encore le rythme. */
+  .day-tick { background-image: repeating-linear-gradient(to bottom, color-mix(in srgb, var(--color-ink) 35%, transparent) 0 3px, transparent 3px 8px); }
 }

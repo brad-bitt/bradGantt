@@ -1,6 +1,11 @@
 'use client'
 import { useGanttStore } from '@/lib/gantt/store'
 import { ROW_HEIGHT, dayColumns, dateToX, monthCells, PX_PER_DAY } from '@/lib/gantt/geometry'
+import { parseDate } from '@/lib/gantt/dates'
+import { cn } from '@/lib/utils'
+
+/** Lundi : le début d'une semaine ISO, marqué d'un trait plus net que les autres jours. */
+const isMonday = (iso: string) => parseDate(iso).getDay() === 1
 import { useGanttView } from './GanttView'
 
 export function TimelineGrid() {
@@ -32,15 +37,37 @@ export function TimelineGrid() {
       {months.map((m, i) => (
         i % 2 === 1 && <div key={m.key} className="absolute top-0 bottom-0 bg-band" style={{ left: m.x, width: m.width }} />
       ))}
-      {/* Aplat et non plus hachures diagonales. Le motif rayé se répétait sur toute la hauteur et
-          sur toutes les colonnes de week-end : au zoom semaine, où une colonne fait 12 px, il
-          produisait un moiré permanent dans lequel quatre barres se noyaient. Une bande unie dit
-          la même chose — ce jour n'est pas ouvré — sans disputer l'attention aux données. */}
+      {/* Week-ends : une bande unie à tous les zooms, et des hachures PAR-DESSUS au zoom jour
+          seulement. Le motif rayé sur toute la hauteur et à tous les zooms faisait un moiré
+          permanent au zoom semaine (colonnes de 12 px) ; à 40 px par jour il ne raye que deux
+          colonnes sur sept, à 6 % d'encre, et dit « pas ouvré » d'un trait de crayon plutôt que
+          d'un aplat de plus. */}
       {cols.filter((c) => c.isWeekend).map((c) => (
-        <div key={c.date} className="absolute top-0 bottom-0 bg-ink/[0.07]" style={{ left: c.x, width: c.width }} />
+        <div
+          key={c.date}
+          className={cn('absolute top-0 bottom-0 bg-ink/[0.06]', zoom === 'day' && 'hatch opacity-[0.12]')}
+          style={{ left: c.x, width: c.width }}
+        />
       ))}
+      {/* Colonne d'aujourd'hui : une teinte sur toute la hauteur, sous le trait rouge. Le jour
+          courant devient une colonne qu'on lit d'un coup d'œil, pas seulement une ligne. */}
+      {inRange && (
+        <div className="absolute top-0 bottom-0 bg-today/10" style={{ left: todayX, width: PX_PER_DAY[zoom] }} />
+      )}
+      {/* Séparations de jours. Un trait plein par jour dessinait un quadrillage de cahier ; le
+          rythme est désormais à deux niveaux — pointillé fin entre les jours, trait net au lundi —
+          pour que la semaine se lise comme un bloc et le jour comme une graduation. Au zoom
+          semaine ne restent que les lundis (une colonne fait 12 px) ; au zoom mois, les bandes
+          de mois suffisent. */}
       {zoom === 'day' && cols.map((c) => (
-        <div key={c.date} className="absolute top-0 bottom-0 border-r border-ink/20" style={{ left: c.x, width: c.width }} />
+        isMonday(c.date) ? (
+          <div key={c.date} className="absolute top-0 bottom-0 w-px bg-ink/35" style={{ left: c.x }} />
+        ) : (
+          <div key={c.date} className="absolute top-0 bottom-0 w-px day-tick" style={{ left: c.x }} />
+        )
+      ))}
+      {zoom === 'week' && cols.filter((c) => isMonday(c.date)).map((c) => (
+        <div key={c.date} className="absolute top-0 bottom-0 w-px day-tick" style={{ left: c.x }} />
       ))}
       {/* Traits de ligne : POUR LES LIGNES RÉELLES seulement. Les prolonger sous la dernière
           tâche redessinerait un tableau vide, ce que le voile ne rattraperait pas — un trait
