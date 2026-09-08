@@ -65,9 +65,9 @@ test('créer, éditer puis supprimer une tâche', async ({ page }) => {
   await page.getByRole('dialog').getByRole('button', { name: 'Supprimer' }).click()
   await expect(page.locator('[data-task-id]')).toHaveCount(0)
 
-  // Supprimer sa dernière tâche ne doit pas laisser une grille rigoureusement nue : le message
-  // de projet vide (posé en `sticky left-4` en tâche 9) doit rester dans le champ de vision.
-  const empty = page.getByText('Aucune tâche pour l\'instant.')
+  // Supprimer sa dernière tâche ne doit pas laisser une grille rigoureusement nue : la carte
+  // d'accueil du projet vide doit rester dans le champ de vision.
+  const empty = page.getByTestId('gantt-empty')
   await expect(empty).toBeVisible()
   await expect(empty).toBeInViewport()
 

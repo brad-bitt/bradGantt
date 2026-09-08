@@ -137,7 +137,7 @@ test('un non-membre obtient une 404', async ({ page }) => {
   expect(res?.status()).toBe(404)
 })
 
-test('un projet sans tâche affiche son message, dans le champ de vision', async ({ page }) => {
+test('un projet sans tâche affiche sa carte d’accueil, dans le champ de vision', async ({ page }) => {
   await loginAs(page, 'alice')
   await page.getByRole('button', { name: 'Nouveau projet' }).click()
   await page.getByLabel('Nom du projet').fill(`Projet vide ${Date.now()}`)
@@ -148,19 +148,18 @@ test('un projet sans tâche affiche son message, dans le champ de vision', async
   // même à x = -639. Le message était posé en `absolute` dans la timeline défilée, donc le
   // recentrage sur aujourd'hui le sortait de l'écran — un projet neuf s'ouvrait sur une grille
   // nue, sans la moindre indication. C'est bien la présence DANS LE CHAMP DE VISION qu'on exige.
-  const message = page.getByText('Aucune tâche pour l\'instant.')
+  const message = page.getByTestId('gantt-empty')
   await expect(message).toBeVisible()
   await expect(message).toBeInViewport()
 
-  // Il ne doit pas non plus TOUCHER la grille : `mt-4` seul le collait à l'élément du dessous.
-  const gap = await message.evaluate((el) => {
-    const next = el.nextElementSibling!.getBoundingClientRect()
-    return Math.round(next.top - el.getBoundingClientRect().bottom)
-  })
-  expect(gap).toBeGreaterThanOrEqual(16)
+  // Elle ne doit pas RECOUVRIR la colonne des tâches : la carte flotte au-dessus de la grille,
+  // et la sidebar collante doit rester lisible à sa gauche.
+  const sidebar = page.getByTestId('gantt-sidebar')
+  const sidebarBox = (await sidebar.boundingBox())!
+  expect((await message.boundingBox())!.x).toBeGreaterThanOrEqual(sidebarBox.x + sidebarBox.width)
 
-  // La propriété essentielle du message reste vraie : il suit le défilement horizontal. On pousse
-  // le conteneur à fond à droite — la timeline remplit désormais l'écran à tous les zooms, donc il
+  // La propriété essentielle reste vraie : la carte suit le défilement horizontal. On pousse le
+  // conteneur à fond à droite — la timeline remplit désormais l'écran à tous les zooms, donc il
   // y a réellement de quoi défiler et l'assertion n'est pas gratuite.
   await page.getByTestId('gantt-scroll').evaluate((el) => { el.scrollLeft = el.scrollWidth })
   await expect(message).toBeInViewport()

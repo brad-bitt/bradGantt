@@ -89,6 +89,30 @@ commentaire dans `lib/e2e.ts`).
 `npm run test:db` et `npm run db:types` nécessitent la stack Supabase locale démarrée
 (`npx supabase start`).
 
+## Construire un diagramme
+
+Un projet neuf s'ouvre sur une carte d'accueil qui propose une première tâche, un premier jalon
+ou un premier groupe. Une fois la première ligne posée, trois gestes suffisent :
+
+- **enchaîner** — le bouton `↳` d'une ligne crée l'élément suivant. Sur une tâche ou un jalon, il
+  prépare une **tâche** rangée juste après elle dans la liste, dont le début est pré-rempli au
+  lendemain de la fin de l'ancre, et propose de tracer la dépendance (case cochée par défaut).
+  Sur un groupe, il prépare le **groupe suivant** — le bouton `+` voisin, lui, ajoute une tâche
+  *dans* le groupe. Les deux boutons n'apparaissent qu'au survol de la ligne, par l'opacité ;
+- **déplacer** — glisser une barre la décale, glisser ses bords l'allonge ;
+- **lier** — tirer la pastille du bord droit d'une barre vers une autre crée la flèche.
+
+L'insertion « après » renumérote la fratrie de 0 à n plutôt que d'incrémenter les rangs suivants :
+des `sort_order` troués (une suppression en laisse) donneraient sinon deux frères au même rang, et
+l'ordre d'affichage deviendrait arbitraire. Voir `planInsertAfter` dans `lib/gantt/scheduling.ts`.
+
+Sous le diagramme, une **barre de synthèse** (`lib/gantt/summary.ts`) donne le nombre de tâches, de
+groupes et de jalons, la période couverte, l'avancement global, le prochain jalon et le nombre de
+tâches en retard. L'avancement y est pondéré par la **durée** et non par le nombre de tâches, et
+les groupes sont exclus de tous les calculs : leurs colonnes `start_date` / `end_date` ne sont
+jamais réécrites quand leurs enfants bougent, c'est `computeLayout` qui recalcule leur empan à
+l'affichage. La liste des projets réutilise la même fonction pour la vignette de chaque carte.
+
 ## Membres et invitations
 
 Le propriétaire d'un projet ouvre le dialog **Membres** (la pile d'avatars dans la barre du
