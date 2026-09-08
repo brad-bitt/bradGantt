@@ -57,3 +57,21 @@ test('un nom vide est refusé', async ({ page }) => {
   // (AppRouterAnnouncer), donc un getByRole('alert') global matche 2 éléments.
   await expect(page.getByRole('dialog').getByRole('alert')).toHaveText('Le nom est requis')
 })
+
+test('la liste ouvre sur un bandeau de chiffres et chaque carte porte sa vignette', async ({ page }) => {
+  await loginAs(page, 'alice')
+
+  // Le bandeau n'a de sens qu'avec au moins un projet : le compte de test en a toujours (seed).
+  const overview = page.getByTestId('projects-overview')
+  await expect(overview).toBeVisible()
+  await expect(overview).toContainText('Projets')
+  await expect(overview).toContainText('En retard')
+
+  // Le projet démo du seed a des tâches : sa carte montre la vignette (barres en couleur), pas
+  // le cadre « frise vide » d'un projet neuf.
+  const demo = page.getByRole('article', { name: 'Projet démo' })
+  await demo.scrollIntoViewIfNeeded()
+  await expect(demo.getByRole('progressbar', { name: 'Avancement de Projet démo' })).toBeVisible()
+  await expect(demo.getByText('Frise vide')).toHaveCount(0)
+  await expect(demo.getByText('Kick-off dev')).toBeVisible()
+})

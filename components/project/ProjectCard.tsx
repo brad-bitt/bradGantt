@@ -7,19 +7,26 @@ import { Avatar } from '@/components/ui/Avatar'
 import { Badge, type BadgeColor } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { RenameProjectDialog } from './RenameProjectDialog'
+import { MiniGantt, MiniGanttPlaceholder } from './MiniGantt'
 import { deleteProject } from '@/app/(app)/projects/actions'
 import { toast } from '@/lib/toast/store'
 import { parseDate } from '@/lib/gantt/dates'
-import type { ProjectSummary } from '@/lib/gantt/summary'
+import type { ProjectSummary, SummaryTask } from '@/lib/gantt/summary'
+import type { MiniTask } from '@/lib/gantt/mini'
 import type { Member } from '@/lib/gantt/types'
+
+/** Ce que la carte sait d'une tâche : de quoi la résumer ET la dessiner en vignette. */
+export type CardTask = SummaryTask & MiniTask
 
 export interface ProjectListItem {
   id: string
   name: string
   role: 'owner' | 'editor' | 'viewer'
   createdAt: string
+  tasks: CardTask[]
   summary: ProjectSummary
   members: Member[]
+  today: string
 }
 
 const roleColor: Record<ProjectListItem['role'], BadgeColor> = { owner: 'violet', editor: 'blue', viewer: 'cyan' }
@@ -34,7 +41,7 @@ function short(iso: string) {
 export function ProjectCard({ project }: { project: ProjectListItem }) {
   const [renaming, setRenaming] = useState(false)
   const [, start] = useTransition()
-  const { summary, members } = project
+  const { summary, members, tasks, today } = project
   const empty = summary.taskCount === 0 && summary.milestoneCount === 0
   /**
    * Seuls les compteurs NON NULS sont énoncés : « 0 tâche · 1 jalon » se lisait comme un
@@ -62,42 +69,48 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
         <Badge color={roleColor[project.role]}>{project.role}</Badge>
       </div>
 
+      {/* La vignette d'abord : c'est l'image du projet, elle se reconnaît avant de se lire. Un
+          projet vide garde la même silhouette avec un cadre en pointillé. */}
+      {empty || !summary.range ? (
+        <MiniGanttPlaceholder />
+      ) : (
+        <Link href={`/projects/${project.id}`} tabIndex={-1} aria-hidden className="block brutal-focus">
+          <MiniGantt tasks={tasks} range={summary.range} today={today} />
+        </Link>
+      )}
+
       {empty ? (
         // Un projet vide ne se décrit pas par des zéros : la carte dit ce qu'il reste à faire.
         <p className="flex-1 font-mono text-xs text-ink-soft">Aucune tâche — ouvre-le pour commencer.</p>
       ) : (
-        <div className="flex-1 space-y-3">
+        <div className="flex-1 space-y-2">
+          {/* Deux lignes et non une : côte à côte, « 2 tâches · 1 groupe · 1 jalon » et la période
+              se coupaient en plein milieu d'un compteur dès que la carte était un peu étroite. */}
+          <p className="font-mono text-xs text-ink-soft">{counts.join(' · ')}</p>
+          {summary.range && (
+            <p className="font-mono text-xs text-ink-soft">{short(summary.range.start)} → {short(summary.range.end)}</p>
+          )}
+
           {/* Pas de barre d'avancement sans tâche à faire avancer : sur un projet qui ne contient
               que des jalons, « 0 % » décrivait un retard imaginaire. */}
           {summary.taskCount > 0 && (
-          <div className="space-y-1">
-            <div className="flex items-baseline justify-between font-mono text-xs">
-              <span className="text-ink-soft">Avancement</span>
-              <span className="font-bold text-ink">{summary.progress} %</span>
+            <div className="flex items-center gap-2">
+              {/* Même vocabulaire que l'avancement d'une barre de tâche : des hachures d'encre. */}
+              <div
+                role="progressbar"
+                aria-valuenow={summary.progress}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`Avancement de ${project.name}`}
+                className="relative h-3 flex-1 border-[3px] border-ink bg-paper"
+              >
+                <span
+                  className="absolute inset-y-0 left-0 bg-[repeating-linear-gradient(45deg,#111_0_4px,transparent_4px_8px)] opacity-40"
+                  style={{ width: `${summary.progress}%` }}
+                />
+              </div>
+              <span className="w-10 text-right font-mono text-xs font-bold">{summary.progress} %</span>
             </div>
-            {/* Même vocabulaire que l'avancement d'une barre de tâche : des hachures d'encre. */}
-            <div
-              role="progressbar"
-              aria-valuenow={summary.progress}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-label={`Avancement de ${project.name}`}
-              className="relative h-3 w-full border-[3px] border-ink bg-paper"
-            >
-              <span
-                className="absolute inset-y-0 left-0 bg-[repeating-linear-gradient(45deg,#111_0_4px,transparent_4px_8px)] opacity-40"
-                style={{ width: `${summary.progress}%` }}
-              />
-            </div>
-          </div>
-          )}
-
-          <p className="font-mono text-xs text-ink-soft">{counts.join(' · ')}</p>
-
-          {summary.range && (
-            <p className="font-mono text-xs text-ink-soft">
-              {short(summary.range.start)} → {short(summary.range.end)}
-            </p>
           )}
 
           {summary.nextMilestone && (
