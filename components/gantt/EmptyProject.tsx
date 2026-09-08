@@ -1,7 +1,11 @@
 'use client'
+import { useState } from 'react'
 import { useGanttStore, selectCanEdit } from '@/lib/gantt/store'
 import { SIDEBAR_WIDTH } from '@/lib/gantt/geometry'
+import { TEMPLATES, instantiate, type ProjectTemplate } from '@/lib/gantt/templates'
+import { applyTemplate } from '@/lib/gantt/apply-template'
 import { Button } from '@/components/ui/Button'
+import { MiniGantt } from '@/components/project/MiniGantt'
 
 /**
  * Écran d'accueil d'un projet sans aucune tâche.
@@ -21,11 +25,21 @@ import { Button } from '@/components/ui/Button'
 export function EmptyProject() {
   const canEdit = useGanttStore(selectCanEdit)
   const openEditor = useGanttStore((s) => s.openEditor)
+  const today = useGanttStore((s) => s.today)
+  // Identifiant du modèle en cours d'application : les autres boutons se désactivent, et la
+  // carte disparaît d'elle-même dès la première ligne créée.
+  const [applying, setApplying] = useState<string | null>(null)
+
+  async function pickTemplate(id: string) {
+    setApplying(id)
+    await applyTemplate(id)
+    setApplying(null)
+  }
 
   return (
     <div
       data-testid="gantt-empty"
-      className="pointer-events-auto sticky w-fit max-w-xl bg-paper brutal shadow-brutal-lg p-6 space-y-4"
+      className="pointer-events-auto sticky w-fit max-w-3xl bg-paper brutal shadow-brutal-lg p-6 space-y-5"
       style={{ left: SIDEBAR_WIDTH + 16 }}
     >
       <h2 className="text-2xl">Ce projet est vide</h2>
@@ -40,6 +54,19 @@ export function EmptyProject() {
             <Button variant="secondary" onClick={() => openEditor({ mode: 'create', parentId: null, type: 'milestone' })}>Premier jalon</Button>
             <Button variant="secondary" onClick={() => openEditor({ mode: 'create', parentId: null, type: 'group' })}>Premier groupe</Button>
           </div>
+
+          {/* Les modèles : un diagramme complet en un clic, daté d'aujourd'hui. C'est ce que
+              font tous les outils du marché sur un projet vide, et c'est la façon la plus
+              rapide de VOIR ce que le produit permet avant de le retailler. */}
+          <div className="space-y-3 border-t-[3px] border-ink pt-5">
+            <p className="font-display text-sm uppercase">Ou pars d’un modèle</p>
+            <ul className="grid gap-3 sm:grid-cols-3">
+              {TEMPLATES.map((t) => (
+                <TemplateChoice key={t.id} template={t} today={today} busy={applying !== null} applying={applying === t.id} onUse={() => pickTemplate(t.id)} />
+              ))}
+            </ul>
+          </div>
+
           <ul className="space-y-1 border-t-[3px] border-ink pt-3 font-mono text-xs text-ink-soft">
             <li>↳ sur une ligne enchaîne la suivante juste après elle.</li>
             <li>Glisse une barre pour la déplacer, ses bords pour l’allonger.</li>
@@ -50,5 +77,28 @@ export function EmptyProject() {
         <p className="font-bold">Personne n’y a encore ajouté de tâche.</p>
       )}
     </div>
+  )
+}
+
+function TemplateChoice({ template, today, busy, applying, onUse }: {
+  template: ProjectTemplate
+  today: string
+  busy: boolean
+  applying: boolean
+  onUse: () => void
+}) {
+  const planned = instantiate(template, today)
+  const dated = planned.filter((p) => p.type !== 'group')
+  const range = { start: dated.map((p) => p.startDate).sort()[0], end: dated.map((p) => p.endDate).sort().at(-1)! }
+  return (
+    <li className="flex flex-col gap-2 border-[3px] border-ink p-3">
+      <p className="font-bold leading-tight">{template.name}</p>
+      {/* La vignette est celle des cartes de la liste : on reconnaît d'emblée ce qu'on obtiendra. */}
+      <MiniGantt tasks={planned} range={range} today={today} />
+      <p className="flex-1 text-xs text-ink-soft">{template.description}</p>
+      <Button size="sm" variant="secondary" disabled={busy} onClick={onUse} aria-label={`Utiliser le modèle ${template.name}`}>
+        {applying ? 'Création…' : `Utiliser · ${planned.length} lignes`}
+      </Button>
+    </li>
   )
 }
