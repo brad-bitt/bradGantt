@@ -44,7 +44,15 @@
 
 @layer base {
   * { border-radius: 0; }
-  body { @apply bg-cream text-ink font-ui antialiased; }
+  /* Trame de points sur le fond crème : elle donne une matière aux zones sans contenu (marges
+     de la liste, pourtour de la page de connexion) sans y ajouter un seul objet. Elle reste
+     sous 10 % d'encre — c'est du décor, il recule — et n'atteint pas la timeline du diagramme,
+     qui pose son propre fond crème opaque par-dessus. */
+  body {
+    @apply bg-cream text-ink font-ui antialiased;
+    background-image: radial-gradient(rgba(17, 17, 17, 0.09) 1.2px, transparent 1.2px);
+    background-size: 22px 22px;
+  }
   h1, h2, h3 { @apply font-display uppercase tracking-tight; }
 }
 

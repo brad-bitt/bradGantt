@@ -56,7 +56,7 @@ export function TimelineGrid() {
       {/* Voile. Posé EN DERNIER, donc par-dessus tout le décor : sous la zone de données, bandes
           de mois, week-ends et trait du jour s'estompent au lieu de disputer l'attention aux
           barres. Il laisse l'axe du temps lisible sans le laisser dominer. */}
-      <div className="absolute inset-x-0 bottom-0 bg-cream/75" style={{ top: dataHeight }} />
+      <div className="absolute inset-x-0 bottom-0 bg-cream/55" style={{ top: dataHeight }} />
     </div>
   )
 }
