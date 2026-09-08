@@ -10,6 +10,7 @@ import { TaskBar } from './TaskBar'
 import { MilestoneMark } from './MilestoneMark'
 import { GroupBar } from './GroupBar'
 import { DependencyArrows } from './DependencyArrows'
+import { EmptyProject } from './EmptyProject'
 import { useTimelineDrag, type TimelineDragHandlers } from './useTimelineDrag'
 import { useKeyboardShortcuts } from './useKeyboardShortcuts'
 import { useReorderDrag, type ReorderDragHandlers } from './useReorderDrag'
@@ -135,8 +136,13 @@ export function GanttView() {
               grille juste en dessous. La marge est verticale, jamais horizontale — un `ml`/`mx`
               décalerait la boîte à l'intérieur de son conteneur défilé et le `sticky left-4`,
               qui se mesure sur le CONTENEUR, cesserait de la ramener au même endroit. */}
+          {/* En SURIMPRESSION et non dans le flux : posée en bloc, la carte poussait la grille
+              et la sidebar de toute sa hauteur vers le bas, et le bord droit de la sidebar
+              commençait à mi-écran. Le conteneur est neutre au pointeur, la carte le reprend. */}
           {layout.rows.length === 0 && (
-            <p className="sticky left-4 z-20 my-4 w-fit bg-paper brutal px-4 py-2 font-bold">Aucune tâche pour l&apos;instant.</p>
+            <div className="pointer-events-none absolute inset-x-0 z-20" style={{ top: HEADER_HEIGHT + 24 }}>
+              <EmptyProject />
+            </div>
           )}
           {/* `flex-1` : le corps prend toute la hauteur restante ; ses deux enfants (sidebar et
               timeline) s'étirent avec lui par `align-items: stretch`, d'où des hauteurs en

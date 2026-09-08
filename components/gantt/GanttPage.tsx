@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { useGanttStore, type HydratePayload } from '@/lib/gantt/store'
 import { GanttToolbar } from './GanttToolbar'
 import { GanttView } from './GanttView'
+import { GanttSummary } from './GanttSummary'
 import { TaskEditor } from './TaskEditor'
 import { MembersDialog } from '@/components/project/MembersDialog'
 
@@ -20,6 +21,7 @@ export function GanttPage({ payload }: { payload: HydratePayload }) {
     <div className="flex flex-col h-[calc(100vh-3.5rem)]">
       <GanttToolbar />
       <GanttView />
+      <GanttSummary />
       <TaskEditor />
       <MembersDialog />
     </div>
