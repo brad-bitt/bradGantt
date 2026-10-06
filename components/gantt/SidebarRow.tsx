@@ -97,11 +97,11 @@ export function SidebarRow({ row }: { row: Row }) {
       {ticketsEnabled && ticketSummaries && ticketSummaries.length > 0 && !compact && (() => {
         const { done, total } = countDone(ticketSummaries)
         return (
-          <span
-            aria-label={`${done} ticket${done > 1 ? 's' : ''} terminé${done > 1 ? 's' : ''} sur ${total}`}
-            className="shrink-0 font-mono text-xs text-ink-soft"
-          >
-            {done}/{total}
+          // Texte masqué plutôt qu'aria-label : sur un <span> sans rôle, le nom n'est pas
+          // annoncé de façon fiable.
+          <span className="shrink-0 font-mono text-xs text-ink-soft">
+            <span className="sr-only">{`${done} ticket${done > 1 ? 's' : ''} terminé${done > 1 ? 's' : ''} sur ${total}`}</span>
+            <span aria-hidden>{done}/{total}</span>
           </span>
         )
       })()}

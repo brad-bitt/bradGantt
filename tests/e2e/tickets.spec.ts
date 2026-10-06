@@ -96,7 +96,7 @@ test('un ticket rattaché à une tâche fait apparaître le compteur dans la fri
 
   await page.getByRole('link', { name: '← Frise' }).click()
   await page.waitForURL('**/projects/**')
-  await expect(page.getByLabel('0 ticket terminé sur 1')).toBeVisible()
+  await expect(page.getByText('0 ticket terminé sur 1')).toBeVisible()
 })
 
 test('un lecteur voit les tickets sans aucune commande d\'écriture', async ({ page }) => {

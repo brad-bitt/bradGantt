@@ -35,7 +35,8 @@ describe('compteur de tickets dans la sidebar', () => {
   it('affiche « terminés / total » sur une tâche qui a des tickets', () => {
     hydrate({ enabled: true, done: 2, total: 5 })
     renderSidebar(false)
-    expect(screen.getByLabelText('2 tickets terminés sur 5')).toHaveTextContent('2/5')
+    expect(screen.getByText('2 tickets terminés sur 5')).toHaveClass('sr-only')
+    expect(screen.getByText('2/5')).toHaveAttribute('aria-hidden', 'true')
   })
 
   it('n\'affiche rien sur un projet dont les tickets sont désactivés', () => {

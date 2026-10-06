@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TicketBoard } from '@/components/tickets/TicketBoard'
 import { useTicketsStore } from '@/lib/tickets/store'
@@ -75,5 +75,21 @@ describe('TicketBoard', () => {
     expect(useTicketsStore.getState().editor).toBeNull()
     await userEvent.dblClick(card)
     expect(useTicketsStore.getState().editor).toEqual({ mode: 'edit', ticketId: 'a' })
+  })
+
+  it('un geste annulé (pointercancel) n\'écrit aucun statut et efface l\'aperçu', () => {
+    hydrate()
+    // jsdom n'implémente pas elementFromPoint : on désigne la colonne « En cours ».
+    const column = document.createElement('div')
+    column.dataset.columnStatus = 'doing'
+    document.elementFromPoint = vi.fn().mockReturnValue(column)
+    render(<TicketBoard />)
+    const card = screen.getByRole('article', { name: '#1 À faire ça' })
+    fireEvent.pointerDown(card, { button: 0, pointerId: 1 })
+    fireEvent.pointerMove(card, { clientX: 5, clientY: 5, pointerId: 1 })
+    expect(useTicketsStore.getState().drag).toEqual({ ticketId: 'a', overStatus: 'doing' })
+    fireEvent.pointerCancel(card, { pointerId: 1 })
+    expect(useTicketsStore.getState().drag).toBeNull()
+    expect(updateTicket).not.toHaveBeenCalled()
   })
 })

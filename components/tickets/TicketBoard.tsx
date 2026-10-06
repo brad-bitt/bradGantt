@@ -18,9 +18,9 @@ export function TicketBoard() {
       className="grid min-h-0 flex-1 gap-3 overflow-y-auto p-3 sm:gap-4 sm:p-6 md:grid-cols-3"
       onPointerMove={drag.onPointerMove}
       onPointerUp={drag.onPointerUp}
-      // Un pointeur qui quitte la fenêtre en plein geste laisserait la colonne éclairée pour
-      // toujours : on traite l'annulation comme un relâchement.
-      onPointerCancel={drag.onPointerUp}
+      // Geste annulé par le navigateur ou l'OS (ex. : un défilement tactile reprend la main) :
+      // on abandonne sans écrire, un dépôt non voulu changerait le statut à l'insu de l'utilisateur.
+      onPointerCancel={drag.onPointerCancel}
     >
       {STATUS_ORDER.map((status) => (
         <TicketColumn key={status} status={status} tickets={columns[status]} onCardPointerDown={drag.onCardPointerDown} />

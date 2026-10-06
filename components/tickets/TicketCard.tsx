@@ -33,10 +33,12 @@ export function TicketCard({ ticket, onPointerDown }: {
       // si bien que chaque dépôt produirait aussi un clic simple qui ouvrirait la modale.
       onDoubleClick={() => canEdit && openEditor({ mode: 'edit', ticketId: ticket.id })}
       className={cn(
-        // `touch-none` : sans lui, le doigt posé sur la carte ferait défiler la page au lieu de
-        // la déplacer, et le navigateur annulerait le geste au premier pixel.
-        'group/card flex flex-col gap-2 border-[3px] border-ink bg-paper p-3 select-none touch-none',
-        canEdit && 'cursor-grab active:cursor-grabbing',
+        // `touch-none` réservé aux éditeurs, et seulement dès md : sous ce seuil les colonnes
+        // s'empilent et le glisser n'a pas de défilement automatique, donc la carte couvrirait
+        // presque tout l'écran et empêcherait de faire défiler au doigt. Sur téléphone, un
+        // éditeur change le statut avec les flèches (visibles au toucher).
+        'group/card flex flex-col gap-2 border-[3px] border-ink bg-paper p-3 select-none',
+        canEdit && 'cursor-grab active:cursor-grabbing md:touch-none',
         // La carte en cours de déplacement s'efface : c'est la colonne éclairée qui porte
         // l'information « où ça va tomber », pas la carte qui la quitte.
         dragging && 'opacity-40',

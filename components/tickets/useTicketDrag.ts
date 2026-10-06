@@ -8,6 +8,7 @@ export interface TicketDragHandlers {
   onCardPointerDown(e: PointerEvent, ticketId: string): void
   onPointerMove(e: PointerEvent): void
   onPointerUp(e: PointerEvent): void
+  onPointerCancel(e: PointerEvent): void
 }
 
 function columnUnder(x: number, y: number): TicketStatus | null {
@@ -63,8 +64,13 @@ export function useTicketDrag(): TicketDragHandlers {
     await getTicketCommands().updateTicket(d.ticketId, { status: d.overStatus })
   }, [])
 
+  // Annulation : on efface l'aperçu sans commande, contrairement au relâchement.
+  const onPointerCancel = useCallback(() => {
+    useTicketsStore.getState().setDrag(null)
+  }, [])
+
   return useMemo(
-    () => ({ onCardPointerDown, onPointerMove, onPointerUp }),
-    [onCardPointerDown, onPointerMove, onPointerUp],
+    () => ({ onCardPointerDown, onPointerMove, onPointerUp, onPointerCancel }),
+    [onCardPointerDown, onPointerMove, onPointerUp, onPointerCancel],
   )
 }
