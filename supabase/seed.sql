@@ -54,3 +54,25 @@ insert into public.tasks (id, project_id, title, type, start_date, end_date, col
   ('d0000000-0000-0000-0000-0000000000f2', 'c0000000-0000-0000-0000-000000000002', 'FUITE INTER-PROJETS BIS', 'task', current_date + 6, current_date + 8, '#A78BFA', 1);
 insert into public.dependencies (id, project_id, from_task_id, to_task_id) values
   ('e0000000-0000-0000-0000-0000000000f1', 'c0000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-0000000000f1', 'd0000000-0000-0000-0000-0000000000f2');
+
+-- Troisième projet, dédié aux TICKETS. Il existe parce que « Projet démo » ne peut pas
+-- accueillir de tickets : des specs Playwright comptent ses lignes et inspectent sa sidebar,
+-- où un compteur de tickets apparaîtrait. Ce projet-ci est le seul avec `tickets_enabled`.
+-- Alice owner, bob editor, carol viewer : les trois rôles sont couverts sans toucher au démo.
+insert into public.projects (id, name, owner_id, tickets_enabled)
+values ('c0000000-0000-0000-0000-000000000003', 'Projet tickets', 'a0000000-0000-0000-0000-000000000001', true);
+insert into public.memberships (project_id, user_id, role) values
+  ('c0000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000001', 'owner'),
+  ('c0000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000002', 'editor'),
+  ('c0000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000003', 'viewer');
+
+insert into public.tasks (id, project_id, title, type, start_date, end_date, color, sort_order) values
+  ('d0000000-0000-0000-0000-0000000000a1', 'c0000000-0000-0000-0000-000000000003', 'Développement', 'task', current_date, current_date + 5, '#5B9DFF', 0),
+  ('d0000000-0000-0000-0000-0000000000a2', 'c0000000-0000-0000-0000-000000000003', 'Recette', 'task', current_date + 6, current_date + 9, '#3ECF8E', 1);
+
+-- Le NUMÉRO n'est pas fourni : le trigger tickets_assign_number l'attribue et incrémente
+-- projects.ticket_counter. L'ordre de ces trois insertions fixe donc #1, #2, #3.
+insert into public.tickets (id, project_id, title, description, status, assignee_id, task_id) values
+  ('f0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000003', 'Brancher la connexion', 'Le formulaire doit accepter un email et un mot de passe.', 'done', 'a0000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-0000000000a1'),
+  ('f0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000003', 'Dessiner la frise', '', 'doing', 'a0000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-0000000000a1'),
+  ('f0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000003', 'Écrire le mode d''emploi', '', 'todo', null, null);
