@@ -19,7 +19,7 @@ test('la liste et la connexion tiennent dans la largeur du téléphone', async (
   await loginAs(page, 'alice')
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
   await expect(page.getByRole('button', { name: 'Menu du compte' })).toBeInViewport()
-  await expect(page.getByTestId('projects-overview')).toBeVisible()
+  await expect(page.getByTestId('projects-summary')).toBeVisible()
 })
 
 test('le diagramme se lit en portrait : sidebar réduite, aujourd’hui visible, commandes au toucher', async ({ page }) => {

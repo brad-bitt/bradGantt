@@ -4,16 +4,18 @@ import { createClient } from '@/lib/supabase/server'
 import { requireUser } from '@/lib/auth/require-user'
 import { addDays, parseDate, todayISO } from '@/lib/gantt/dates'
 import { projectSummary } from '@/lib/gantt/summary'
+import { LATE_FILTER, visibleProjects } from '@/lib/projects/filter'
 import { ProjectCard, type ProjectListItem, type CardTask } from '@/components/project/ProjectCard'
 import { NewProjectDialog } from '@/components/project/NewProjectDialog'
 import { NoProjects } from '@/components/project/NoProjects'
-import { ProjectsOverview } from '@/components/project/ProjectsOverview'
+import { ProjectsSummaryLine } from '@/components/project/ProjectsSummaryLine'
 import type { Member } from '@/lib/gantt/types'
 
-/** Horizon des « jalons à venir » du bandeau, en jours, aujourd'hui compris. */
+/** Horizon des « jalons à venir » de la synthèse, en jours, aujourd'hui compris. */
 const MILESTONE_HORIZON_DAYS = 14
 
-export default async function ProjectsPage() {
+export default async function ProjectsPage({ searchParams }: { searchParams: Promise<{ filtre?: string }> }) {
+  const { filtre } = await searchParams
   const user = await requireUser()
   const supabase = await createClient()
   const { data } = await supabase
@@ -80,38 +82,48 @@ export default async function ProjectsPage() {
     today,
   }))
 
+  // Les chiffres portent sur TOUS les projets, filtre ou non : « 2 en retard » doit rester vrai
+  // une fois le filtre posé, sinon le lien se contredirait.
   const allTasks = projects.flatMap((p) => p.tasks)
   const horizon = addDays(today, MILESTONE_HORIZON_DAYS - 1)
   const figures = {
     projects: projects.length,
     tasks: allTasks.filter((t) => t.type === 'task').length,
-    done: allTasks.filter((t) => t.type === 'task' && t.progress >= 100).length,
     upcomingMilestones: allTasks.filter((t) => t.type === 'milestone' && t.startDate >= today && t.startDate <= horizon).length,
     late: projects.reduce((n, p) => n + p.summary.lateCount, 0),
   }
 
+  const lateOnly = filtre === LATE_FILTER
+  const shown = visibleProjects(projects, filtre)
+
   return (
     <main className="mx-auto max-w-7xl p-4 space-y-6 sm:p-8 sm:space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="space-y-1">
+        <div className="space-y-2">
           {/* La date du jour en surtitre : c'est un tableau de bord, il dit quand on le regarde. */}
-          <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">
+          <p className="font-mono text-xs text-ink-soft">
             {format(parseDate(today), 'EEEE d MMMM yyyy', { locale: fr })}
           </p>
           <h1 className="text-4xl">Mes projets</h1>
+          {/* Seulement avec au moins un projet : sur un compte neuf, une ligne de zéros ne dirait
+              rien que la carte d'accueil ne dise mieux. */}
+          {projects.length > 0 && <ProjectsSummaryLine figures={figures} lateOnly={lateOnly} />}
         </div>
-        <NewProjectDialog />
+        {/* Sur un compte vide, la carte d'accueil porte déjà « Nouveau projet » : deux boutons
+            noirs pour un même geste, c'est ce que la règle des trois niveaux interdit. */}
+        {projects.length > 0 && <NewProjectDialog />}
       </div>
 
       {projects.length === 0 ? (
         <NoProjects />
+      ) : shown.length === 0 ? (
+        // Le filtre ne garde rien : le dire, plutôt qu'une grille vide qui ferait croire que les
+        // projets ont disparu. « Tout afficher » est juste au-dessus, dans la ligne de synthèse.
+        <p className="text-sm text-ink-soft">Aucun projet en retard.</p>
       ) : (
-        <>
-          <ProjectsOverview figures={figures} />
-          <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {projects.map((p) => <li key={p.id}><ProjectCard project={p} /></li>)}
-          </ul>
-        </>
+        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {shown.map((p) => <li key={p.id}><ProjectCard project={p} /></li>)}
+        </ul>
       )}
     </main>
   )

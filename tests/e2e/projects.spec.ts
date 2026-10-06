@@ -1,5 +1,19 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { loginAs } from './helpers'
+
+function isoInDays(n: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() + n)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+async function createProject(page: Page, name: string) {
+  await page.goto('/projects')
+  await page.getByRole('button', { name: 'Nouveau projet' }).click()
+  await page.getByLabel('Nom du projet').fill(name)
+  await page.getByRole('button', { name: 'Créer' }).click()
+  await page.waitForURL(/\/projects\/[0-9a-f-]{36}$/)
+}
 
 test('créer, renommer puis supprimer un projet', async ({ page }) => {
   await loginAs(page, 'alice')
@@ -58,14 +72,14 @@ test('un nom vide est refusé', async ({ page }) => {
   await expect(page.getByRole('dialog').getByRole('alert')).toHaveText('Le nom est requis')
 })
 
-test('la liste ouvre sur un bandeau de chiffres et chaque carte porte sa vignette', async ({ page }) => {
+test('la liste ouvre sur une ligne de synthèse et chaque carte porte sa vignette', async ({ page }) => {
   await loginAs(page, 'alice')
 
-  // Le bandeau n'a de sens qu'avec au moins un projet : le compte de test en a toujours (seed).
-  const overview = page.getByTestId('projects-overview')
-  await expect(overview).toBeVisible()
-  await expect(overview).toContainText('Projets')
-  await expect(overview).toContainText('En retard')
+  // La ligne n'a de sens qu'avec au moins un projet : le compte de test en a toujours (seed).
+  const summary = page.getByTestId('projects-summary')
+  await expect(summary).toBeVisible()
+  await expect(summary).toContainText(/\d+ projets?/)
+  await expect(summary).toContainText('en retard')
 
   // Le projet démo du seed a des tâches : sa carte montre la vignette (barres en couleur), pas
   // le cadre « frise vide » d'un projet neuf.
@@ -110,4 +124,32 @@ test('le menu du nom de projet, dans l\'en-tête : renommer, basculer les ticket
   await page.waitForURL(/\/projects$/)
   await expect(page.getByRole('heading', { name: 'Mes projets' })).toBeVisible()
   await expect(page.getByRole('article', { name: `${name} v2` })).toHaveCount(0)
+})
+
+test('« N en retard » ne garde que les projets en retard, « Tout afficher » rend la liste', async ({ page }) => {
+  await loginAs(page, 'alice')
+  const stamp = Date.now()
+  const calm = `Calme ${stamp}`
+  const late = `Retard ${stamp}`
+
+  // Un projet vide n'est jamais en retard ; l'autre reçoit une tâche finie il y a cinq jours.
+  await createProject(page, calm)
+  await createProject(page, late)
+  await page.getByRole('button', { name: '+ Tâche' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Nouvelle tâche' })
+  await dialog.getByLabel('Titre').fill('En souffrance')
+  await dialog.getByLabel('Début').fill(isoInDays(-10))
+  await dialog.getByLabel('Fin').fill(isoInDays(-5))
+  await dialog.getByRole('button', { name: 'Créer', exact: true }).click()
+  await expect(page.locator('[data-row-task-id]', { hasText: 'En souffrance' })).toHaveCount(1)
+
+  await page.goto('/projects')
+  await page.getByTestId('projects-summary').getByRole('link', { name: /en retard$/ }).click()
+  await page.waitForURL('**/projects?filtre=retard')
+  await expect(page.getByRole('article', { name: late })).toBeVisible()
+  await expect(page.getByRole('article', { name: calm })).toHaveCount(0)
+
+  await page.getByRole('link', { name: 'Tout afficher' }).click()
+  await page.waitForURL(/\/projects$/)
+  await expect(page.getByRole('article', { name: calm })).toBeVisible()
 })
