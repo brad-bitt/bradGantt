@@ -75,6 +75,25 @@ serveur uniquement (jamais `NEXT_PUBLIC_*`), lue au runtime — mais un build pr
 avec la variable positionnée ne peut plus la refermer sans reconstruire (voir le
 commentaire dans `lib/e2e.ts`).
 
+## Tickets
+
+Chaque projet peut ouvrir un backlog de tickets numérotés (`#1`, `#2`, …), rattachables aux
+tâches de la frise. Un ticket porte un titre, une description, un statut (À faire / En cours /
+Terminé) et un assigné.
+
+La fonctionnalité est **désactivée par défaut**. Le propriétaire l'active depuis le bouton
+« Tickets » de la carte du projet, sur `/projects`. La désactiver masque les tickets sans en
+supprimer aucun : les réactiver les rend tels quels.
+
+Une fois activés, la barre d'outils de la frise porte un lien « Tickets » vers
+`/projects/<id>/tickets`, qui s'ouvre sur un kanban à trois colonnes (`?vue=liste` pour la vue
+tableau filtrable). Les lignes de la frise affichent alors un compteur « terminés / total », et
+l'éditeur d'une tâche liste ses tickets.
+
+Côté seed, « Projet tickets » est le seul projet avec un backlog, et il sert de terrain aux
+tests de bout en bout. « Projet démo » en est volontairement dépourvu : des specs comptent ses
+lignes et inspectent sa barre latérale, où un compteur fausserait les décomptes.
+
 ## Commandes de test
 
 | Commande              | Ce qu'elle fait                                              |
