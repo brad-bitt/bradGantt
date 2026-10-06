@@ -50,3 +50,24 @@ export async function deleteProject(projectId: string): Promise<ActionResult> {
   revalidatePath('/projects')
   return {}
 }
+
+/**
+ * Active ou désactive le backlog de tickets d'un projet.
+ *
+ * L'autorisation n'est PAS vérifiée ici : la policy `projects_update_owner` la porte, et
+ * `count !== 1` transforme son refus silencieux en échec explicite. Dupliquer le contrôle dans
+ * l'action donnerait deux sources de vérité pour la même règle.
+ *
+ * Désactiver ne supprime AUCUNE donnée : les tickets restent en base et réapparaissent tels
+ * quels à la réactivation. C'est un choix d'affichage, réversible sans conséquence.
+ */
+export async function setTicketsEnabled(projectId: string, enabled: boolean): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { error, count } = await supabase
+    .from('projects')
+    .update({ tickets_enabled: enabled }, { count: 'exact' })
+    .eq('id', projectId)
+  if (error || count !== 1) return { error: 'Modification non enregistrée' }
+  revalidatePath('/projects')
+  return {}
+}

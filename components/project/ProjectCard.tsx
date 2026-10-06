@@ -8,7 +8,7 @@ import { Badge, type BadgeColor } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { RenameProjectDialog } from './RenameProjectDialog'
 import { MiniGantt, MiniGanttPlaceholder } from './MiniGantt'
-import { deleteProject } from '@/app/(app)/projects/actions'
+import { deleteProject, setTicketsEnabled } from '@/app/(app)/projects/actions'
 import { toast } from '@/lib/toast/store'
 import { parseDate } from '@/lib/gantt/dates'
 import type { ProjectSummary, SummaryTask } from '@/lib/gantt/summary'
@@ -23,6 +23,7 @@ export interface ProjectListItem {
   name: string
   role: 'owner' | 'editor' | 'viewer'
   createdAt: string
+  ticketsEnabled: boolean
   tasks: CardTask[]
   summary: ProjectSummary
   members: Member[]
@@ -53,6 +54,13 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
     summary.groupCount > 0 && `${summary.groupCount} groupe${summary.groupCount > 1 ? 's' : ''}`,
     summary.milestoneCount > 0 && `${summary.milestoneCount} jalon${summary.milestoneCount > 1 ? 's' : ''}`,
   ].filter((x): x is string => typeof x === 'string')
+
+  function toggleTickets() {
+    start(async () => {
+      const res = await setTicketsEnabled(project.id, !project.ticketsEnabled)
+      if (res.error) toast.error(res.error)
+    })
+  }
 
   function remove() {
     if (!window.confirm(`Supprimer « ${project.name} » et toutes ses tâches ?`)) return
@@ -139,6 +147,17 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
         </span>
         {project.role === 'owner' && (
           <span className="flex gap-2">
+            {/* `aria-pressed` plutôt qu'un libellé qui changerait (« Activer » / « Désactiver ») :
+                un bouton dont le texte bascule oblige à le relire pour savoir dans quel état on
+                est. Ici le mot reste « Tickets », c'est son état enfoncé qui répond. */}
+            <Button
+              size="sm"
+              variant={project.ticketsEnabled ? 'primary' : 'secondary'}
+              aria-pressed={project.ticketsEnabled}
+              onClick={toggleTickets}
+            >
+              Tickets
+            </Button>
             <Button size="sm" variant="secondary" onClick={() => setRenaming(true)}>Renommer</Button>
             <Button size="sm" variant="danger-quiet" onClick={remove}>Supprimer</Button>
           </span>

@@ -14,7 +14,7 @@ vi.mock('@/lib/supabase/server', () => ({
 const mockRevalidatePath = vi.fn()
 vi.mock('next/cache', () => ({ revalidatePath: (...args: unknown[]) => mockRevalidatePath(...args) }))
 
-import { createProject, renameProject, deleteProject } from '@/app/(app)/projects/actions'
+import { createProject, renameProject, deleteProject, setTicketsEnabled } from '@/app/(app)/projects/actions'
 
 describe('renameProject / deleteProject : robustesse à un count non strictement égal à 1', () => {
   beforeEach(() => {
@@ -79,6 +79,40 @@ describe('createProject : réinvalidation de la liste', () => {
     mockRpc.mockResolvedValue({ data: null, error: { message: 'boom' } })
     const res = await createProject('Mon projet')
     expect(res.error).toBe('Création impossible, réessaie.')
+    expect(mockRevalidatePath).not.toHaveBeenCalled()
+  })
+})
+
+describe('setTicketsEnabled', () => {
+  beforeEach(() => {
+    mockEq.mockReset()
+    mockUpdate.mockClear()
+    mockFrom.mockClear()
+    mockRevalidatePath.mockClear()
+  })
+
+  it('écrit la colonne et réinvalide la liste des projets', async () => {
+    mockEq.mockResolvedValue({ error: null, count: 1 })
+    const res = await setTicketsEnabled('p1', true)
+    expect(res.error).toBeUndefined()
+    expect(mockUpdate).toHaveBeenCalledWith({ tickets_enabled: true }, { count: 'exact' })
+    expect(mockRevalidatePath).toHaveBeenCalledWith('/projects')
+  })
+
+  it('désactive aussi bien qu\'il active', async () => {
+    mockEq.mockResolvedValue({ error: null, count: 1 })
+    await setTicketsEnabled('p1', false)
+    expect(mockUpdate).toHaveBeenCalledWith({ tickets_enabled: false }, { count: 'exact' })
+  })
+
+  it('count null (en-tête content-range absente) est traité comme un échec', async () => {
+    mockEq.mockResolvedValue({ error: null, count: null })
+    expect((await setTicketsEnabled('p1', true)).error).toBe('Modification non enregistrée')
+  })
+
+  it('count à 0 (la RLS a refusé : l\'appelant n\'est pas propriétaire) est un échec', async () => {
+    mockEq.mockResolvedValue({ error: null, count: 0 })
+    expect((await setTicketsEnabled('p1', true)).error).toBe('Modification non enregistrée')
     expect(mockRevalidatePath).not.toHaveBeenCalled()
   })
 })

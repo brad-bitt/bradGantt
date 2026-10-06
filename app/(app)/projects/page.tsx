@@ -18,7 +18,7 @@ export default async function ProjectsPage() {
   const supabase = await createClient()
   const { data } = await supabase
     .from('projects')
-    .select('id, name, created_at, memberships!inner(role, user_id)')
+    .select('id, name, created_at, tickets_enabled, memberships!inner(role, user_id)')
     .eq('memberships.user_id', user.id)
     .order('created_at', { ascending: false })
 
@@ -72,6 +72,7 @@ export default async function ProjectsPage() {
     id: p.id,
     name: p.name,
     createdAt: p.created_at,
+    ticketsEnabled: p.tickets_enabled,
     role: p.memberships[0].role,
     tasks: tasksByProject.get(p.id) ?? [],
     summary: projectSummary(tasksByProject.get(p.id) ?? [], today),
