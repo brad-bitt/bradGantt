@@ -114,4 +114,7 @@
   /* Graduation d'un jour dans la grille : un pointillé vertical, 3 px de trait pour 5 px de vide,
      en encre à 35 %. Plus léger qu'un trait plein, et il marque encore le rythme. */
   .day-tick { background-image: repeating-linear-gradient(to bottom, color-mix(in srgb, var(--color-ink) 35%, transparent) 0 3px, transparent 3px 8px); }
+  /* Focus dans l'en-tête : le contour pointillé d'encre de `brutal-focus` disparaît sur la bande
+     noire. Le jaune y prend le relais — il signifie déjà « actif », et le focus en est un. */
+  .brutal-focus-header { @apply outline-none focus-visible:outline-[3px] focus-visible:outline-dashed focus-visible:outline-yellow focus-visible:outline-offset-2; }
 }
