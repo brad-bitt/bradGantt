@@ -33,7 +33,7 @@ test('créer, renommer puis supprimer un projet', async ({ page }) => {
   // Retour par navigation client plutôt que par `page.goto` : on reste au plus près du parcours
   // réel. Ce retour ne prouve rien sur la réinvalidation (voir plus haut), il enchaîne le
   // parcours renommage/suppression, qui se pilote depuis la carte.
-  await page.getByRole('link', { name: '← Projets' }).click()
+  await page.getByRole('link', { name: 'Projets', exact: true }).click()
   await page.waitForURL('**/projects')
   const card = page.getByRole('article', { name })
   await expect(card).toBeVisible()

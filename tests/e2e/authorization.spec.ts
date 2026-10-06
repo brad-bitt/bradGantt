@@ -4,7 +4,7 @@ import { loginAs, addMembership, USERS } from './helpers'
 // Négatif d'autorisation : un editor ne peut ni renommer ni supprimer un projet dont il
 // n'est pas owner. La RLS (projects_update_owner / projects_delete_owner) refuse déjà
 // l'écriture au niveau base ; ce test couvre la couche au-dessus — la traduction de ce
-// refus en message utilisateur par renameProject/deleteProject (app/(app)/projects/actions.ts)
+// refus en message utilisateur par renameProject/deleteProject (app/(app)/(accueil)/projects/actions.ts)
 // — seul endroit de la suite qui l'exerce. On ne peut pas passer par les boutons "Renommer"/
 // "Supprimer" de ProjectCard : ils ne sont rendus que pour project.role === 'owner', donc
 // invisibles pour bob. On reproduit à la place la requête réelle envoyée par le navigateur
@@ -24,7 +24,7 @@ test('bob (editor) ne peut ni renommer ni supprimer un projet dont alice est own
   // directement dans l'URL, et on revient à la liste pour piloter les cartes.
   await alicePage.waitForURL(/\/projects\/[0-9a-f-]{36}$/)
   const targetId = new URL(alicePage.url()).pathname.split('/').pop()!
-  await alicePage.getByRole('link', { name: '← Projets' }).click()
+  await alicePage.getByRole('link', { name: 'Projets', exact: true }).click()
   await alicePage.waitForURL('**/projects')
   const targetCard = alicePage.getByRole('article', { name: targetName })
   await expect(targetCard).toBeVisible()
@@ -51,7 +51,7 @@ test('bob (editor) ne peut ni renommer ni supprimer un projet dont alice est own
   await alicePage.getByLabel('Nom du projet').fill(throwName)
   await alicePage.getByRole('button', { name: 'Créer' }).click()
   await alicePage.waitForURL(/\/projects\/[0-9a-f-]{36}$/)
-  await alicePage.getByRole('link', { name: '← Projets' }).click()
+  await alicePage.getByRole('link', { name: 'Projets', exact: true }).click()
   await alicePage.waitForURL('**/projects')
   const throwCard = alicePage.getByRole('article', { name: throwName })
   await expect(throwCard).toBeVisible()
@@ -90,4 +90,21 @@ test('bob (editor) ne peut ni renommer ni supprimer un projet dont alice est own
 
   await aliceContext.close()
   await bobContext.close()
+})
+
+test('l\'onglet Tickets d\'un projet sans backlog n\'existe que pour son propriétaire', async ({ page }) => {
+  const demo = '/projects/c0000000-0000-0000-0000-000000000001'
+  const tabs = page.getByRole('navigation', { name: 'Sections du projet' })
+
+  // Bob est éditeur du projet démo, qui n'a pas de tickets : la page lui répondrait 404.
+  await loginAs(page, 'bob')
+  await page.goto(demo)
+  await expect(tabs.getByRole('link', { name: 'Gantt' })).toHaveAttribute('aria-current', 'page')
+  await expect(tabs.getByRole('link', { name: 'Membres' })).toBeVisible()
+  await expect(tabs.getByRole('link', { name: 'Tickets' })).toHaveCount(0)
+
+  // Alice, propriétaire, voit l'onglet : il mène à la carte d'activation.
+  await loginAs(page, 'alice')
+  await page.goto(demo)
+  await expect(tabs.getByRole('link', { name: 'Tickets' })).toBeVisible()
 })

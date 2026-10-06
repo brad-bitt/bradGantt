@@ -20,7 +20,9 @@ export function GanttPage({ payload }: { payload: HydratePayload }) {
 
   if (!ready) return <div className="p-8 font-mono">Chargement…</div>
   return (
-    <div className="flex flex-col h-[calc(100dvh-3.5rem)]">
+    // La hauteur vient du layout de projet (colonne pleine fenêtre sous l'en-tête) : une
+    // soustraction en dur se trompait dès que l'en-tête passait sur deux rangées.
+    <div className="flex min-h-0 flex-1 flex-col">
       <GanttToolbar />
       <RotateHint />
       <GanttView />

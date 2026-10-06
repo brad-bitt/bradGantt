@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { requireUser } from '@/lib/auth/require-user'
-import { AppHeader } from '@/components/layout/AppHeader'
 import { ProfileProvider } from '@/components/layout/ProfileProvider'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -17,10 +16,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         avatarUrl: profile?.avatar_url ?? null,
       }}
     >
-      <div className="min-h-screen flex flex-col">
-        <AppHeader />
-        <div className="flex-1">{children}</div>
-      </div>
+      {/* Pas d'en-tête ici : chaque groupe de routes porte le sien (liste, ou projet). */}
+      <div className="min-h-screen flex flex-col">{children}</div>
     </ProfileProvider>
   )
 }

@@ -8,7 +8,7 @@ import { Select } from '@/components/ui/Select'
 import { toast } from '@/lib/toast/store'
 import type { Member } from '@/lib/gantt/types'
 import type { InviteRole } from '@/lib/invitations/types'
-import { changeMemberRole, removeMember } from '@/app/(app)/projects/[id]/members-actions'
+import { changeMemberRole, removeMember } from '@/app/(app)/(projet)/projects/[id]/members-actions'
 
 // Mêmes couleurs que les badges de rôle de la liste de projets : un rôle garde sa couleur d'un
 // écran à l'autre. Le jaune reste réservé à l'état actif (sélection), il ne code pas un rôle.

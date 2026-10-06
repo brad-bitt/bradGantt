@@ -21,7 +21,7 @@ test('le projet démo affiche ses lignes, barres, jalon et flèches', async ({ p
   await expect(page.getByTestId('today-line')).toBeVisible()
 })
 
-// Verrou d'ISOLATION INTER-PROJETS. Les `.eq('project_id', id)` de app/(app)/projects/[id]/page.tsx
+// Verrou d'ISOLATION INTER-PROJETS. Les `.eq('project_id', id)` de app/(app)/(projet)/projects/[id]/page.tsx
 // sont le seul rempart : la RLS autorise la lecture de TOUTES les lignes des projets dont on est
 // membre, elle ne filtre pas sur le projet demandé. Ce test est la seule chose qui tienne cette
 // ligne, dans un fichier que les tâches 10 à 14 vont toutes toucher.

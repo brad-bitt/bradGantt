@@ -4,7 +4,7 @@ import { NewProjectDialog } from '@/components/project/NewProjectDialog'
 import { useToastStore } from '@/lib/toast/store'
 
 const mockCreateProject = vi.fn()
-vi.mock('@/app/(app)/projects/actions', () => ({
+vi.mock('@/app/(app)/(accueil)/projects/actions', () => ({
   createProject: (...args: unknown[]) => mockCreateProject(...args),
 }))
 

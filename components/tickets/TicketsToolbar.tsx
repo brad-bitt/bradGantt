@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils'
 
 export function TicketsToolbar({ view }: { view: 'board' | 'list' }) {
   const projectId = useTicketsStore((s) => s.projectId)
-  const projectName = useTicketsStore((s) => s.projectName)
   const myRole = useTicketsStore((s) => s.myRole)
   const canEdit = useTicketsStore(selectCanEditTickets)
   const openEditor = useTicketsStore((s) => s.openEditor)
@@ -31,8 +30,6 @@ export function TicketsToolbar({ view }: { view: 'board' | 'list' }) {
 
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b-[3px] border-ink bg-paper px-3 py-2 sm:gap-4 sm:px-6 sm:py-3">
-      <Link href={`/projects/${projectId}`} className="font-mono text-sm underline brutal-focus">← Frise</Link>
-      <h1 className="max-w-md truncate text-xl sm:text-2xl">{projectName}</h1>
       <Badge color="ink">{count} ticket{count > 1 ? 's' : ''}</Badge>
       {!canEdit && <Badge color="cyan">Lecture seule</Badge>}
       <div className="ml-auto flex flex-wrap items-center gap-2 sm:gap-3">

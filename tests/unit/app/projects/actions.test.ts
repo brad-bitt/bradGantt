@@ -14,7 +14,7 @@ vi.mock('@/lib/supabase/server', () => ({
 const mockRevalidatePath = vi.fn()
 vi.mock('next/cache', () => ({ revalidatePath: (...args: unknown[]) => mockRevalidatePath(...args) }))
 
-import { createProject, renameProject, deleteProject, setTicketsEnabled } from '@/app/(app)/projects/actions'
+import { createProject, renameProject, deleteProject, setTicketsEnabled } from '@/app/(app)/(accueil)/projects/actions'
 
 describe('renameProject / deleteProject : robustesse à un count non strictement égal à 1', () => {
   beforeEach(() => {
@@ -91,12 +91,13 @@ describe('setTicketsEnabled', () => {
     mockRevalidatePath.mockClear()
   })
 
-  it('écrit la colonne et réinvalide la liste des projets', async () => {
+  it('écrit la colonne et réinvalide la liste ET l\'en-tête de chaque page de projet', async () => {
     mockEq.mockResolvedValue({ error: null, count: 1 })
     const res = await setTicketsEnabled('p1', true)
     expect(res.error).toBeUndefined()
     expect(mockUpdate).toHaveBeenCalledWith({ tickets_enabled: true }, { count: 'exact' })
     expect(mockRevalidatePath).toHaveBeenCalledWith('/projects')
+    expect(mockRevalidatePath).toHaveBeenCalledWith('/projects/[id]', 'layout')
   })
 
   it('désactive aussi bien qu\'il active', async () => {
@@ -114,5 +115,21 @@ describe('setTicketsEnabled', () => {
     mockEq.mockResolvedValue({ error: null, count: 0 })
     expect((await setTicketsEnabled('p1', true)).error).toBe('Modification non enregistrée')
     expect(mockRevalidatePath).not.toHaveBeenCalled()
+  })
+})
+
+describe('renameProject : réinvalidation', () => {
+  beforeEach(() => {
+    mockEq.mockReset()
+    mockRevalidatePath.mockClear()
+  })
+
+  // Le nom s'affiche dans l'en-tête de TOUTES les pages du projet : sans revalider leur layout,
+  // l'en-tête garderait l'ancien nom jusqu'au prochain rechargement.
+  it('réinvalide la liste et le layout de projet', async () => {
+    mockEq.mockResolvedValue({ error: null, count: 1 })
+    await renameProject('p1', 'Nouveau nom')
+    expect(mockRevalidatePath).toHaveBeenCalledWith('/projects')
+    expect(mockRevalidatePath).toHaveBeenCalledWith('/projects/[id]', 'layout')
   })
 })

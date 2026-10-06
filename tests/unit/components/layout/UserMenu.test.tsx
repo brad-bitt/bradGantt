@@ -4,7 +4,7 @@ import { UserMenu } from '@/components/layout/UserMenu'
 import { ProfileProvider } from '@/components/layout/ProfileProvider'
 
 const mockSignOut = vi.fn()
-vi.mock('@/app/(app)/projects/actions', () => ({
+vi.mock('@/app/(app)/(accueil)/projects/actions', () => ({
   signOut: (...args: unknown[]) => mockSignOut(...args),
 }))
 

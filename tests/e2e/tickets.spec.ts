@@ -94,7 +94,7 @@ test('un ticket rattaché à une tâche fait apparaître le compteur dans la fri
   await page.getByLabel('Titre').fill('Brancher la connexion')
   await page.getByRole('button', { name: 'Créer' }).click()
 
-  await page.getByRole('link', { name: '← Frise' }).click()
+  await page.getByRole('link', { name: 'Gantt', exact: true }).click()
   await page.waitForURL('**/projects/**')
   await expect(page.getByText('0 ticket terminé sur 1')).toBeVisible()
 })

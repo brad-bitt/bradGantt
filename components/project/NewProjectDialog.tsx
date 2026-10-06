@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Dialog } from '@/components/ui/Dialog'
 import { Input } from '@/components/ui/Input'
-import { createProject } from '@/app/(app)/projects/actions'
+import { createProject } from '@/app/(app)/(accueil)/projects/actions'
 import { toast } from '@/lib/toast/store'
 
 export function NewProjectDialog() {

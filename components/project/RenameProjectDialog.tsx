@@ -3,7 +3,7 @@ import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Dialog } from '@/components/ui/Dialog'
 import { Input } from '@/components/ui/Input'
-import { renameProject } from '@/app/(app)/projects/actions'
+import { renameProject } from '@/app/(app)/(accueil)/projects/actions'
 import { toast } from '@/lib/toast/store'
 
 export function RenameProjectDialog({ projectId, currentName, open, onClose }: { projectId: string; currentName: string; open: boolean; onClose: () => void }) {

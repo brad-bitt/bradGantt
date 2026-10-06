@@ -38,7 +38,7 @@ export default async function ProjectTicketsPage({ params, searchParams }: {
   // reçoit un 404. Ne pas offrir une porte qui se referme.
   if (!project.tickets_enabled) {
     if (myRole !== 'owner') notFound()
-    return <TicketsDisabled projectId={project.id} projectName={project.name} />
+    return <TicketsDisabled projectId={project.id} />
   }
 
   // `.eq('project_id', id)` sur tickets ET tasks : SEUL rempart d'isolation inter-projets à ce

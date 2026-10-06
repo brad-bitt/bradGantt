@@ -4,7 +4,7 @@ import { RenameProjectDialog } from '@/components/project/RenameProjectDialog'
 import { useToastStore } from '@/lib/toast/store'
 
 const mockRenameProject = vi.fn()
-vi.mock('@/app/(app)/projects/actions', () => ({
+vi.mock('@/app/(app)/(accueil)/projects/actions', () => ({
   renameProject: (...args: unknown[]) => mockRenameProject(...args),
 }))
 

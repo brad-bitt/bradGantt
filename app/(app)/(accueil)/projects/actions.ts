@@ -20,6 +20,16 @@ export interface ActionResult {
   error?: string
 }
 
+/**
+ * Le nom du projet et l'onglet Tickets s'affichent dans l'EN-TÊTE de chaque page du projet.
+ * Revalider `/projects` seul laissait l'en-tête sur l'ancien état jusqu'au prochain
+ * rechargement ; le motif `[id]` en type `layout` couvre le Gantt, les tickets et les membres.
+ */
+function revalidateProject() {
+  revalidatePath('/projects')
+  revalidatePath('/projects/[id]', 'layout')
+}
+
 export async function createProject(name: string): Promise<ActionResult & { id?: string }> {
   const v = validateProjectName(name)
   if (!v.ok) return { fieldError: v.error }
@@ -39,7 +49,7 @@ export async function renameProject(projectId: string, name: string): Promise<Ac
   // succès. `count === 0` laisserait passer un `count` null (en-tête content-range
   // absente de la réponse) comme un faux succès alors que la RLS a refusé l'écriture.
   if (error || count !== 1) return { error: 'Modification non enregistrée' }
-  revalidatePath('/projects')
+  revalidateProject()
   return {}
 }
 
@@ -68,6 +78,6 @@ export async function setTicketsEnabled(projectId: string, enabled: boolean): Pr
     .update({ tickets_enabled: enabled }, { count: 'exact' })
     .eq('id', projectId)
   if (error || count !== 1) return { error: 'Modification non enregistrée' }
-  revalidatePath('/projects')
+  revalidateProject()
   return {}
 }

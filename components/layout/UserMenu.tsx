@@ -2,7 +2,7 @@
 import { useEffect, useState, useTransition } from 'react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Menu } from '@/components/ui/Menu'
-import { signOut } from '@/app/(app)/projects/actions'
+import { signOut } from '@/app/(app)/(accueil)/projects/actions'
 import { currentTheme, toggleTheme, type Theme } from './ThemeToggle'
 import { useProfile } from './ProfileProvider'
 

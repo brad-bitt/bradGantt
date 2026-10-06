@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { toast } from '@/lib/toast/store'
 import { MemberRow } from './MemberRow'
 import { InviteForm } from './InviteForm'
-import { revokeInvitation } from '@/app/(app)/projects/[id]/members-actions'
+import { revokeInvitation } from '@/app/(app)/(projet)/projects/[id]/members-actions'
 
 export function MembersDialog() {
   const router = useRouter()
