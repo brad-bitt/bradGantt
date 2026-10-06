@@ -75,3 +75,39 @@ test('la liste ouvre sur un bandeau de chiffres et chaque carte porte sa vignett
   await expect(demo.getByText('Frise vide')).toHaveCount(0)
   await expect(demo.getByText('Kick-off dev')).toBeVisible()
 })
+
+test('le menu du nom de projet, dans l\'en-tête : renommer, basculer les tickets, supprimer', async ({ page }) => {
+  await loginAs(page, 'alice')
+  const name = `Entête ${Date.now()}`
+  await page.getByRole('button', { name: 'Nouveau projet' }).click()
+  await page.getByLabel('Nom du projet').fill(name)
+  await page.getByRole('button', { name: 'Créer' }).click()
+  await page.waitForURL(/\/projects\/[0-9a-f-]{36}$/)
+
+  const header = page.getByRole('banner')
+  const actions = header.getByRole('button', { name: 'Actions du projet' })
+
+  // Renommer depuis le Gantt : l'en-tête suit sans rechargement (revalidation du layout).
+  await actions.click()
+  await page.getByRole('menuitem', { name: 'Renommer' }).click()
+  await page.getByLabel('Nom du projet').fill(`${name} v2`)
+  await page.getByRole('button', { name: 'Enregistrer' }).click()
+  await expect(header.getByRole('heading', { name: `${name} v2` })).toBeVisible()
+
+  // Review Focus 4 : désactiver les tickets DEPUIS la page Tickets bascule la page d'elle-même.
+  await header.getByRole('link', { name: 'Tickets', exact: true }).click()
+  await page.waitForURL('**/tickets')
+  await page.getByRole('button', { name: 'Activer les tickets' }).click()
+  await expect(page.getByRole('region', { name: 'À faire' })).toBeVisible()
+  await actions.click()
+  await page.getByRole('menuitem', { name: 'Désactiver les tickets' }).click()
+  await expect(page.getByRole('button', { name: 'Activer les tickets' })).toBeVisible()
+
+  // Review Focus 3 : supprimer depuis l'en-tête ramène à la liste, sans passer par une 404.
+  page.once('dialog', (d) => d.accept())
+  await actions.click()
+  await page.getByRole('menuitem', { name: 'Supprimer' }).click()
+  await page.waitForURL(/\/projects$/)
+  await expect(page.getByRole('heading', { name: 'Mes projets' })).toBeVisible()
+  await expect(page.getByRole('article', { name: `${name} v2` })).toHaveCount(0)
+})

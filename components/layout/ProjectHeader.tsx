@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Member, Role } from '@/lib/gantt/types'
 import { Avatar } from '@/components/ui/Avatar'
+import { ProjectMenu } from '@/components/project/ProjectMenu'
 import { Mark } from './Logo'
 import { ProjectTabs } from './ProjectTabs'
 import { UserMenu } from './UserMenu'
@@ -40,6 +41,18 @@ export function ProjectHeader({ projectId, projectName, ticketsEnabled, myRole, 
         <span aria-hidden className="hidden text-on-header/50 sm:inline">/</span>
         {/* Le nom est LE titre de chaque page du projet : un `h1`, tronqué plutôt que replié. */}
         <h1 className="min-w-0 truncate text-base sm:text-lg" title={projectName}>{projectName}</h1>
+        {isOwner && (
+          // Même menu que la carte de projet : le propriétaire agit sur son projet sans revenir
+          // à la liste. `leaveOnDelete` : supprimé d'ici, le projet emporte la page courante.
+          <ProjectMenu
+            projectId={projectId}
+            projectName={projectName}
+            ticketsEnabled={ticketsEnabled}
+            leaveOnDelete
+            tone="header"
+            triggerClassName="shrink-0 text-on-header"
+          />
+        )}
       </nav>
       <ProjectTabs
         projectId={projectId}

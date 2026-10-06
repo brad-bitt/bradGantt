@@ -11,6 +11,8 @@ const mockRpc = vi.fn()
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(async () => ({ from: mockFrom, rpc: mockRpc })),
 }))
+const mockRedirect = vi.fn()
+vi.mock('next/navigation', () => ({ redirect: (...args: unknown[]) => mockRedirect(...args) }))
 const mockRevalidatePath = vi.fn()
 vi.mock('next/cache', () => ({ revalidatePath: (...args: unknown[]) => mockRevalidatePath(...args) }))
 
@@ -97,7 +99,7 @@ describe('setTicketsEnabled', () => {
     expect(res.error).toBeUndefined()
     expect(mockUpdate).toHaveBeenCalledWith({ tickets_enabled: true }, { count: 'exact' })
     expect(mockRevalidatePath).toHaveBeenCalledWith('/projects')
-    expect(mockRevalidatePath).toHaveBeenCalledWith('/projects/[id]', 'layout')
+    expect(mockRevalidatePath).toHaveBeenCalledWith('/projects/p1', 'layout')
   })
 
   it('désactive aussi bien qu\'il active', async () => {
@@ -130,6 +132,33 @@ describe('renameProject : réinvalidation', () => {
     mockEq.mockResolvedValue({ error: null, count: 1 })
     await renameProject('p1', 'Nouveau nom')
     expect(mockRevalidatePath).toHaveBeenCalledWith('/projects')
-    expect(mockRevalidatePath).toHaveBeenCalledWith('/projects/[id]', 'layout')
+    expect(mockRevalidatePath).toHaveBeenCalledWith('/projects/p1', 'layout')
+  })
+})
+
+describe('deleteProject : quitter la page du projet supprimé', () => {
+  beforeEach(() => {
+    mockEq.mockReset()
+    mockRedirect.mockReset()
+  })
+
+  // Supprimé depuis son propre en-tête, le projet ne doit pas être re-rendu : son layout
+  // répondrait 404 avant que le client ait eu le temps de naviguer.
+  it('avec leave, redirige vers la liste après une suppression réussie', async () => {
+    mockEq.mockResolvedValue({ error: null, count: 1 })
+    await deleteProject('p1', true)
+    expect(mockRedirect).toHaveBeenCalledWith('/projects')
+  })
+
+  it('sans leave, ne redirige pas (la carte de la liste disparaît d\'elle-même)', async () => {
+    mockEq.mockResolvedValue({ error: null, count: 1 })
+    await deleteProject('p1')
+    expect(mockRedirect).not.toHaveBeenCalled()
+  })
+
+  it('un échec ne redirige jamais', async () => {
+    mockEq.mockResolvedValue({ error: null, count: 0 })
+    expect((await deleteProject('p1', true)).error).toBe('Suppression impossible')
+    expect(mockRedirect).not.toHaveBeenCalled()
   })
 })
