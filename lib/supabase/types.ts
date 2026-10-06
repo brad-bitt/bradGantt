@@ -194,18 +194,24 @@ export type Database = {
           id: string
           name: string
           owner_id: string
+          ticket_counter: number
+          tickets_enabled: boolean
         }
         Insert: {
           created_at?: string
           id?: string
           name: string
           owner_id: string
+          ticket_counter?: number
+          tickets_enabled?: boolean
         }
         Update: {
           created_at?: string
           id?: string
           name?: string
           owner_id?: string
+          ticket_counter?: number
+          tickets_enabled?: boolean
         }
         Relationships: [
           {
@@ -290,6 +296,67 @@ export type Database = {
           },
         ]
       }
+      tickets: {
+        Row: {
+          assignee_id: string | null
+          created_at: string
+          description: string
+          id: string
+          number: number
+          project_id: string
+          status: Database["public"]["Enums"]["ticket_status"]
+          task_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          number: number
+          project_id: string
+          status?: Database["public"]["Enums"]["ticket_status"]
+          task_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          number?: number
+          project_id?: string
+          status?: Database["public"]["Enums"]["ticket_status"]
+          task_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tickets_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -303,6 +370,8 @@ export type Database = {
           id: string
           name: string
           owner_id: string
+          ticket_counter: number
+          tickets_enabled: boolean
         }
         SetofOptions: {
           from: "*"
@@ -327,6 +396,7 @@ export type Database = {
     Enums: {
       member_role: "owner" | "editor" | "viewer"
       task_type: "task" | "milestone" | "group"
+      ticket_status: "todo" | "doing" | "done"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -459,6 +529,7 @@ export const Constants = {
     Enums: {
       member_role: ["owner", "editor", "viewer"],
       task_type: ["task", "milestone", "group"],
+      ticket_status: ["todo", "doing", "done"],
     },
   },
 } as const
