@@ -15,7 +15,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
   const selectId = id ?? autoId
   return (
     <div className="flex flex-col gap-1">
-      {label && <label htmlFor={selectId} className="font-bold uppercase text-sm">{label}</label>}
+      {label && <label htmlFor={selectId} className="font-bold text-sm">{label}</label>}
       {/* `appearance-none` retire le chevron natif : sans le remettre, une liste déroulante est
           rigoureusement indiscernable d'un champ de saisie — même bordure, même fond, même
           hauteur. Le glyphe est décoratif et ne capte pas le pointeur, le clic va au select. */}

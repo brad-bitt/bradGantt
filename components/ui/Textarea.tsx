@@ -15,7 +15,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
   const errorId = `${fieldId}-error`
   return (
     <div className="flex flex-col gap-1">
-      {label && <label htmlFor={fieldId} className="font-bold uppercase text-sm">{label}</label>}
+      {label && <label htmlFor={fieldId} className="font-bold text-sm">{label}</label>}
       {/* Même discipline que `Input` : aria-invalid/aria-describedby posés APRÈS le spread,
           pour qu'un appelant ne puisse pas les écraser silencieusement quand une erreur est
           affichée, tout en laissant passer sa propre valeur quand il n'y en a pas. */}

@@ -112,7 +112,7 @@ export function Dialog({ open, onClose, title, children, footer }: DialogProps) 
         onClick={(e) => e.stopPropagation()}>
         <header className="flex shrink-0 items-center justify-between border-b-[3px] border-ink px-5 py-3 bg-cream">
           <h2 id={titleId} className="text-xl">{title}</h2>
-          <Button variant="ghost" size="sm" onClick={onClose} aria-label="Fermer">✕</Button>
+          <Button variant="quiet" size="sm" onClick={onClose} aria-label="Fermer">✕</Button>
         </header>
         {/* `min-h-0` : sans lui, un enfant flex refuse de rétrécir sous sa hauteur de contenu et
             `overflow-y-auto` n'a jamais rien à faire défiler. */}

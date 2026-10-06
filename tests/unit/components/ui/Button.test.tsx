@@ -26,4 +26,31 @@ describe('Button', () => {
     await userEvent.click(screen.getByRole('button'))
     expect(onClick).not.toHaveBeenCalled()
   })
+
+  it('ne met plus le libellé en capitales', () => {
+    render(<Button>Nouveau projet</Button>)
+    expect(screen.getByRole('button')).not.toHaveClass('uppercase')
+  })
+
+  it('seul le niveau 1 porte l\'ombre brutale', () => {
+    render(
+      <>
+        <Button>Principal</Button>
+        <Button variant="secondary">Secondaire</Button>
+        <Button variant="quiet">Discret</Button>
+      </>,
+    )
+    expect(screen.getByRole('button', { name: 'Principal' })).toHaveClass('brutal')
+    const secondary = screen.getByRole('button', { name: 'Secondaire' })
+    expect(secondary).not.toHaveClass('brutal')
+    expect(secondary).toHaveClass('border-ink')
+    expect(screen.getByRole('button', { name: 'Discret' })).not.toHaveClass('brutal')
+    expect(screen.getByRole('button', { name: 'Discret' })).toHaveClass('border-transparent')
+  })
+
+  it('le destructif discret est rouge sans fond au repos', () => {
+    render(<Button variant="danger-quiet">Supprimer</Button>)
+    expect(screen.getByRole('button')).toHaveClass('text-danger', 'bg-transparent')
+    expect(screen.getByRole('button')).not.toHaveClass('brutal')
+  })
 })

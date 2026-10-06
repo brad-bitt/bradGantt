@@ -205,7 +205,8 @@ function TaskEditorForm({ existing, defaultType, defaultParentId, afterTaskId, p
       title={dialogTitle}
       footer={
         <>
-          {existing && <Button variant="danger" onClick={remove} disabled={busy} className="mr-auto">Supprimer</Button>}
+          {/* Destructif au repos : « Enregistrer » doit rester le seul noir de la fenêtre (spec §3). */}
+          {existing && <Button variant="danger-quiet" onClick={remove} disabled={busy} className="mr-auto">Supprimer</Button>}
           <Button variant="secondary" onClick={closeEditor} disabled={busy}>Annuler</Button>
           <Button type="submit" form={FORM_ID} disabled={busy}>{existing ? 'Enregistrer' : 'Créer'}</Button>
         </>

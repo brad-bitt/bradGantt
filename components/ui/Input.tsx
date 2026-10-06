@@ -15,7 +15,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   const errorId = `${inputId}-error`
   return (
     <div className="flex flex-col gap-1">
-      {label && <label htmlFor={inputId} className="font-bold uppercase text-sm">{label}</label>}
+      {label && <label htmlFor={inputId} className="font-bold text-sm">{label}</label>}
       {/* aria-invalid/aria-describedby après `{...props}` : quand `error` est posé, ils
           doivent toujours refléter fidèlement l'état du champ (et pointer vers le
           message rendu juste en dessous) — un appelant ne doit jamais pouvoir les
