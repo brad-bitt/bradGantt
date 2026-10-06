@@ -1,5 +1,6 @@
 'use client'
 import { useState, type FormEvent } from 'react'
+import Link from 'next/link'
 import { useGanttStore, selectCanEdit } from '@/lib/gantt/store'
 import { getGanttCommands } from '@/lib/gantt/client-commands'
 import { validateTaskInput, type TaskErrors } from '@/lib/gantt/validate'
@@ -14,6 +15,8 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
+import { STATUS_LABELS, TICKET_STATUS_BADGE } from '@/lib/tickets/types'
 import { cn } from '@/lib/utils'
 
 const TITLES: Record<TaskType, { create: string; edit: string }> = {
@@ -95,6 +98,9 @@ function TaskEditorForm({ existing, defaultType, defaultParentId, afterTaskId, p
   const members = useGanttStore((s) => s.members)
   const tasks = useGanttStore((s) => s.tasks)
   const today = useGanttStore((s) => s.today)
+  const projectId = useGanttStore((s) => s.projectId)
+  const ticketsEnabled = useGanttStore((s) => s.ticketsEnabled)
+  const ticketSummaries = useGanttStore((s) => (existing ? s.ticketsByTask[existing.id] : undefined))
   const groups = Object.values(tasks).filter((t) => t.type === 'group' && t.id !== existing?.id)
 
   const anchor = afterTaskId ? tasks[afterTaskId] : undefined
@@ -322,6 +328,39 @@ function TaskEditorForm({ existing, defaultType, defaultParentId, afterTaskId, p
             onChange={(e) => setParentId(e.target.value)}
             options={[{ value: '', label: 'Aucun' }, ...groups.map((g) => ({ value: g.id, label: g.title }))]}
           />
+        )}
+
+        {/* Section présente uniquement en ÉDITION : une tâche en cours de création n'a pas
+            encore d'identifiant, il n'y aurait rien à rattacher. Absente aussi sur un GROUPE :
+            la page des tickets refuse de rattacher un groupe, le lien mènerait nulle part. */}
+        {existing && existing.type !== 'group' && ticketsEnabled && (
+          <section className="brutal bg-band px-3 py-2 space-y-2">
+            <h3 className="font-bold uppercase text-sm">Tickets</h3>
+            {!ticketSummaries || ticketSummaries.length === 0 ? (
+              <p className="font-mono text-xs text-ink-soft">Aucun ticket rattaché.</p>
+            ) : (
+              <ul className="space-y-1">
+                {ticketSummaries.map((t) => (
+                  <li key={t.id} className="flex items-center gap-2 text-sm">
+                    <span className="font-mono text-xs text-ink-soft">#{t.number}</span>
+                    <span className="flex-1 truncate">{t.title}</span>
+                    <Badge color={TICKET_STATUS_BADGE[t.status]}>{STATUS_LABELS[t.status]}</Badge>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {/* Un LIEN, pas un bouton : la création n'a pas lieu ici. Le store du Gantt ne
+                contient aucun ticket — c'était tout l'intérêt de séparer les deux modules — et
+                y brancher les commandes de tickets pour ce seul formulaire réintroduirait le
+                couplage qu'on a évité. On emmène l'utilisateur là où le backlog vit, la tâche
+                déjà rattachée dans le formulaire. */}
+            <Link
+              href={`/projects/${projectId}/tickets?nouveau=${existing.id}`}
+              className="inline-block font-bold uppercase text-sm underline brutal-focus"
+            >
+              + Nouveau ticket
+            </Link>
+          </section>
         )}
       </form>
     </Dialog>

@@ -12,6 +12,8 @@ export function GanttToolbar() {
   const myRole = useGanttStore((s) => s.myRole)
   const canEdit = useGanttStore(selectCanEdit)
   const openEditor = useGanttStore((s) => s.openEditor)
+  const projectId = useGanttStore((s) => s.projectId)
+  const ticketsEnabled = useGanttStore((s) => s.ticketsEnabled)
   const setMembersDialogOpen = useGanttStore((s) => s.setMembersDialogOpen)
 
   return (
@@ -29,6 +31,14 @@ export function GanttToolbar() {
         <span className="font-bold uppercase text-sm underline">Membres</span>
       </button>
       <div className="ml-auto flex flex-wrap items-center gap-2 sm:gap-3">
+        {/* Affiché SEULEMENT quand les tickets sont activés : la page renvoie un 404 à tout
+            membre non propriétaire d'un projet sans backlog, et offrir une porte qui se referme
+            serait pire que de ne rien offrir. */}
+        {ticketsEnabled && (
+          <Link href={`/projects/${projectId}/tickets`} className="font-bold uppercase text-sm underline brutal-focus">
+            Tickets
+          </Link>
+        )}
         <ZoomControls />
         {canEdit && (
           <>

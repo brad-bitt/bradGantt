@@ -1,3 +1,5 @@
+import type { BadgeColor } from '@/components/ui/Badge'
+
 export type TicketStatus = 'todo' | 'doing' | 'done'
 
 /** Ordre des colonnes du kanban, et ordre de déplacement des flèches d'une carte. */
@@ -7,6 +9,17 @@ export const STATUS_LABELS: Record<TicketStatus, string> = {
   todo: 'À faire',
   doing: 'En cours',
   done: 'Terminé',
+}
+
+/**
+ * Couleur du badge de chaque statut. Vit ici plutôt que dans un composant : la vue liste et
+ * l'éditeur de tâche du Gantt l'affichent tous les deux, et deux tables jumelles finiraient
+ * par diverger. L'import est un import de TYPE seul, aucun composant n'est tiré dans `lib`.
+ */
+export const TICKET_STATUS_BADGE: Record<TicketStatus, BadgeColor> = {
+  todo: 'ink',
+  doing: 'blue',
+  done: 'emerald',
 }
 
 export interface Ticket {

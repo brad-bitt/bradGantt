@@ -2,13 +2,11 @@
 import { useMemo } from 'react'
 import { useTicketsStore, selectCanEditTickets } from '@/lib/tickets/store'
 import { filterTickets } from '@/lib/tickets/summary'
-import { STATUS_LABELS, STATUS_ORDER, type TicketStatus } from '@/lib/tickets/types'
-import type { BadgeColor } from '@/components/ui/Badge'
+import { STATUS_LABELS, STATUS_ORDER, TICKET_STATUS_BADGE, type TicketStatus } from '@/lib/tickets/types'
 import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
 import { Select } from '@/components/ui/Select'
 
-const STATUS_COLOR: Record<TicketStatus, BadgeColor> = { todo: 'ink', doing: 'blue', done: 'emerald' }
 
 export function TicketList() {
   const tickets = useTicketsStore((s) => s.tickets)
@@ -92,7 +90,7 @@ export function TicketList() {
                         <span className="font-bold">{t.title}</span>
                       )}
                     </td>
-                    <td className="px-3 py-2"><Badge color={STATUS_COLOR[t.status]}>{STATUS_LABELS[t.status]}</Badge></td>
+                    <td className="px-3 py-2"><Badge color={TICKET_STATUS_BADGE[t.status]}>{STATUS_LABELS[t.status]}</Badge></td>
                     <td className="px-3 py-2">
                       {assignee
                         ? <span className="flex items-center gap-2"><Avatar name={assignee.displayName} color={assignee.color} src={assignee.avatarUrl} size="sm" />{assignee.displayName}</span>
