@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import { expect, type Page } from '@playwright/test'
 import { loadEnvConfig } from '@next/env'
 import path from 'node:path'
 
@@ -38,4 +38,28 @@ export async function addMembership(projectId: string, userId: string, role: 'ed
     body: JSON.stringify({ project_id: projectId, user_id: userId, role }),
   })
   if (!res.ok) throw new Error(`addMembership a échoué (${res.status}): ${await res.text()}`)
+}
+
+/** Projet de seed dédié aux tickets, en LECTURE SEULE pour les tests : trois tickets, deux tâches. */
+export const TICKETS_PROJECT = {
+  id: 'c0000000-0000-0000-0000-000000000003',
+  name: 'Projet tickets',
+  taskId: 'd0000000-0000-0000-0000-0000000000a1',
+  taskTitle: 'Développement',
+} as const
+
+/**
+ * Crée un projet neuf par l'interface et y active les tickets. Tout test qui ÉCRIT passe par
+ * là : écrire dans un projet du seed ferait dériver les décomptes que les autres tests lisent.
+ */
+export async function createProjectWithTickets(page: Page, name: string): Promise<void> {
+  await page.goto('/projects')
+  await page.getByRole('button', { name: 'Nouveau projet' }).click()
+  await page.getByLabel('Nom du projet').fill(name)
+  await page.getByRole('button', { name: 'Créer' }).click()
+  await page.waitForURL('**/projects/**')
+  await page.goto('/projects')
+  const card = page.getByRole('article', { name })
+  await card.getByRole('button', { name: 'Tickets' }).click()
+  await expect(card.getByRole('button', { name: 'Tickets' })).toHaveAttribute('aria-pressed', 'true')
 }
