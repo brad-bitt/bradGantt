@@ -5,6 +5,7 @@ import type { GanttEvent } from './events'
 import type { Task, TaskType } from './types'
 import { checkLink, LINK_ERRORS, nextSortOrder, planInsertAfter, reorderSiblings, resizeDates, shiftDates, siblingsOf } from './scheduling'
 import { nextColor } from './palette'
+import { createRunner } from '@/lib/optimistic/run'
 
 export const PERSIST_ERROR = 'Modification non enregistrée'
 export const UNKNOWN_TASK_ERROR = 'Tâche introuvable'
@@ -53,40 +54,7 @@ export interface CommandDeps {
 type TaskPatch = Partial<Omit<Task, 'id' | 'projectId'>>
 
 export function createCommands({ store, repo, notify, newId = () => crypto.randomUUID(), now = () => new Date().toISOString() }: CommandDeps): GanttCommands {
-  /**
-   * Applique l'événement `event` (optimiste), persiste, puis en cas d'échec rejoue `inverse`
-   * pour annuler *uniquement* ce que cette commande a fait — jamais un instantané global.
-   *
-   * Un instantané global casserait dès que deux commandes sont en vol en même temps (un
-   * glisser-déposer suivi d'une autre action, typiquement) : le rollback de la première
-   * effacerait le travail déjà réussi de la seconde. L'événement inverse, lui, ne touche
-   * que les entités que cette commande a modifiées, donc il commute proprement avec le
-   * reste — y compris, plus tard, avec des événements distants reçus en temps réel pendant
-   * que l'écriture est en vol.
-   *
-   * Garde-fou de contexte : si les données affichées ont été remplacées pendant que la
-   * commande était en vol, on n'annule rien. `epoch` change à chaque `hydrate`, ce qui
-   * couvre les deux cas — navigation vers un autre projet (les entités de l'ancien
-   * corrompraient le nouveau) et rechargement du même projet (l'état frais vient du
-   * serveur, y réinjecter des entités d'avant y ferait réapparaître des fantômes). On
-   * signale simplement l'échec.
-   */
-  async function run(event: GanttEvent | GanttEvent[], inverse: GanttEvent[], persist: () => Promise<void>): Promise<boolean> {
-    const epoch = store.getState().epoch
-    for (const e of Array.isArray(event) ? event : [event]) store.getState().apply(e)
-    try {
-      await persist()
-      return true
-    } catch (err) {
-      // Cause technique préservée pour le diagnostic (RLS, réseau, requête) ; le message utilisateur reste générique.
-      console.error(err)
-      if (store.getState().epoch === epoch) {
-        for (const e of inverse) store.getState().apply(e)
-      }
-      notify(PERSIST_ERROR)
-      return false
-    }
-  }
+  const run = createRunner<GanttEvent>({ store, notify, errorMessage: PERSIST_ERROR })
 
   const allTasks = () => Object.values(store.getState().tasks)
   const allDeps = () => Object.values(store.getState().dependencies)
