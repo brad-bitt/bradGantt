@@ -59,17 +59,22 @@ for each row execute function public.assign_ticket_number();
 
 -- Numéro figé, même verrou que profiles.email et projects.owner_id : un numéro qui change
 -- fait mentir toutes les références écrites ailleurs (message, capture, conversation).
+-- `project_id` est figé pour la même raison : un ticket déplacé garderait son numéro et
+-- pourrait entrer en collision avec le compteur du projet d'arrivée (unique project_id, number).
 create or replace function public.check_ticket_number_immutable() returns trigger
 language plpgsql set search_path = public as $$
 begin
   if new.number is distinct from old.number then
     raise exception 'ticket_number_is_read_only';
   end if;
+  if new.project_id is distinct from old.project_id then
+    raise exception 'ticket_project_is_read_only';
+  end if;
   return new;
 end $$;
 
 create trigger tickets_number_immutable
-before update of number on public.tickets
+before update of number, project_id on public.tickets
 for each row execute function public.check_ticket_number_immutable();
 
 -- ===== Rattachement à une tâche du MÊME projet =====

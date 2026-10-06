@@ -4,7 +4,7 @@ create extension if not exists pgtap with schema extensions;
 -- Indépendant de supabase/seed.sql (mêmes UUID de test) : le rollback final rend la base intacte.
 delete from auth.users;
 
-select plan(18);
+select plan(19);
 
 create schema tests;
 grant usage on schema tests to authenticated;
@@ -117,6 +117,10 @@ select tests.logout();
 
 -- Supprimer le projet emporte ses tickets
 select tests.login_as('a0000000-0000-0000-0000-000000000001', 'alice@test.local');
+-- Alice est éditrice des deux projets : elle ne peut pourtant pas déplacer un ticket de l'un à l'autre
+select throws_ok(
+  $$ update public.tickets set project_id = (select project_id from tests.ctxb) where id = 'f0000000-0000-0000-0000-000000000001' $$,
+  'ticket_project_is_read_only', 'un ticket ne change pas de projet');
 delete from public.projects where id = (select project_id from tests.ctx);
 select is((select count(*) from public.tickets), 0::bigint, 'suppression du projet : ses tickets partent avec');
 select tests.logout();
