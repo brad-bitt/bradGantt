@@ -136,7 +136,9 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-3 border-t-[3px] border-ink pt-3">
+      {/* `flex-wrap` : avec le bouton « Tickets », les trois commandes du propriétaire et la pile
+          d'avatars ne tiennent plus sur une ligne à la largeur d'un téléphone. */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t-[3px] border-ink pt-3">
         <span className="flex -space-x-2">
           {members.slice(0, MAX_AVATARS).map((m) => (
             <Avatar key={m.userId} name={m.displayName} color={m.color} src={m.avatarUrl} size="sm" />
@@ -146,7 +148,7 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
           )}
         </span>
         {project.role === 'owner' && (
-          <span className="flex gap-2">
+          <span className="flex flex-wrap gap-2">
             {/* `aria-pressed` plutôt qu'un libellé qui changerait (« Activer » / « Désactiver ») :
                 un bouton dont le texte bascule oblige à le relire pour savoir dans quel état on
                 est. Ici le mot reste « Tickets », c'est son état enfoncé qui répond. */}
