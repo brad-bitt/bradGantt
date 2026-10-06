@@ -40,6 +40,11 @@ export interface GanttState extends GanttData {
   drag: DragState | null
   editor: EditorState
   menu: ContextMenuState
+  /**
+   * Demande de recentrage de la frise sur une date. `seq` change à CHAQUE demande, même pour la
+   * même date : « Aujourd'hui » cliqué deux fois doit recentrer deux fois.
+   */
+  scrollTarget: { date: string; seq: number } | null
   hydrate: (p: HydratePayload) => void
   apply: (e: GanttEvent) => void
   setZoom: (z: Zoom) => void
@@ -49,7 +54,15 @@ export interface GanttState extends GanttData {
   closeEditor: () => void
   openMenu: (menu: Exclude<ContextMenuState, null>) => void
   closeMenu: () => void
+  scrollToDate: (date: string) => void
 }
+
+/**
+ * Compteur de module des demandes de recentrage. Hors du store : `hydrate` remet la demande à
+ * `null`, et un compteur rangé dans l'état repartirait à 1 — `GanttView`, qui retient le dernier
+ * numéro traité, prendrait la première demande du projet suivant pour une demande déjà servie.
+ */
+let scrollSeq = 0
 
 export const useGanttStore = create<GanttState>((set) => ({
   projectId: '',
@@ -67,6 +80,7 @@ export const useGanttStore = create<GanttState>((set) => ({
   drag: null,
   editor: null,
   menu: null,
+  scrollTarget: null,
 
   hydrate: (p) => set((s) => ({
     epoch: s.epoch + 1,
@@ -83,6 +97,7 @@ export const useGanttStore = create<GanttState>((set) => ({
     drag: null,
     editor: null,
     menu: null,
+  scrollTarget: null,
   })),
   apply: (e) => set((s) => applyEvent({ tasks: s.tasks, dependencies: s.dependencies }, e)),
   setZoom: (zoom) => set({ zoom }),
@@ -92,6 +107,7 @@ export const useGanttStore = create<GanttState>((set) => ({
   closeEditor: () => set({ editor: null }),
   openMenu: (menu) => set({ menu }),
   closeMenu: () => set({ menu: null }),
+  scrollToDate: (date) => set({ scrollTarget: { date, seq: ++scrollSeq } }),
 }))
 
 export const selectCanEdit = (s: GanttState) => s.myRole !== 'viewer'

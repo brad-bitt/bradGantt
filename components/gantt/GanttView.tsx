@@ -46,6 +46,9 @@ export function GanttView() {
   const today = useGanttStore((s) => s.today)
   const canEdit = useGanttStore(selectCanEdit)
   const select = useGanttStore((s) => s.select)
+  const scrollTarget = useGanttStore((s) => s.scrollTarget)
+  /** Numéro de la dernière demande de recentrage servie : chacune ne s'applique qu'une fois. */
+  const servedSeq = useRef(0)
   const timelineRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   /**
@@ -113,6 +116,16 @@ export function GanttView() {
     centeredKey.current = key
     el.scrollLeft = initialScrollLeft(dateToX(today, layout.range, zoom), el.clientWidth, sidebarWidth)
   }, [projectId, zoom, today, layout.range, viewportWidth, sidebarWidth])
+
+  // Recentrage À LA DEMANDE (« Aujourd'hui », mise en évidence du retard). Même calcul que le
+  // recentrage d'ouverture, mais déclenché par un numéro de demande : une demande servie ne se
+  // rejoue pas quand `layout` change à chaque image d'un glisser.
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el || !scrollTarget || viewportWidth === null || scrollTarget.seq === servedSeq.current) return
+    servedSeq.current = scrollTarget.seq
+    el.scrollLeft = initialScrollLeft(dateToX(scrollTarget.date, layout.range, zoom), el.clientWidth, sidebarWidth)
+  }, [scrollTarget, layout.range, zoom, viewportWidth, sidebarWidth])
 
   return (
     <GanttViewContext.Provider value={value}>

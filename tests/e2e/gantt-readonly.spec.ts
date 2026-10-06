@@ -53,5 +53,41 @@ test('un editor peut modifier le projet démo', async ({ page }) => {
   await loginAs(page, 'bob')
   await page.goto(DEMO)
   await expect(page.getByRole('button', { name: '+ Tâche' })).toBeVisible()
-  await expect(page.getByText('editor')).toBeVisible()
+  // Le rôle d'un éditeur n'est plus affiché dans la barre : seul « Lecture seule » mérite d'être dit.
+  await expect(page.getByText('Lecture seule')).toHaveCount(0)
+})
+
+// Projet jetable : les dates du seed local périment, et le projet démo n'est jamais écrit par un e2e.
+test('« Aujourd\'hui » recentre la frise ; sur téléphone le bouton est masqué', async ({ page }) => {
+  const iso = (n: number) => {
+    const d = new Date()
+    d.setDate(d.getDate() + n)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }
+  await loginAs(page, 'alice')
+  await page.goto('/projects')
+  await page.getByRole('button', { name: 'Nouveau projet' }).click()
+  await page.getByLabel('Nom du projet').fill(`Aujourd'hui ${Date.now()}`)
+  await page.getByRole('button', { name: 'Créer' }).click()
+  await page.waitForURL(/\/projects\/[0-9a-f-]{36}$/)
+  await page.getByRole('button', { name: '+ Tâche' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Nouvelle tâche' })
+  await dialog.getByLabel('Titre').fill('Loin')
+  await dialog.getByLabel('Début').fill(iso(-40))
+  await dialog.getByLabel('Fin').fill(iso(-30))
+  await dialog.getByRole('button', { name: 'Créer', exact: true }).click()
+  await expect(page.locator('[data-row-task-id]', { hasText: 'Loin' })).toHaveCount(1)
+
+  const scroller = page.getByTestId('gantt-scroll')
+  await scroller.evaluate((el) => { el.scrollLeft = 0 })
+  await page.getByRole('button', { name: 'Aujourd\'hui' }).click()
+  await expect.poll(() => scroller.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0)
+  const box = (await scroller.boundingBox())!
+  const line = (await page.getByTestId('today-line').boundingBox())!
+  expect(line.x).toBeGreaterThan(box.x)
+  expect(line.x).toBeLessThan(box.x + box.width)
+
+  await page.setViewportSize({ width: 390, height: 800 })
+  await expect(page.getByRole('button', { name: 'Aujourd\'hui' })).toBeHidden()
+  await expect(page.getByRole('button', { name: 'Ajouter', exact: true })).toBeVisible()
 })

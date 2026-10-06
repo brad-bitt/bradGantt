@@ -113,6 +113,19 @@ describe('GanttView : recentrage initial sur aujourd\'hui', () => {
     rerender(<GanttView />)
     expect(scroller().scrollLeft).toBe(expected('day'))
   })
+
+  it('« Aujourd\'hui » recentre à la demande, même après un défilement manuel', () => {
+    hydrate()
+    render(<GanttView />)
+    scroller().scrollLeft = 0
+    act(() => { useGanttStore.getState().scrollToDate(TODAY) })
+    expect(scroller().scrollLeft).toBe(expected('day'))
+
+    // Une seconde demande sur la MÊME date recentre encore : c'est le geste qui compte.
+    scroller().scrollLeft = 0
+    act(() => { useGanttStore.getState().scrollToDate(TODAY) })
+    expect(scroller().scrollLeft).toBe(expected('day'))
+  })
 })
 
 describe('GanttView : la timeline remplit la largeur du conteneur', () => {

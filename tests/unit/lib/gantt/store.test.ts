@@ -46,4 +46,14 @@ describe('useGanttStore', () => {
     useGanttStore.getState().closeEditor()
     expect(useGanttStore.getState().editor).toBeNull()
   })
+  it('scrollToDate pose une demande dont le numéro change à chaque appel ; hydrate l\'efface', () => {
+    useGanttStore.getState().scrollToDate('2026-09-01')
+    const first = useGanttStore.getState().scrollTarget!
+    useGanttStore.getState().scrollToDate('2026-09-01')
+    const second = useGanttStore.getState().scrollTarget!
+    expect(second.date).toBe('2026-09-01')
+    expect(second.seq).toBeGreaterThan(first.seq)
+    useGanttStore.getState().hydrate(payload)
+    expect(useGanttStore.getState().scrollTarget).toBeNull()
+  })
 })
