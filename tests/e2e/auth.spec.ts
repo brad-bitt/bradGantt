@@ -11,7 +11,9 @@ test('un anonyme est redirigé vers /login avec next', async ({ page }) => {
 
 test('connexion puis déconnexion', async ({ page }) => {
   await loginAs(page, 'alice')
-  await expect(page.getByText(USERS.alice.name)).toBeVisible()
-  await page.getByRole('button', { name: 'Déconnexion' }).click()
+  // Nom, thème et déconnexion sont derrière l'avatar : c'est là qu'on vérifie qui est connecté.
+  await page.getByRole('button', { name: 'Menu du compte' }).click()
+  await expect(page.getByRole('menu').getByText(USERS.alice.name)).toBeVisible()
+  await page.getByRole('menuitem', { name: 'Déconnexion' }).click()
   await expect(page).toHaveURL(/\/login/)
 })

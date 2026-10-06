@@ -16,7 +16,7 @@ export const THEME_STORAGE_KEY = 'bradgantt.theme'
  */
 export const THEME_BOOT_SCRIPT = `(function(){try{var s=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});var d=s?s==='dark':matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.dataset.theme=d?'dark':'light'}catch(e){}})()`
 
-function current(): Theme {
+export function currentTheme(): Theme {
   return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
 }
 
@@ -25,8 +25,20 @@ export function applyTheme(theme: Theme) {
 }
 
 /**
- * Bascule clair / sombre. Un choix explicite est enregistré ; tant qu'il n'y en a pas, la page
- * suit le système, y compris quand il change en cours de session.
+ * Bascule, applique ET enregistre. Partagée par la bascule de la page de connexion et par le
+ * menu du compte : deux portes, une seule règle d'enregistrement. Rend le thème obtenu pour que
+ * l'appelant mette son libellé à jour.
+ */
+export function toggleTheme(): Theme {
+  const next: Theme = currentTheme() === 'dark' ? 'light' : 'dark'
+  applyTheme(next)
+  try { localStorage.setItem(THEME_STORAGE_KEY, next) } catch {}
+  return next
+}
+
+/**
+ * Bascule clair / sombre de la page de connexion. Un choix explicite est enregistré ; tant
+ * qu'il n'y en a pas, la page suit le système, y compris quand il change en cours de session.
  */
 export function ThemeToggle({ className }: { className?: string }) {
   // `null` tant que le composant n'est pas monté : le serveur ne connaît pas le thème, et
@@ -34,7 +46,7 @@ export function ThemeToggle({ className }: { className?: string }) {
   const [theme, setTheme] = useState<Theme | null>(null)
 
   useEffect(() => {
-    setTheme(current())
+    setTheme(currentTheme())
     const media = matchMedia('(prefers-color-scheme: dark)')
     const follow = () => {
       let stored: string | null = null
@@ -48,23 +60,16 @@ export function ThemeToggle({ className }: { className?: string }) {
     return () => media.removeEventListener('change', follow)
   }, [])
 
-  function toggle() {
-    const next: Theme = current() === 'dark' ? 'light' : 'dark'
-    applyTheme(next)
-    setTheme(next)
-    try { localStorage.setItem(THEME_STORAGE_KEY, next) } catch {}
-  }
-
   const dark = theme === 'dark'
   return (
     <button
       type="button"
-      onClick={toggle}
+      onClick={() => setTheme(toggleTheme())}
       aria-pressed={dark}
       aria-label={dark ? 'Passer au thème clair' : 'Passer au thème sombre'}
       title={dark ? 'Thème clair' : 'Thème sombre'}
       className={cn(
-        'inline-flex h-8 items-center gap-2 border-[3px] border-current px-2 font-mono text-xs font-bold uppercase brutal-focus',
+        'inline-flex h-8 items-center gap-2 border-[3px] border-current px-2 text-xs font-bold brutal-focus',
         className,
       )}
     >

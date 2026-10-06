@@ -13,13 +13,17 @@ async function createProject(page: Page, name: string) {
 test('le thème sombre se choisit, survit au rechargement et à la navigation', async ({ page }) => {
   await loginAs(page, 'alice')
   const html = page.locator('html')
+  const account = page.getByRole('button', { name: 'Menu du compte' })
 
   // Sans choix enregistré, la page suit le système — le navigateur de test est en clair.
   await expect(html).toHaveAttribute('data-theme', 'light')
 
-  await page.getByRole('button', { name: 'Passer au thème sombre' }).click()
+  await account.click()
+  await page.getByRole('menuitem', { name: 'Passer au thème sombre' }).click()
   await expect(html).toHaveAttribute('data-theme', 'dark')
-  await expect(page.getByRole('button', { name: 'Passer au thème clair' })).toBeVisible()
+  await account.click()
+  await expect(page.getByRole('menuitem', { name: 'Passer au thème clair' })).toBeVisible()
+  await page.keyboard.press('Escape')
 
   // Le fond a réellement changé : ce n'est pas seulement un attribut.
   const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor)
@@ -30,7 +34,8 @@ test('le thème sombre se choisit, survit au rechargement et à la navigation', 
   await expect(html).toHaveAttribute('data-theme', 'dark')
 
   // Une autre page, hors application : la bascule y est aussi et le choix tient.
-  await page.getByRole('button', { name: 'Déconnexion' }).click()
+  await account.click()
+  await page.getByRole('menuitem', { name: 'Déconnexion' }).click()
   await page.waitForURL('**/login')
   await expect(html).toHaveAttribute('data-theme', 'dark')
   await page.getByRole('button', { name: 'Passer au thème clair' }).click()
