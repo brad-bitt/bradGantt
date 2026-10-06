@@ -60,6 +60,9 @@ export async function createProjectWithTickets(page: Page, name: string): Promis
   await page.waitForURL('**/projects/**')
   await page.goto('/projects')
   const card = page.getByRole('article', { name })
-  await card.getByRole('button', { name: 'Tickets' }).click()
-  await expect(card.getByRole('button', { name: 'Tickets' })).toHaveAttribute('aria-pressed', 'true')
+  // Le menu ⋯ se révèle au survol de la carte : on survole comme le ferait l'utilisateur.
+  await card.hover()
+  await card.getByRole('button', { name: 'Actions du projet' }).click()
+  await page.getByRole('menuitem', { name: 'Activer les tickets' }).click()
+  await expect(card.getByRole('link', { name: /^Tickets · \d+$/ })).toBeVisible()
 }

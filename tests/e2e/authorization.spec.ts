@@ -5,8 +5,8 @@ import { loginAs, addMembership, USERS } from './helpers'
 // n'est pas owner. La RLS (projects_update_owner / projects_delete_owner) refuse déjà
 // l'écriture au niveau base ; ce test couvre la couche au-dessus — la traduction de ce
 // refus en message utilisateur par renameProject/deleteProject (app/(app)/(accueil)/projects/actions.ts)
-// — seul endroit de la suite qui l'exerce. On ne peut pas passer par les boutons "Renommer"/
-// "Supprimer" de ProjectCard : ils ne sont rendus que pour project.role === 'owner', donc
+// — seul endroit de la suite qui l'exerce. On ne peut pas passer par les entrées "Renommer"/
+// "Supprimer" du menu ⋯ de ProjectCard : le menu n'est rendu que pour project.role === 'owner', donc
 // invisibles pour bob. On reproduit à la place la requête réelle envoyée par le navigateur
 // pour une Server Action (POST sur l'URL de la page, header Next-Action, corps JSON des
 // arguments — observé en conditions réelles, capturé ici sur un appel légitime d'alice)
@@ -36,7 +36,9 @@ test('bob (editor) ne peut ni renommer ni supprimer un projet dont alice est own
   const [renameReq] = await Promise.all([
     alicePage.waitForRequest((req) => req.method() === 'POST' && !!req.headers()['next-action']),
     (async () => {
-      await targetCard.getByRole('button', { name: 'Renommer' }).click()
+      await targetCard.hover()
+      await targetCard.getByRole('button', { name: 'Actions du projet' }).click()
+      await alicePage.getByRole('menuitem', { name: 'Renommer' }).click()
       await alicePage.getByLabel('Nom du projet').fill(`${targetName} v2`)
       await alicePage.getByRole('button', { name: 'Enregistrer' }).click()
     })(),
@@ -59,7 +61,9 @@ test('bob (editor) ne peut ni renommer ni supprimer un projet dont alice est own
     alicePage.waitForRequest((req) => req.method() === 'POST' && !!req.headers()['next-action']),
     (async () => {
       alicePage.once('dialog', (d) => d.accept())
-      await throwCard.getByRole('button', { name: 'Supprimer' }).click()
+      await throwCard.hover()
+      await throwCard.getByRole('button', { name: 'Actions du projet' }).click()
+      await alicePage.getByRole('menuitem', { name: 'Supprimer' }).click()
     })(),
   ])
   const deleteActionId = deleteReq.headers()['next-action']

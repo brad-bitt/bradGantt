@@ -35,18 +35,25 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
   // et il cassait la page au-delà d'environ 170 projets — la bibliothèque encode chaque
   // identifiant entre guillemets, l'URL dépassait les 8 Ko acceptés par PostgREST et la lecture
   // revenait en « URI too long » : toutes les cartes se rendaient vides d'un coup.
-  const [tasksRes, membersRes] = rows.length
+  // La troisième lecture ne ramène que `project_id` : de quoi compter les tickets de chaque
+  // carte, groupés ici même. Comme les tâches au-dessus, elle est plafonnée par le `max_rows` de
+  // PostgREST (1000 lignes) : au-delà, les comptes seraient sous-estimés.
+  const [tasksRes, membersRes, ticketsRes] = rows.length
     ? await Promise.all([
         supabase.from('tasks').select('project_id, type, title, start_date, end_date, progress, color'),
         supabase.from('memberships').select('project_id, user_id, role, profiles(display_name, email, avatar_url, color)'),
+        supabase.from('tickets').select('project_id'),
       ])
-    : [{ data: [], error: null }, { data: [], error: null }]
+    : [{ data: [], error: null }, { data: [], error: null }, { data: [], error: null }]
 
   // Un échec de ces lectures d'appoint ne doit PAS priver l'utilisateur de sa liste de projets :
   // les cartes se rendent alors sans chiffres ni avatars, ce qui reste un écran utilisable.
   // Politique d'erreur du projet : la cause technique part au journal serveur, l'écran reste muet.
   if (tasksRes.error) console.error('[projects] lecture "tasks" en échec :', tasksRes.error.message)
   if (membersRes.error) console.error('[projects] lecture "memberships" en échec :', membersRes.error.message)
+  if (ticketsRes.error) console.error('[projects] lecture "tickets" en échec :', ticketsRes.error.message)
+  const ticketCounts = new Map<string, number>()
+  for (const t of ticketsRes.data ?? []) ticketCounts.set(t.project_id, (ticketCounts.get(t.project_id) ?? 0) + 1)
   const tasksByProject = new Map<string, CardTask[]>()
   for (const t of tasksRes.data ?? []) {
     const list = tasksByProject.get(t.project_id) ?? []
@@ -75,6 +82,8 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
     name: p.name,
     createdAt: p.created_at,
     ticketsEnabled: p.tickets_enabled,
+    // Lecture en échec : `null`, le lien reste sans chiffre plutôt que d'afficher un faux « 0 ».
+    ticketCount: ticketsRes.error ? null : (ticketCounts.get(p.id) ?? 0),
     role: p.memberships[0].role,
     tasks: tasksByProject.get(p.id) ?? [],
     summary: projectSummary(tasksByProject.get(p.id) ?? [], today),

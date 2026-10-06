@@ -56,10 +56,10 @@ export function MiniGanttPlaceholder() {
   return (
     <div
       aria-hidden
-      className="flex w-full items-center justify-center border-[3px] border-dashed border-ink/30 font-mono text-[11px] uppercase tracking-wide text-ink-soft"
+      className="flex w-full items-center justify-center border-[3px] border-dashed border-ink/30 text-xs text-ink-soft"
       style={{ height: height + 12 }}
     >
-      Frise vide
+      Aucune tâche
     </div>
   )
 }

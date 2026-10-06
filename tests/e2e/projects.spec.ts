@@ -51,16 +51,21 @@ test('créer, renommer puis supprimer un projet', async ({ page }) => {
   await page.waitForURL('**/projects')
   const card = page.getByRole('article', { name })
   await expect(card).toBeVisible()
-  await expect(card.getByText('owner')).toBeVisible()
+  await expect(card.getByText('Propriétaire')).toBeVisible()
 
-  await card.getByRole('button', { name: 'Renommer' }).click()
+  await card.hover()
+  await card.getByRole('button', { name: 'Actions du projet' }).click()
+  await page.getByRole('menuitem', { name: 'Renommer' }).click()
   await page.getByLabel('Nom du projet').fill(`${name} v2`)
   await page.getByRole('button', { name: 'Enregistrer' }).click()
-  await expect(page.getByRole('article', { name: `${name} v2` })).toBeVisible()
+  const renamed = page.getByRole('article', { name: `${name} v2` })
+  await expect(renamed).toBeVisible()
 
   page.once('dialog', (d) => d.accept())
-  await page.getByRole('article', { name: `${name} v2` }).getByRole('button', { name: 'Supprimer' }).click()
-  await expect(page.getByRole('article', { name: `${name} v2` })).toHaveCount(0)
+  await renamed.hover()
+  await renamed.getByRole('button', { name: 'Actions du projet' }).click()
+  await page.getByRole('menuitem', { name: 'Supprimer' }).click()
+  await expect(renamed).toHaveCount(0)
 })
 
 test('un nom vide est refusé', async ({ page }) => {
@@ -86,7 +91,7 @@ test('la liste ouvre sur une ligne de synthèse et chaque carte porte sa vignett
   const demo = page.getByRole('article', { name: 'Projet démo' })
   await demo.scrollIntoViewIfNeeded()
   await expect(demo.getByRole('progressbar', { name: 'Avancement de Projet démo' })).toBeVisible()
-  await expect(demo.getByText('Frise vide')).toHaveCount(0)
+  await expect(demo.getByText('Aucune tâche', { exact: true })).toHaveCount(0)
   await expect(demo.getByText('Kick-off dev')).toBeVisible()
 })
 
@@ -152,4 +157,50 @@ test('« N en retard » ne garde que les projets en retard, « Tout afficher » 
   await page.getByRole('link', { name: 'Tout afficher' }).click()
   await page.waitForURL(/\/projects$/)
   await expect(page.getByRole('article', { name: calm })).toBeVisible()
+})
+
+test('toute la carte ouvre le Gantt, mais son menu ⋯ n\'y emmène pas', async ({ page }) => {
+  await loginAs(page, 'alice')
+  const stamp = Date.now()
+  const empty = `Carte vide ${stamp}`
+  const filled = `Carte pleine ${stamp}`
+  await createProject(page, empty)
+  await createProject(page, filled)
+  await page.getByRole('button', { name: '+ Tâche' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Nouvelle tâche' })
+  await dialog.getByLabel('Titre').fill('Une tâche')
+  await dialog.getByLabel('Début').fill(isoInDays(1))
+  await dialog.getByLabel('Fin').fill(isoInDays(5))
+  await dialog.getByRole('button', { name: 'Créer', exact: true }).click()
+  await expect(page.locator('[data-row-task-id]', { hasText: 'Une tâche' })).toHaveCount(1)
+
+  await page.goto('/projects')
+  const card = page.getByRole('article', { name: empty })
+
+  // Le menu est posé au-dessus du lien de la carte : l'ouvrir ne navigue pas.
+  await card.hover()
+  await card.getByRole('button', { name: 'Actions du projet' }).click()
+  await expect(page.getByRole('menu', { name: 'Actions du projet' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page).toHaveURL(/\/projects$/)
+
+  // Carte vide : un clic au milieu, loin du titre, ouvre le projet.
+  const box = (await card.boundingBox())!
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
+  await page.waitForURL(/\/projects\/[0-9a-f-]{36}$/)
+
+  // Carte NON vide : vignette et barre d'avancement sont `relative` et plus loin dans le DOM que
+  // le lien ; sans `after:z-[1]` elles intercepteraient le clic. Clics réels à la souris, pas
+  // `locator.click()` qui refuserait d'agir sur un élément recouvert.
+  for (const target of ['thumbnail', 'progress'] as const) {
+    await page.goto('/projects')
+    const full = page.getByRole('article', { name: filled })
+    const el = target === 'thumbnail'
+      ? full.locator('div[aria-hidden].relative.overflow-hidden')
+      : full.getByRole('progressbar')
+    await el.scrollIntoViewIfNeeded()
+    const b = (await el.boundingBox())!
+    await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2)
+    await page.waitForURL(/\/projects\/[0-9a-f-]{36}$/)
+  }
 })
