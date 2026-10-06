@@ -5,6 +5,7 @@ import { todayISO } from '@/lib/gantt/dates'
 import type { Member, Role } from '@/lib/gantt/types'
 import type { InviteRole } from '@/lib/invitations/types'
 import { GanttPage } from '@/components/gantt/GanttPage'
+import { groupByTask, type TicketRowSummary } from '@/lib/tickets/summary'
 import { ProjectLoadError } from '@/components/gantt/ProjectLoadError'
 
 export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
@@ -17,7 +18,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   // `maybeSingle` plutôt que `single` : l'absence de ligne n'est pas une erreur ici, c'est le cas nominal
   // d'un identifiant inconnu ou d'un projet auquel on n'a pas accès (les deux se répondent par un 404,
   // volontairement indistinguables pour ne pas divulguer l'existence d'un projet).
-  const { data: project, error: projectError } = await supabase.from('projects').select('id, name').eq('id', id).maybeSingle()
+  const { data: project, error: projectError } = await supabase.from('projects').select('id, name, tickets_enabled').eq('id', id).maybeSingle()
   // Un échec technique n'est PAS une absence de ligne : le confondre avec un 404 ferait croire à
   // l'utilisateur que son projet n'existe plus. Le message reste générique (il ne dit rien de
   // l'existence du projet), seule la cause technique part au journal serveur.
@@ -29,13 +30,19 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   // on est membre, elle ne filtre donc pas sur CE projet-ci. Verrouillé par
   // tests/e2e/gantt-view.spec.ts (« aucune donnée d'un autre projet ne fuit »), qui s'appuie sur
   // le second projet du seed. Ne jamais retirer ces filtres.
-  const [membershipsRes, tasksRes, depsRes, invitationsRes] = await Promise.all([
+  const [membershipsRes, tasksRes, depsRes, invitationsRes, ticketsRes] = await Promise.all([
     supabase.from('memberships').select('user_id, role, profiles(display_name, email, avatar_url, color)').eq('project_id', id),
     supabase.from('tasks').select('*').eq('project_id', id).order('sort_order'),
     supabase.from('dependencies').select('*').eq('project_id', id),
     // La RLS ne montre les invitations qu'à l'owner : pour tout autre membre, cette lecture
     // renvoie une liste vide, ce qui est exactement l'affichage voulu.
     supabase.from('invitations').select('id, email, role, created_at').eq('project_id', id).is('accepted_at', null).order('created_at'),
+    // Tickets RATTACHÉS uniquement, et seulement si le projet les active : un projet sans
+    // backlog n'émet même pas la requête. `.not('task_id', 'is', null)` parce qu'un ticket
+    // libre n'a aucune ligne où s'afficher dans la frise.
+    project.tickets_enabled
+      ? supabase.from('tickets').select('id, number, title, status, task_id').eq('project_id', id).not('task_id', 'is', null)
+      : Promise.resolve({ data: [], error: null }),
   ])
 
   // Une lecture en échec ne doit jamais se présenter comme un résultat vide : un `tasks` en erreur
@@ -49,6 +56,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   // Les invitations ne sont PAS dans les échecs bloquants : elles ne sont qu'un complément du
   // dialog des membres. Un Gantt refusé parce qu'une liste d'invitations n'a pas pu être lue
   // serait une régression de disponibilité pour un écran qui n'en dépend pas.
+  // Les tickets non plus ne sont PAS bloquants : le compteur disparaît, la frise reste entière.
+  // Refuser de rendre un Gantt parce qu'un décompte n'a pas pu être lu serait une régression
+  // de disponibilité pour un écran qui n'en dépend pas.
+  if (ticketsRes.error) console.error(`[projects/${id}] lecture "tickets" en échec :`, ticketsRes.error.message)
   if (failures.length > 0) return renderLoadError(id, failures, project.name)
 
   const memberships = membershipsRes.data ?? []
@@ -84,6 +95,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         tasks: (tasksRes.data ?? []).map(rowToTask),
         dependencies: (depsRes.data ?? []).map(rowToDependency),
         invitations: (invitationsRes.data ?? []).map((i) => ({ id: i.id, email: i.email, role: i.role as InviteRole, createdAt: i.created_at })),
+        ticketsEnabled: project.tickets_enabled,
+        ticketsByTask: groupByTask(
+          (ticketsRes.data ?? []).map((t): TicketRowSummary => ({
+            id: t.id, number: t.number, title: t.title, status: t.status, taskId: t.task_id,
+          })),
+        ),
         today: todayISO(),
       }}
     />

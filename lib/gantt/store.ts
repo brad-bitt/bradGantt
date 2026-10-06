@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type { ContextMenuState, Dependency, DragState, EditorState, GanttData, Member, Role, Selection, Task, Zoom } from './types'
 import { applyEvent, indexById, type GanttEvent } from './events'
 import type { PendingInvitation } from '@/lib/invitations/types'
+import type { TicketSummary } from '@/lib/tickets/types'
 
 export interface HydratePayload {
   projectId: string
@@ -13,6 +14,13 @@ export interface HydratePayload {
   today: string
   /** Absent pour un non-owner : la RLS ne lui montre aucune invitation. */
   invitations?: PendingInvitation[]
+  /** Le projet affiche-t-il ses tickets. Faux : ni lien, ni compteur, ni section dans l'éditeur. */
+  ticketsEnabled?: boolean
+  /**
+   * RÉSUMÉ seulement, groupé par tâche. Le store du Gantt ne contient volontairement aucun
+   * ticket complet : le backlog vit dans `lib/tickets`, sur sa propre route.
+   */
+  ticketsByTask?: Record<string, TicketSummary[]>
 }
 
 export interface GanttState extends GanttData {
@@ -29,6 +37,8 @@ export interface GanttState extends GanttData {
    */
   epoch: number
   invitations: PendingInvitation[]
+  ticketsEnabled: boolean
+  ticketsByTask: Record<string, TicketSummary[]>
   zoom: Zoom
   selection: Selection
   drag: DragState | null
@@ -57,6 +67,8 @@ export const useGanttStore = create<GanttState>((set) => ({
   tasks: {},
   dependencies: {},
   invitations: [],
+  ticketsEnabled: false,
+  ticketsByTask: {},
   zoom: 'day',
   selection: null,
   drag: null,
@@ -74,6 +86,8 @@ export const useGanttStore = create<GanttState>((set) => ({
     tasks: indexById(p.tasks),
     dependencies: indexById(p.dependencies),
     invitations: p.invitations ?? [],
+    ticketsEnabled: p.ticketsEnabled ?? false,
+    ticketsByTask: p.ticketsByTask ?? {},
     selection: null,
     drag: null,
     editor: null,

@@ -4,6 +4,7 @@ import { getGanttCommands } from '@/lib/gantt/client-commands'
 import { ROW_HEIGHT } from '@/lib/gantt/geometry'
 import { siblingsOf } from '@/lib/gantt/scheduling'
 import type { Row } from '@/lib/gantt/types'
+import { countDone } from '@/lib/tickets/summary'
 import { Avatar } from '@/components/ui/Avatar'
 import { cn } from '@/lib/utils'
 import { useGanttView } from './GanttView'
@@ -28,6 +29,10 @@ export function SidebarRow({ row }: { row: Row }) {
   const select = useGanttStore((s) => s.select)
   const openEditor = useGanttStore((s) => s.openEditor)
   const assignee = useGanttStore((s) => s.members.find((m) => m.userId === task.assigneeId))
+  const ticketsEnabled = useGanttStore((s) => s.ticketsEnabled)
+  // La référence du tableau vient du store et reste stable entre deux rendus : la lire
+  // directement ne provoque pas de boucle, contrairement à un calcul fait dans le sélecteur.
+  const ticketSummaries = useGanttStore((s) => s.ticketsByTask[task.id])
   const openMenu = useOpenContextMenu()
 
   return (
@@ -87,6 +92,19 @@ export function SidebarRow({ row }: { row: Row }) {
       ) : null}
       {task.type === 'milestone' && <span className="size-3 shrink-0 rotate-45 bg-ink" aria-hidden />}
       <span className={cn('flex-1 truncate text-sm', task.type === 'group' && 'font-display uppercase')}>{task.title}</span>
+      {/* Compteur de tickets, effacé en mode compact comme l'avatar : sur un téléphone, ces
+          quelques pixels sont pris sur le titre, qui est la seule chose indispensable. */}
+      {ticketsEnabled && ticketSummaries && ticketSummaries.length > 0 && !compact && (() => {
+        const { done, total } = countDone(ticketSummaries)
+        return (
+          <span
+            aria-label={`${done} ticket${done > 1 ? 's' : ''} terminé${done > 1 ? 's' : ''} sur ${total}`}
+            className="shrink-0 font-mono text-xs text-ink-soft"
+          >
+            {done}/{total}
+          </span>
+        )
+      })()}
       {/* L'assigné reste lisible dans l'éditeur : sur un écran étroit, son avatar cède la place au titre. */}
       {assignee && !compact && <Avatar name={assignee.displayName} color={assignee.color} src={assignee.avatarUrl} size="sm" />}
       {/* Enchaînement. Sur une tâche ou un jalon : une TÂCHE frère, insérée juste après et liée
