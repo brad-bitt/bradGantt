@@ -3,15 +3,19 @@ import { loginAs } from './helpers'
 
 /** Invite une adresse SANS compte et récupère le lien, exposé seulement sous `E2E_ENABLED`. */
 async function inviteUnknown(page: Page, email: string, role: 'editor' | 'viewer') {
-  await page.getByRole('button', { name: 'Membres' }).click()
-  const dialog = page.getByRole('dialog', { name: 'Membres' })
-  await dialog.getByLabel('Email').fill(email)
-  await dialog.getByLabel('Rôle', { exact: true }).selectOption(role)
-  await dialog.getByRole('button', { name: 'Inviter' }).click()
-  const text = await dialog.getByTestId('invite-url').textContent()
-  const url = text!.match(/https?:\/\/\S+/)![0]
-  await page.keyboard.press('Escape')
-  return url
+  await page.getByRole('navigation', { name: 'Sections du projet' }).getByRole('link', { name: 'Membres' }).click()
+  await page.waitForURL('**/membres')
+  const region = page.getByRole('region', { name: 'Membres' })
+  const link = region.getByTestId('invite-url')
+  // La page reste ouverte d'une invitation à l'autre : le lien de la précédente est encore
+  // affiché. On attend qu'il change avant de lire, sinon on renverrait l'ancien.
+  const previous = (await link.count()) ? await link.textContent() : null
+  await region.getByLabel('Email').fill(email)
+  await region.getByLabel('Rôle', { exact: true }).selectOption(role)
+  await region.getByRole('button', { name: 'Inviter' }).click()
+  if (previous) await expect(link).not.toHaveText(previous)
+  const text = await link.textContent()
+  return text!.match(/https?:\/\/\S+/)![0]
 }
 
 async function signUp(browser: Browser, email: string) {
@@ -39,9 +43,7 @@ test('invitation par lien : acceptation, réutilisation refusée, mauvais compte
   const frankUrl = await inviteUnknown(page, frankEmail, 'viewer')
   const graceUrl = await inviteUnknown(page, `grace-${stamp}@test.local`, 'editor')
 
-  await page.getByRole('button', { name: 'Membres' }).click()
-  await expect(page.getByRole('dialog').getByTestId('pending-list')).toContainText(frankEmail)
-  await page.keyboard.press('Escape')
+  await expect(page.getByRole('region', { name: 'Membres' }).getByTestId('pending-list')).toContainText(frankEmail)
 
   // Anonyme → renvoyé au login, avec le lien d'invitation en `next`.
   const anon = await browser.newContext()
@@ -73,8 +75,7 @@ test('invitation par lien : acceptation, réutilisation refusée, mauvais compte
 
   // Côté owner : Frank a quitté les invitations en attente pour la liste des membres.
   await page.reload()
-  await page.getByRole('button', { name: 'Membres' }).click()
-  const dialog = page.getByRole('dialog', { name: 'Membres' })
-  await expect(dialog.getByTestId('pending-list')).not.toContainText(frankEmail)
-  await expect(dialog.getByTestId('members-list')).toContainText(frankEmail)
+  const region = page.getByRole('region', { name: 'Membres' })
+  await expect(region.getByTestId('pending-list')).not.toContainText(frankEmail)
+  await expect(region.getByTestId('members-list')).toContainText(frankEmail)
 })

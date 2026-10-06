@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import type { ContextMenuState, Dependency, DragState, EditorState, GanttData, Member, Role, Selection, Task, Zoom } from './types'
 import { applyEvent, indexById, type GanttEvent } from './events'
-import type { PendingInvitation } from '@/lib/invitations/types'
 import type { TicketSummary } from '@/lib/tickets/types'
 
 export interface HydratePayload {
@@ -12,8 +11,6 @@ export interface HydratePayload {
   tasks: Task[]
   dependencies: Dependency[]
   today: string
-  /** Absent pour un non-owner : la RLS ne lui montre aucune invitation. */
-  invitations?: PendingInvitation[]
   /** Le projet affiche-t-il ses tickets. Faux : ni lien, ni compteur, ni section dans l'éditeur. */
   ticketsEnabled?: boolean
   /**
@@ -36,7 +33,6 @@ export interface GanttState extends GanttData {
    * et rejouer l'événement inverse réinjecterait des entités périmées dans un état frais.
    */
   epoch: number
-  invitations: PendingInvitation[]
   ticketsEnabled: boolean
   ticketsByTask: Record<string, TicketSummary[]>
   zoom: Zoom
@@ -44,7 +40,6 @@ export interface GanttState extends GanttData {
   drag: DragState | null
   editor: EditorState
   menu: ContextMenuState
-  membersDialogOpen: boolean
   hydrate: (p: HydratePayload) => void
   apply: (e: GanttEvent) => void
   setZoom: (z: Zoom) => void
@@ -54,7 +49,6 @@ export interface GanttState extends GanttData {
   closeEditor: () => void
   openMenu: (menu: Exclude<ContextMenuState, null>) => void
   closeMenu: () => void
-  setMembersDialogOpen: (open: boolean) => void
 }
 
 export const useGanttStore = create<GanttState>((set) => ({
@@ -66,7 +60,6 @@ export const useGanttStore = create<GanttState>((set) => ({
   epoch: 0,
   tasks: {},
   dependencies: {},
-  invitations: [],
   ticketsEnabled: false,
   ticketsByTask: {},
   zoom: 'day',
@@ -74,7 +67,6 @@ export const useGanttStore = create<GanttState>((set) => ({
   drag: null,
   editor: null,
   menu: null,
-  membersDialogOpen: false,
 
   hydrate: (p) => set((s) => ({
     epoch: s.epoch + 1,
@@ -85,16 +77,12 @@ export const useGanttStore = create<GanttState>((set) => ({
     today: p.today,
     tasks: indexById(p.tasks),
     dependencies: indexById(p.dependencies),
-    invitations: p.invitations ?? [],
     ticketsEnabled: p.ticketsEnabled ?? false,
     ticketsByTask: p.ticketsByTask ?? {},
     selection: null,
     drag: null,
     editor: null,
     menu: null,
-    // `membersDialogOpen` n'est VOLONTAIREMENT pas réinitialisé : chaque changement de rôle ou
-    // de membre appelle `router.refresh()`, donc `hydrate`. Le remettre à `false` refermerait
-    // le dialog sous les doigts de l'owner à chaque modification qu'il vient de faire.
   })),
   apply: (e) => set((s) => applyEvent({ tasks: s.tasks, dependencies: s.dependencies }, e)),
   setZoom: (zoom) => set({ zoom }),
@@ -104,7 +92,6 @@ export const useGanttStore = create<GanttState>((set) => ({
   closeEditor: () => set({ editor: null }),
   openMenu: (menu) => set({ menu }),
   closeMenu: () => set({ menu: null }),
-  setMembersDialogOpen: (membersDialogOpen) => set({ membersDialogOpen }),
 }))
 
 export const selectCanEdit = (s: GanttState) => s.myRole !== 'viewer'

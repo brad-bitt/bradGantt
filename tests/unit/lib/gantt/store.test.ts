@@ -34,12 +34,10 @@ describe('useGanttStore', () => {
     useGanttStore.getState().hydrate({ ...payload, myRole: 'viewer' })
     expect(selectCanEdit(useGanttStore.getState())).toBe(false)
   })
-  it('hydrate charge les invitations en attente (vide par défaut)', () => {
-    expect(useGanttStore.getState().invitations).toEqual([])
-    useGanttStore.getState().hydrate({ ...payload, invitations: [{ id: 'i1', email: 'x@y.z', role: 'viewer', createdAt: '2026-08-31' }] })
-    expect(useGanttStore.getState().invitations).toHaveLength(1)
-    useGanttStore.getState().setMembersDialogOpen(true)
-    expect(useGanttStore.getState().membersDialogOpen).toBe(true)
+  it('le store ne porte plus ni invitations ni fenêtre des membres : la page Membres les lit', () => {
+    const s = useGanttStore.getState() as unknown as Record<string, unknown>
+    expect(s.invitations).toBeUndefined()
+    expect(s.membersDialogOpen).toBeUndefined()
   })
   it('setters d\'interaction', () => {
     const s = useGanttStore.getState()

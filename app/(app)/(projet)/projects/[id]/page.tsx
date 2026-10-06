@@ -3,7 +3,6 @@ import { createClient } from '@/lib/supabase/server'
 import { rowToDependency, rowToTask } from '@/lib/gantt/repository'
 import { todayISO } from '@/lib/gantt/dates'
 import type { Member, Role } from '@/lib/gantt/types'
-import type { InviteRole } from '@/lib/invitations/types'
 import { GanttPage } from '@/components/gantt/GanttPage'
 import { groupByTask, type TicketRowSummary } from '@/lib/tickets/summary'
 import { ProjectLoadError } from '@/components/gantt/ProjectLoadError'
@@ -30,13 +29,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   // on est membre, elle ne filtre donc pas sur CE projet-ci. Verrouillé par
   // tests/e2e/gantt-view.spec.ts (« aucune donnée d'un autre projet ne fuit »), qui s'appuie sur
   // le second projet du seed. Ne jamais retirer ces filtres.
-  const [membershipsRes, tasksRes, depsRes, invitationsRes, ticketsRes] = await Promise.all([
+  const [membershipsRes, tasksRes, depsRes, ticketsRes] = await Promise.all([
     supabase.from('memberships').select('user_id, role, profiles(display_name, email, avatar_url, color)').eq('project_id', id),
     supabase.from('tasks').select('*').eq('project_id', id).order('sort_order'),
     supabase.from('dependencies').select('*').eq('project_id', id),
-    // La RLS ne montre les invitations qu'à l'owner : pour tout autre membre, cette lecture
-    // renvoie une liste vide, ce qui est exactement l'affichage voulu.
-    supabase.from('invitations').select('id, email, role, created_at').eq('project_id', id).is('accepted_at', null).order('created_at'),
     // Tickets RATTACHÉS uniquement, et seulement si le projet les active : un projet sans
     // backlog n'émet même pas la requête. `.not('task_id', 'is', null)` parce qu'un ticket
     // libre n'a aucune ligne où s'afficher dans la frise.
@@ -53,10 +49,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   if (membershipsRes.error) failures.push(['memberships', membershipsRes.error])
   if (tasksRes.error) failures.push(['tasks', tasksRes.error])
   if (depsRes.error) failures.push(['dependencies', depsRes.error])
-  // Les invitations ne sont PAS dans les échecs bloquants : elles ne sont qu'un complément du
-  // dialog des membres. Un Gantt refusé parce qu'une liste d'invitations n'a pas pu être lue
-  // serait une régression de disponibilité pour un écran qui n'en dépend pas.
-  // Les tickets non plus ne sont PAS bloquants : le compteur disparaît, la frise reste entière.
+  // Les tickets ne sont PAS bloquants : le compteur disparaît, la frise reste entière.
   // Refuser de rendre un Gantt parce qu'un décompte n'a pas pu être lu serait une régression
   // de disponibilité pour un écran qui n'en dépend pas.
   if (ticketsRes.error) console.error(`[projects/${id}] lecture "tickets" en échec :`, ticketsRes.error.message)
@@ -94,7 +87,6 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         members,
         tasks: (tasksRes.data ?? []).map(rowToTask),
         dependencies: (depsRes.data ?? []).map(rowToDependency),
-        invitations: (invitationsRes.data ?? []).map((i) => ({ id: i.id, email: i.email, role: i.role as InviteRole, createdAt: i.created_at })),
         ticketsEnabled: project.tickets_enabled,
         ticketsByTask: groupByTask(
           (ticketsRes.data ?? []).map((t): TicketRowSummary => ({
