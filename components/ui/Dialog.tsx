@@ -148,7 +148,10 @@ export function Dialog({ open, onClose, title, children, footer, accentClassName
         {/* `min-h-0` : sans lui, un enfant flex refuse de rétrécir sous sa hauteur de contenu et
             `overflow-y-auto` n'a jamais rien à faire défiler. */}
         <div ref={contentRef} className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
-        {footer && <footer className="flex shrink-0 justify-end gap-3 border-t-[3px] border-ink px-5 py-3">{footer}</footer>}
+        {/* `flex-wrap` : sur un téléphone, « Supprimer », « Annuler » et « Enregistrer » ne tiennent
+            pas sur une rangée ; sans retour à la ligne, `justify-end` poussait « Supprimer » hors
+            du panneau, par la gauche. */}
+        {footer && <footer className="flex shrink-0 flex-wrap justify-end gap-3 border-t-[3px] border-ink px-5 py-3">{footer}</footer>}
       </div>
     </div>,
     document.body,

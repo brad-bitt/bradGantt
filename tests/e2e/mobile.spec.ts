@@ -150,4 +150,18 @@ test('les pages Tickets et Membres tiennent dans la largeur du téléphone', asy
   await page.goto(`/projects/${TICKETS_PROJECT.id}/tickets`)
   await page.getByRole('button', { name: 'Filtres' }).click()
   await expect(page.getByRole('dialog', { name: 'Filtres' }).getByLabel('Statut')).toBeVisible()
+  await page.keyboard.press('Escape')
+
+  // La fenêtre d'un ticket (ouverte puis fermée sans enregistrer) : ses trois boutons de pied
+  // restent dans le panneau, « Supprimer » compris.
+  await page.getByRole('article', { name: /^#3 / }).dblclick()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  const panel = (await dialog.boundingBox())!
+  for (const name of ['Supprimer', 'Annuler', 'Enregistrer']) {
+    const b = (await dialog.getByRole('button', { name, exact: true }).boundingBox())!
+    expect(b.x, name).toBeGreaterThanOrEqual(panel.x)
+    expect(b.x + b.width, name).toBeLessThanOrEqual(panel.x + panel.width)
+  }
+  await page.keyboard.press('Escape')
 })
