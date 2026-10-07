@@ -119,7 +119,8 @@ test('un lecteur voit les tickets sans aucune commande d\'écriture', async ({ p
 test('un projet sans tickets n\'offre ni lien ni page, sauf à son propriétaire', async ({ page }) => {
   const demoId = 'c0000000-0000-0000-0000-000000000001'
 
-  // Une lectrice du projet démo : aucun lien dans la barre d'outils, et la page renvoie un 404.
+  // Une lectrice du projet démo : pas d'onglet Tickets dans l'en-tête du projet, et la page
+  // renvoie un 404.
   await loginAs(page, 'carol')
   await page.goto(`/projects/${demoId}`)
   await expect(page.getByRole('link', { name: 'Tickets' })).toHaveCount(0)
