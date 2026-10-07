@@ -70,7 +70,7 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
         <Link
           href={base}
           data-card-link
-          className="font-display text-xl uppercase leading-tight outline-none after:absolute after:inset-0 after:z-[1] after:content-['']"
+          className="min-w-0 font-display text-xl uppercase leading-tight [overflow-wrap:anywhere] outline-none after:absolute after:inset-0 after:z-[1] after:content-['']"
         >
           {project.name}
         </Link>

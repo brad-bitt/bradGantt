@@ -88,6 +88,13 @@ test('l\'en-tête de projet passe sur deux rangées, même avec un nom de 100 ca
   const title = (await header.getByRole('heading').boundingBox())!
   const tabsBox = (await tabs.boundingBox())!
   expect(tabsBox.y).toBeGreaterThanOrEqual(title.y + title.height)
+
+  // Nettoyage par l'UI : un projet à nom de 100 caractères laissé en base ferait déborder la
+  // liste des runs suivants.
+  page.once('dialog', (d) => d.accept())
+  await header.getByRole('button', { name: 'Actions du projet' }).click()
+  await page.getByRole('menuitem', { name: 'Supprimer' }).click()
+  await page.waitForURL(/\/projects$/)
 })
 
 test('les pages Tickets et Membres tiennent dans la largeur du téléphone', async ({ page }) => {

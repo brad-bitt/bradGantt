@@ -130,8 +130,8 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
         // projets ont disparu. « Tout afficher » est juste au-dessus, dans la ligne de synthèse.
         <p className="text-sm text-ink-soft">Aucun projet en retard.</p>
       ) : (
-        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {shown.map((p) => <li key={p.id}><ProjectCard project={p} /></li>)}
+        <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {shown.map((p) => <li key={p.id} className="min-w-0"><ProjectCard project={p} /></li>)}
         </ul>
       )}
     </main>
