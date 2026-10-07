@@ -37,6 +37,28 @@ export function toggleTheme(): Theme {
 }
 
 /**
+ * Tant qu'aucun choix n'est enregistré, suit le thème du système quand il change en cours de
+ * session, et prévient l'appelant pour qu'il mette son libellé à jour. Branché par la bascule de
+ * la page de connexion et par le menu du compte, présent dans les deux en-têtes : toutes les
+ * pages suivent ainsi le système. Rend la fonction de désabonnement.
+ */
+export function followSystemTheme(onChange: (theme: Theme) => void): () => void {
+  // Absent de jsdom et de très vieux navigateurs : on garde alors le thème posé au chargement.
+  if (typeof window.matchMedia !== 'function') return () => {}
+  const media = window.matchMedia('(prefers-color-scheme: dark)')
+  const follow = () => {
+    let stored: string | null = null
+    try { stored = localStorage.getItem(THEME_STORAGE_KEY) } catch {}
+    if (stored) return
+    const next: Theme = media.matches ? 'dark' : 'light'
+    applyTheme(next)
+    onChange(next)
+  }
+  media.addEventListener('change', follow)
+  return () => media.removeEventListener('change', follow)
+}
+
+/**
  * Bascule clair / sombre de la page de connexion. Un choix explicite est enregistré ; tant
  * qu'il n'y en a pas, la page suit le système, y compris quand il change en cours de session.
  */
@@ -47,17 +69,7 @@ export function ThemeToggle({ className }: { className?: string }) {
 
   useEffect(() => {
     setTheme(currentTheme())
-    const media = matchMedia('(prefers-color-scheme: dark)')
-    const follow = () => {
-      let stored: string | null = null
-      try { stored = localStorage.getItem(THEME_STORAGE_KEY) } catch {}
-      if (stored) return
-      const next: Theme = media.matches ? 'dark' : 'light'
-      applyTheme(next)
-      setTheme(next)
-    }
-    media.addEventListener('change', follow)
-    return () => media.removeEventListener('change', follow)
+    return followSystemTheme(setTheme)
   }, [])
 
   const dark = theme === 'dark'

@@ -3,7 +3,7 @@ import { useEffect, useState, useTransition } from 'react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Menu } from '@/components/ui/Menu'
 import { signOut } from '@/app/(app)/(accueil)/projects/actions'
-import { currentTheme, toggleTheme, type Theme } from './ThemeToggle'
+import { currentTheme, followSystemTheme, toggleTheme, type Theme } from './ThemeToggle'
 import { useProfile } from './ProfileProvider'
 
 /**
@@ -17,8 +17,12 @@ export function UserMenu() {
   const [, start] = useTransition()
 
   // Le thème vit sur <html>, hors de React : on le relit au montage pour que le libellé dise ce
-  // que fera le clic, pas ce que supposait le rendu serveur.
-  useEffect(() => { setTheme(currentTheme()) }, [])
+  // que fera le clic, pas ce que supposait le rendu serveur. Le menu est dans les deux en-têtes :
+  // c'est lui qui fait suivre le système à toute l'application tant qu'aucun choix n'est fait.
+  useEffect(() => {
+    setTheme(currentTheme())
+    return followSystemTheme(setTheme)
+  }, [])
 
   return (
     <Menu

@@ -189,12 +189,13 @@ Les tests `tests/e2e/mobile.spec.ts` tournent en émulation Pixel 7 (portrait pu
 
 ## Thème sombre
 
-La bascule est dans le menu du compte (l'avatar, en haut à droite de l'en-tête) et en haut à
-droite de la page de connexion. Un choix explicite
-est enregistré dans `localStorage` ; sans choix, la page suit le réglage du système, y compris
-quand il change en cours de session. Un script inséré en tête du `<body>` par le layout racine
-pose `data-theme` sur `<html>` avant le premier rendu, pour éviter l'éclair clair d'une page
-sombre (`components/layout/ThemeToggle.tsx`).
+La bascule est dans le menu du compte (l'avatar, à droite de l'en-tête de la liste comme de
+celui d'un projet) et en haut à droite de la page de connexion. Un choix explicite est enregistré
+dans `localStorage` ; sans choix, l'application suit le réglage du système, y compris quand il
+change en cours de session : c'est le menu du compte, présent dans les deux en-têtes, qui écoute
+ce changement (et la bascule, sur la page de connexion). Un script placé en premier enfant du
+`<body>` par le layout racine pose `data-theme` sur `<html>` avant le premier rendu, pour éviter
+l'éclair clair d'une page sombre (`components/layout/ThemeToggle.tsx`).
 
 Les couleurs sont des jetons Tailwind dans un `@theme` non inline (`app/globals.css`) : les
 utilitaires référencent `var(--color-…)`, et le bloc `:root[data-theme="dark"]` les redéfinit.

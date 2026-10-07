@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { UserMenu } from '@/components/layout/UserMenu'
 import { ProfileProvider } from '@/components/layout/ProfileProvider'
@@ -46,5 +46,50 @@ describe('UserMenu', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Menu du compte' }))
     await userEvent.click(screen.getByRole('menuitem', { name: 'Déconnexion' }))
     expect(mockSignOut).toHaveBeenCalledTimes(1)
+  })
+
+  describe('suit le thème du système en cours de session', () => {
+    // jsdom n'a pas `matchMedia` : une simulation dont on déclenche le changement à la main.
+    let listeners: Array<() => void>
+    let mq: { matches: boolean; addEventListener: (t: string, l: () => void) => void; removeEventListener: (t: string, l: () => void) => void }
+    beforeEach(() => {
+      listeners = []
+      mq = {
+        matches: false,
+        addEventListener: (_t, l) => { listeners.push(l) },
+        removeEventListener: (_t, l) => { listeners = listeners.filter((x) => x !== l) },
+      }
+      window.matchMedia = (() => mq) as unknown as typeof window.matchMedia
+    })
+    afterEach(() => {
+      // @ts-expect-error on retire la simulation : jsdom n'en a pas
+      delete window.matchMedia
+    })
+    function systemGoes(dark: boolean) {
+      mq.matches = dark
+      act(() => { listeners.forEach((l) => l()) })
+    }
+
+    it('sans choix enregistré, la page et le libellé du menu suivent le système', async () => {
+      renderMenu()
+      systemGoes(true)
+      expect(document.documentElement.dataset.theme).toBe('dark')
+      await userEvent.click(screen.getByRole('button', { name: 'Menu du compte' }))
+      expect(screen.getByRole('menuitem', { name: 'Passer au thème clair' })).toBeInTheDocument()
+    })
+
+    it('un choix explicite l\'emporte sur le système', () => {
+      localStorage.setItem('bradgantt.theme', 'light')
+      renderMenu()
+      systemGoes(true)
+      expect(document.documentElement.dataset.theme).toBe('light')
+    })
+
+    it('l\'écoute s\'arrête au démontage', () => {
+      const { unmount } = renderMenu()
+      expect(listeners).toHaveLength(1)
+      unmount()
+      expect(listeners).toHaveLength(0)
+    })
   })
 })
