@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { Button } from './Button'
+import { cn } from '@/lib/utils'
 
 export interface DialogProps {
   open: boolean
@@ -8,6 +9,11 @@ export interface DialogProps {
   title: string
   children: ReactNode
   footer?: ReactNode
+  /**
+   * Classe d'aplat d'une bande de 7 px à gauche du titre. La fenêtre d'un ticket y reprend la
+   * couleur de son statut, comme la carte d'où elle s'ouvre : on reconnaît l'objet qu'on édite.
+   */
+  accentClassName?: string
 }
 
 const focusableSelectors = [
@@ -27,7 +33,7 @@ function getContentFocusableElements(contentElement: HTMLElement | null): HTMLEl
   return []
 }
 
-export function Dialog({ open, onClose, title, children, footer }: DialogProps) {
+export function Dialog({ open, onClose, title, children, footer, accentClassName }: DialogProps) {
   const titleId = useId()
   const dialogRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
@@ -110,9 +116,15 @@ export function Dialog({ open, onClose, title, children, footer }: DialogProps) 
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}
         className="flex max-h-full w-full max-w-lg flex-col bg-paper border-[3px] border-ink shadow-brutal-xl brutal-focus"
         onClick={(e) => e.stopPropagation()}>
-        <header className="flex shrink-0 items-center justify-between border-b-[3px] border-ink px-5 py-3 bg-cream">
-          <h2 id={titleId} className="text-xl">{title}</h2>
-          <Button variant="quiet" size="sm" onClick={onClose} aria-label="Fermer">✕</Button>
+        <header className="flex shrink-0 items-stretch justify-between border-b-[3px] border-ink px-5 py-3 bg-cream">
+          <div className="flex min-w-0 items-center gap-3">
+            {/* Marges négatives : la bande court du haut au bas du bandeau, padding compris. */}
+            {accentClassName && (
+              <span aria-hidden data-testid="dialog-accent" className={cn('-my-3 -ml-5 w-[7px] shrink-0 self-stretch border-r-[3px] border-ink', accentClassName)} />
+            )}
+            <h2 id={titleId} className="text-xl">{title}</h2>
+          </div>
+          <Button variant="quiet" size="sm" className="self-center" onClick={onClose} aria-label="Fermer">✕</Button>
         </header>
         {/* `min-h-0` : sans lui, un enfant flex refuse de rétrécir sous sa hauteur de contenu et
             `overflow-y-auto` n'a jamais rien à faire défiler. */}

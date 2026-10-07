@@ -5,6 +5,7 @@ import { getTicketCommands } from '@/lib/tickets/client-commands'
 import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH, validateTicketInput, type TicketErrors } from '@/lib/tickets/validate'
 import { STATUS_LABELS, STATUS_ORDER, type Ticket, type TicketPatch, type TicketStatus } from '@/lib/tickets/types'
 import { Dialog } from '@/components/ui/Dialog'
+import { STATUS_SWATCH } from './status'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Select } from '@/components/ui/Select'
@@ -107,6 +108,7 @@ function TicketEditorForm({ existing, defaultTaskId }: { existing?: Ticket; defa
     <Dialog
       open
       onClose={closeEditor}
+      accentClassName={STATUS_SWATCH[status]}
       title={existing ? `Ticket #${existing.number}` : 'Nouveau ticket'}
       footer={
         <>
