@@ -1,5 +1,5 @@
 import { test, expect, devices } from '@playwright/test'
-import { loginAs } from './helpers'
+import { loginAs, TICKETS_PROJECT } from './helpers'
 
 /**
  * Un téléphone en portrait : écran étroit, pas de survol, pointeur grossier. `isMobile` fait
@@ -65,4 +65,45 @@ test('en paysage, le diagramme retrouve sa mise en page de bureau', async ({ pag
   // Trois lignes au moins restent visibles sous l'en-tête et la barre d'outils.
   const rows = page.locator('[data-row-task-id]')
   await expect(rows.nth(2)).toBeInViewport()
+})
+
+test('l\'en-tête de projet passe sur deux rangées, même avec un nom de 100 caractères', async ({ page }) => {
+  await loginAs(page, 'alice')
+  // Review Focus 2 : le nom le plus long qu'accepte la validation.
+  const name = `Projet au nom interminable ${Date.now()} `.padEnd(100, 'x')
+  await page.getByRole('button', { name: 'Nouveau projet' }).click()
+  await page.getByLabel('Nom du projet').fill(name)
+  await page.getByRole('button', { name: 'Créer' }).click()
+  await page.waitForURL(/\/projects\/[0-9a-f-]{36}$/)
+
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
+  const header = page.getByRole('banner')
+  const tabs = header.getByRole('navigation', { name: 'Sections du projet' })
+  await expect(tabs.getByRole('link', { name: 'Membres' })).toBeInViewport()
+  await expect(header.getByRole('button', { name: 'Menu du compte' })).toBeInViewport()
+  // Le fil d'Ariane se réduit au nom : le lien « Projets » est masqué, le signe en tient lieu.
+  await expect(header.getByRole('link', { name: 'Projets', exact: true })).toBeHidden()
+
+  // Deux rangées : les onglets passent SOUS le nom du projet.
+  const title = (await header.getByRole('heading').boundingBox())!
+  const tabsBox = (await tabs.boundingBox())!
+  expect(tabsBox.y).toBeGreaterThanOrEqual(title.y + title.height)
+})
+
+test('les pages Tickets et Membres tiennent dans la largeur du téléphone', async ({ page }) => {
+  await loginAs(page, 'alice')
+  // Lecture seule : « Projet tickets » et la page Membres du démo ne font que s'afficher.
+  for (const path of [
+    `/projects/${TICKETS_PROJECT.id}/tickets`,
+    `/projects/${TICKETS_PROJECT.id}/tickets?vue=liste`,
+    `${DEMO}/membres`,
+  ]) {
+    await page.goto(path)
+    await expect(page.getByRole('banner')).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth), path).toBeLessThanOrEqual(390)
+  }
+  // Sur téléphone, les filtres sont derrière un bouton : les trois sélecteurs n'élargissent rien.
+  await page.goto(`/projects/${TICKETS_PROJECT.id}/tickets`)
+  await page.getByRole('button', { name: 'Filtres' }).click()
+  await expect(page.getByRole('dialog', { name: 'Filtres' }).getByLabel('Statut')).toBeVisible()
 })

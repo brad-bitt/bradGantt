@@ -20,7 +20,8 @@ export function InviteError({ kind, token }: { kind: 'mismatch' | 'not_found'; t
             {/* Un lien déjà utilisé et un lien inexistant donnent le MÊME message : distinguer
                 les deux dirait à un inconnu qu'un token a existé. */}
             <p className="font-bold">Lien invalide ou déjà utilisé.</p>
-            <Link href="/projects" className="inline-flex bg-paper brutal brutal-press px-5 py-2 font-bold uppercase brutal-focus">Aller à mes projets</Link>
+            {/* Seule issue de l'écran : c'en est l'action principale (niveau 1). */}
+            <Link href="/projects" className="inline-flex bg-ink text-cream brutal brutal-press px-5 py-2 font-bold brutal-focus">Aller à mes projets</Link>
           </>
         )}
       </div>

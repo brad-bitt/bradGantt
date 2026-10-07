@@ -286,7 +286,7 @@ function TaskEditorForm({ existing, defaultType, defaultParentId, afterTaskId, p
         )}
 
         <fieldset>
-          <legend className="mb-1 font-bold uppercase text-sm">Couleur</legend>
+          <legend className="mb-1 font-bold text-sm">Couleur</legend>
           <div className="flex gap-2">
             {TASK_COLORS.map((c) => (
               <button
@@ -357,7 +357,7 @@ function TaskEditorForm({ existing, defaultType, defaultParentId, afterTaskId, p
                 déjà rattachée dans le formulaire. */}
             <Link
               href={`/projects/${projectId}/tickets?nouveau=${existing.id}`}
-              className="inline-block font-bold uppercase text-sm underline brutal-focus"
+              className="inline-block text-sm font-bold underline-offset-4 hover:underline brutal-focus"
             >
               + Nouveau ticket
             </Link>
