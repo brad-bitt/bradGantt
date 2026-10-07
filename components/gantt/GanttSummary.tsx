@@ -1,5 +1,5 @@
 'use client'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { useGanttStore } from '@/lib/gantt/store'
@@ -31,7 +31,21 @@ export function GanttSummary() {
   const today = useGanttStore((s) => s.today)
   const highlightLate = useGanttStore((s) => s.highlightLate)
   const toggleHighlightLate = useGanttStore((s) => s.toggleHighlightLate)
+  const setHighlightLate = useGanttStore((s) => s.setHighlightLate)
   const summary = useMemo(() => projectSummary(Object.values(tasks), today), [tasks, today])
+
+  // La barre est masquée sous 640 px de large ou 500 px de haut (téléphone, fenêtre réduite) :
+  // avec elle disparaît le seul bouton qui éteint la mise en évidence, et un appareil tactile n'a
+  // pas d'Échap. On l'éteint donc quand la barre cesse d'être visible. Doit rester aligné sur
+  // `hidden sm:flex short:hidden` ci-dessous.
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return
+    const visible = window.matchMedia('(min-width: 40rem) and (min-height: 501px)')
+    const onChange = () => { if (!visible.matches) setHighlightLate(false) }
+    onChange()
+    visible.addEventListener('change', onChange)
+    return () => visible.removeEventListener('change', onChange)
+  }, [setHighlightLate])
 
   if (summary.taskCount === 0 && summary.milestoneCount === 0) return null
 

@@ -134,3 +134,11 @@ export const useGanttStore = create<GanttState>((set, get) => ({
 }))
 
 export const selectCanEdit = (s: GanttState) => s.myRole !== 'viewer'
+
+/**
+ * La mise en évidence n'est EFFECTIVE que s'il reste du retard à distinguer : le bouton qui
+ * l'éteint disparaît avec le dernier retard (tâche achevée ou supprimée), et un drapeau resté
+ * allumé atténuerait tout le diagramme sans aucune commande pour en sortir.
+ */
+export const selectHighlightActive = (s: GanttState) =>
+  s.highlightLate && Object.values(s.tasks).some((t) => isLate(t, s.today))

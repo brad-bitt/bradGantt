@@ -42,4 +42,22 @@ describe('GanttSummary', () => {
     expect(screen.getByText('Tâches')).not.toHaveClass('uppercase')
     expect(screen.getByText('1', { selector: '.font-mono' })).toBeInTheDocument()
   })
+
+  it('éteint la mise en évidence quand la barre se masque (écran étroit ou bas)', () => {
+    hydrate([makeTask({ startDate: '2026-09-01', endDate: '2026-09-05', progress: 0 })])
+    act(() => { useGanttStore.getState().setHighlightLate(true) })
+    let listener: () => void = () => {}
+    const mq = { matches: true, addEventListener: (_: string, l: () => void) => { listener = l }, removeEventListener: () => {} }
+    window.matchMedia = (() => mq) as unknown as typeof window.matchMedia
+    try {
+      render(<GanttSummary />)
+      expect(useGanttStore.getState().highlightLate).toBe(true)
+      mq.matches = false
+      act(() => listener())
+      expect(useGanttStore.getState().highlightLate).toBe(false)
+    } finally {
+      // @ts-expect-error jsdom n'a pas matchMedia : on retire notre simulation
+      delete window.matchMedia
+    }
+  })
 })

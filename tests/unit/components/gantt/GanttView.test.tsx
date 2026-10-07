@@ -204,4 +204,15 @@ describe('GanttView : mise en évidence du retard', () => {
     expect(useGanttStore.getState().highlightLate).toBe(false)
     expect(useGanttStore.getState().selection).toEqual({ kind: 'task', id: 'a' })
   })
+
+  it('le dernier retard disparaît pendant la mise en évidence : plus rien n\'est atténué', () => {
+    hydrateWithLate()
+    const { container } = render(<GanttView />)
+    act(() => { useGanttStore.getState().toggleHighlightLate() })
+    expect(container.querySelector('[data-task-id="a"]')).toHaveClass('opacity-50')
+    // Le retard est achevé : le bouton de pied de page disparaît, le drapeau resterait allumé.
+    act(() => { useGanttStore.getState().apply({ type: 'task.updated', taskId: 'late', patch: { progress: 100 } }) })
+    expect(container.querySelector('[data-task-id="a"]')).not.toHaveClass('opacity-50')
+    expect(container.querySelector('[data-task-id="late"]')).toHaveClass('border-ink')
+  })
 })

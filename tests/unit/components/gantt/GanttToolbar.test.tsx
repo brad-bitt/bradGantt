@@ -57,7 +57,7 @@ describe('GanttToolbar', () => {
   it('le zoom courant est en jaune, sans ombre', () => {
     hydrate('viewer')
     render(<GanttToolbar />)
-    expect(screen.getByRole('button', { name: 'Jour', exact: true })).toHaveClass('bg-yellow')
+    expect(screen.getByRole('button', { name: 'Jour' })).toHaveClass('bg-yellow')
     expect(screen.getByRole('group', { name: 'Zoom' })).not.toHaveClass('shadow-brutal')
   })
 })

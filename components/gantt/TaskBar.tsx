@@ -1,5 +1,5 @@
 'use client'
-import { useGanttStore } from '@/lib/gantt/store'
+import { useGanttStore, selectHighlightActive } from '@/lib/gantt/store'
 import { BAR_BORDER_PX, LINK_HANDLE_PX, resizeHandleWidth } from '@/lib/gantt/geometry'
 import type { Rect, Task } from '@/lib/gantt/types'
 import { cn } from '@/lib/utils'
@@ -12,7 +12,7 @@ export function TaskBar({ task, rect }: { task: Task; rect: Rect }) {
   const openEditor = useGanttStore((s) => s.openEditor)
   const { drag, canEdit } = useGanttView()
   const openMenu = useOpenContextMenu()
-  const highlightLate = useGanttStore((s) => s.highlightLate)
+  const highlightLate = useGanttStore(selectHighlightActive)
   const today = useGanttStore((s) => s.today)
   const late = isLate(task, today)
   // Bornée au quart de la barre : à 8 px fixes, les deux poignées mangeaient toute barre plus

@@ -1,5 +1,5 @@
 'use client'
-import { useGanttStore } from '@/lib/gantt/store'
+import { useGanttStore, selectHighlightActive } from '@/lib/gantt/store'
 import { LINK_HANDLE_PX } from '@/lib/gantt/geometry'
 import type { Rect, Task } from '@/lib/gantt/types'
 import { cn } from '@/lib/utils'
@@ -11,7 +11,7 @@ export function MilestoneMark({ task, rect }: { task: Task; rect: Rect }) {
   const openEditor = useGanttStore((s) => s.openEditor)
   const { drag, canEdit } = useGanttView()
   const openMenu = useOpenContextMenu()
-  const highlightLate = useGanttStore((s) => s.highlightLate)
+  const highlightLate = useGanttStore(selectHighlightActive)
   const size = rect.height * 0.75
   return (
     <div

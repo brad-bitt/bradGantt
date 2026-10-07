@@ -1,5 +1,5 @@
 'use client'
-import { useGanttStore, selectCanEdit } from '@/lib/gantt/store'
+import { useGanttStore, selectCanEdit, selectHighlightActive } from '@/lib/gantt/store'
 import type { Rect, Task } from '@/lib/gantt/types'
 import { cn } from '@/lib/utils'
 import { useOpenContextMenu } from './ContextMenu'
@@ -10,7 +10,7 @@ export function GroupBar({ task, rect }: { task: Task; rect: Rect }) {
   const openEditor = useGanttStore((s) => s.openEditor)
   const canEdit = useGanttStore(selectCanEdit)
   const openMenu = useOpenContextMenu()
-  const highlightLate = useGanttStore((s) => s.highlightLate)
+  const highlightLate = useGanttStore(selectHighlightActive)
   return (
     <div
       data-task-id={task.id}
