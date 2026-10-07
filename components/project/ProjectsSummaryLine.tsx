@@ -20,7 +20,8 @@ function n(count: number, one: string, many: string) {
 }
 
 // Les espaces sont dans le span : le texte se lit « 1 projet · 0 tâche » pour un lecteur d'écran
-// et pour les tests, tandis que `aria-hidden` évite d'annoncer la ponctuation.
+// et pour les tests, tandis que `aria-hidden` évite d'annoncer la ponctuation. À l'écran, un
+// conteneur flex avale ces espaces de bord : c'est le `gap-x-2` de la ligne qui écarte le point.
 const dot = <span aria-hidden> · </span>
 
 /**
@@ -31,7 +32,7 @@ const dot = <span aria-hidden> · </span>
 export function ProjectsSummaryLine({ figures, lateOnly }: { figures: SummaryFigures; lateOnly: boolean }) {
   return (
     // `flex-wrap` : sur un téléphone, la phrase passe à la ligne au lieu d'élargir la page.
-    <p data-testid="projects-summary" className="flex flex-wrap items-baseline gap-x-1 gap-y-1 text-sm text-ink-soft">
+    <p data-testid="projects-summary" className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm text-ink-soft">
       {n(figures.projects, 'projet', 'projets')}
       {dot}
       {n(figures.tasks, 'tâche', 'tâches')}
