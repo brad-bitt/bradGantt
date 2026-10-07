@@ -112,4 +112,42 @@ describe('Dialog', () => {
     await userEvent.tab({ shift: true })
     expect(fermer).toHaveFocus()
   })
+
+  it('se rend sous document.body, hors de son parent : ni contexte d\'empilement ni couleur hérités', () => {
+    const { container } = render(
+      <div data-testid="parent" style={{ color: 'rgb(253, 246, 227)' }}>
+        <Dialog open onClose={() => {}} title="Renommer">contenu</Dialog>
+      </div>,
+    )
+    const dialog = screen.getByRole('dialog', { name: 'Renommer' })
+    expect(container).not.toContainElement(dialog)
+    expect(screen.getByTestId('parent')).not.toContainElement(dialog)
+    expect(document.body).toContainElement(dialog)
+    // Couleur d'encre posée sur le panneau lui-même, pas laissée à l'héritage.
+    expect(dialog).toHaveClass('text-ink')
+  })
+
+  it('un clic, un pointeur ou un double-clic dans la fenêtre ne remontent pas au parent React', async () => {
+    // Un portail ne coupe pas la propagation React : sans arrêt, un clic dans la fenêtre armerait
+    // le glisser d'une carte de ticket ou suivrait le lien d'une carte de projet.
+    const onParentClick = vi.fn()
+    const onParentPointerDown = vi.fn()
+    const onParentDoubleClick = vi.fn()
+    const onClose = vi.fn()
+    render(
+      <div onClick={onParentClick} onPointerDown={onParentPointerDown} onDoubleClick={onParentDoubleClick}>
+        <Dialog open onClose={onClose} title="T"><input aria-label="Nom" /></Dialog>
+      </div>,
+    )
+    await userEvent.click(screen.getByLabelText('Nom'))
+    await userEvent.dblClick(screen.getByLabelText('Nom'))
+    expect(onParentClick).not.toHaveBeenCalled()
+    expect(onParentPointerDown).not.toHaveBeenCalled()
+    expect(onParentDoubleClick).not.toHaveBeenCalled()
+    // Le fond aussi : il ferme la fenêtre, sans rien déclencher dessous.
+    await userEvent.click(screen.getByRole('dialog').parentElement!)
+    expect(onClose).toHaveBeenCalledTimes(1)
+    expect(onParentClick).not.toHaveBeenCalled()
+    expect(onParentPointerDown).not.toHaveBeenCalled()
+  })
 })

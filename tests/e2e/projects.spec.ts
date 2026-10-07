@@ -204,3 +204,100 @@ test('toute la carte ouvre le Gantt, mais son menu ⋯ n\'y emmène pas', async 
     await page.waitForURL(/\/projects\/[0-9a-f-]{36}$/)
   }
 })
+
+/** Supprime un projet jetable depuis sa carte, s'il existe encore : nettoyage de fin de test. */
+async function deleteFromCard(page: Page, name: string) {
+  await page.goto('/projects')
+  const card = page.getByRole('article', { name, exact: true })
+  if ((await card.count()) === 0) return
+  page.once('dialog', (d) => d.accept())
+  await card.hover()
+  await card.getByRole('button', { name: 'Actions du projet' }).click()
+  await page.getByRole('menuitem', { name: 'Supprimer' }).click()
+  await expect(card).toHaveCount(0)
+}
+
+test('la fenêtre « Renommer » d\'une carte passe au-dessus des cartes suivantes', async ({ page }) => {
+  await loginAs(page, 'alice')
+  const stamp = Date.now()
+  const second = `Dessous ${stamp}`
+  const first = `Dessus ${stamp}`
+  try {
+    // La liste est triée du plus récent au plus ancien : `first` est la première carte, `second`
+    // la suivante, dans la même rangée.
+    await createProject(page, second)
+    await createProject(page, first)
+    await page.goto('/projects')
+    const cards = page.getByRole('article')
+    await expect(cards.nth(0)).toHaveAccessibleName(first)
+    await expect(cards.nth(1)).toHaveAccessibleName(second)
+
+    // La fenêtre est centrée dans l'écran : on règle la hauteur pour que le « ⋯ » de la carte
+    // SUIVANTE tombe à mi-hauteur, donc sous le panneau. Rendue en place, la fenêtre passait
+    // sous ce bouton (`relative z-10` d'une carte plus loin dans le DOM), qui recevait le clic.
+    const nextActions = cards.nth(1).getByRole('button', { name: 'Actions du projet' })
+    const target = (await nextActions.boundingBox())!
+    const y = target.y + target.height / 2
+    await page.setViewportSize({ width: 1280, height: Math.max(360, Math.round(2 * y)) })
+
+    await cards.nth(0).hover()
+    await cards.nth(0).getByRole('button', { name: 'Actions du projet' }).click()
+    await page.getByRole('menuitem', { name: 'Renommer' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Renommer le projet' })
+    await expect(dialog).toBeVisible()
+
+    const at = (await nextActions.boundingBox())!
+    const x = at.x + at.width / 2
+    const cy = at.y + at.height / 2
+    const panel = (await dialog.boundingBox())!
+    // Garde du test lui-même : le point visé est bien DANS le panneau.
+    expect(x).toBeGreaterThan(panel.x)
+    expect(x).toBeLessThan(panel.x + panel.width)
+    expect(cy).toBeGreaterThan(panel.y)
+    expect(cy).toBeLessThan(panel.y + panel.height)
+    expect(await page.evaluate(([px, py]) => {
+      const el = document.elementFromPoint(px, py)
+      return !!el && !!el.closest('[role="dialog"]')
+    }, [x, cy])).toBe(true)
+
+    await page.mouse.click(x, cy)
+    // Sans effet parasite : ni menu de l'autre projet, ni navigation, la fenêtre reste ouverte.
+    await expect(page.getByRole('menu')).toHaveCount(0)
+    await expect(page).toHaveURL(/\/projects$/)
+    await expect(dialog).toBeVisible()
+
+    // Et elle fonctionne toujours.
+    await dialog.getByLabel('Nom du projet').fill(`${first} v2`)
+    await dialog.getByRole('button', { name: 'Enregistrer' }).click()
+    await expect(page.getByRole('article', { name: `${first} v2` })).toBeVisible()
+  } finally {
+    await page.setViewportSize({ width: 1280, height: 720 })
+    await deleteFromCard(page, `${first} v2`)
+    await deleteFromCard(page, first)
+    await deleteFromCard(page, second)
+  }
+})
+
+test('ouverte depuis l\'en-tête en thème clair, la fenêtre « Renommer » garde son encre', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'light' })
+  await page.addInitScript(() => { try { localStorage.setItem('bradgantt.theme', 'light') } catch {} })
+  await loginAs(page, 'alice')
+  const name = `Encre ${Date.now()}`
+  try {
+    await createProject(page, name)
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
+    const header = page.getByRole('banner')
+    await header.getByRole('button', { name: 'Actions du projet' }).click()
+    await page.getByRole('menuitem', { name: 'Renommer' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Renommer le projet' })
+    await expect(dialog).toBeVisible()
+    // Hors du `banner` : rendue dans l'en-tête, elle en héritait l'encre crème.
+    await expect(header.getByRole('dialog')).toHaveCount(0)
+    const headerColor = await header.getByRole('heading', { name }).evaluate((el) => getComputedStyle(el).color)
+    const titleColor = await dialog.getByRole('heading', { name: 'Renommer le projet' }).evaluate((el) => getComputedStyle(el).color)
+    expect(titleColor).not.toBe(headerColor)
+    await page.keyboard.press('Escape')
+  } finally {
+    await deleteFromCard(page, name)
+  }
+})

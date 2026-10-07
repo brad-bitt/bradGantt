@@ -1,5 +1,6 @@
 'use client'
-import { useEffect, useId, useRef, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type ReactNode, type SyntheticEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { Button } from './Button'
 import { cn } from '@/lib/utils'
 
@@ -33,6 +34,19 @@ function getContentFocusableElements(contentElement: HTMLElement | null): HTMLEl
   return []
 }
 
+const stop = (e: SyntheticEvent) => e.stopPropagation()
+
+/**
+ * Fenêtre modale, rendue par un PORTAIL dans `body`. Rendue en place, elle héritait de ce qui
+ * l'entoure : sous la carte d'un projet (`relative z-10`), son `z-40` ne valait qu'à l'intérieur
+ * de la carte et les badges et liens des cartes suivantes passaient par-dessus ; dans l'en-tête
+ * d'un projet, elle prenait l'encre crème de la bande noire et son titre disparaissait sur le
+ * fond clair. D'où aussi `text-ink` sur le panneau.
+ *
+ * Les événements React traversent quand même le portail jusqu'au parent React : le fond arrête
+ * le pointeur, le clic et le double-clic, sinon un clic dans la fenêtre armerait le glisser d'une
+ * carte de ticket ou suivrait le lien d'une carte de projet.
+ */
 export function Dialog({ open, onClose, title, children, footer, accentClassName }: DialogProps) {
   const titleId = useId()
   const dialogRef = useRef<HTMLDivElement>(null)
@@ -105,8 +119,13 @@ export function Dialog({ open, onClose, title, children, footer, accentClassName
   }, [open, onClose])
 
   if (!open) return null
-  return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+  return createPortal(
+    <div
+      className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
+      onPointerDown={stop}
+      onDoubleClick={stop}
+      onClick={(e) => { e.stopPropagation(); onClose() }}
+    >
       {/* `max-h-full` + colonne flex : une modale plus haute que la fenêtre débordait des deux
           côtés à la fois — l'overlay est en `fixed`, la page ne défile donc pas, et NI le titre
           NI les boutons du pied n'étaient atteignables. Mesuré sur l'éditeur de tâche en
@@ -114,7 +133,7 @@ export function Dialog({ open, onClose, title, children, footer, accentClassName
           fenêtre de 600 px de haut — formulaire impossible à valider autrement qu'au clavier.
           Header et pied restent donc ancrés, seul le contenu défile. */}
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}
-        className="flex max-h-full w-full max-w-lg flex-col bg-paper border-[3px] border-ink shadow-brutal-xl brutal-focus"
+        className="flex max-h-full w-full max-w-lg flex-col bg-paper text-ink border-[3px] border-ink shadow-brutal-xl brutal-focus"
         onClick={(e) => e.stopPropagation()}>
         <header className="flex shrink-0 items-stretch justify-between border-b-[3px] border-ink px-5 py-3 bg-cream">
           <div className="flex min-w-0 items-center gap-3">
@@ -131,6 +150,7 @@ export function Dialog({ open, onClose, title, children, footer, accentClassName
         <div ref={contentRef} className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
         {footer && <footer className="flex shrink-0 justify-end gap-3 border-t-[3px] border-ink px-5 py-3">{footer}</footer>}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
