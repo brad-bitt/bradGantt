@@ -17,7 +17,9 @@ export const STATUS_LABELS: Record<TicketStatus, string> = {
  * par diverger. L'import est un import de TYPE seul, aucun composant n'est tiré dans `lib`.
  */
 export const TICKET_STATUS_BADGE: Record<TicketStatus, BadgeColor> = {
-  todo: 'ink',
+  // Papier et non encre : un aplat noir faisait de « À faire » le statut le plus criard, alors
+  // que c'est le plus banal. Même teinte que la pastille de colonne et l'accent de carte.
+  todo: 'paper',
   doing: 'blue',
   done: 'emerald',
 }

@@ -132,3 +132,18 @@ test('un projet sans tickets n\'offre ni lien ni page, sauf à son propriétaire
   await expect(page.getByRole('button', { name: 'Activer les tickets' })).toBeVisible()
   // On n'active PAS : le projet démo doit rester sans tickets pour les autres specs.
 })
+
+test('les filtres de la barre d\'outils s\'appliquent au kanban et suivent en vue liste', async ({ page }) => {
+  await loginAs(page, 'alice')
+  // Lecture seule de « Projet tickets » : filtrer n'écrit rien.
+  await page.goto(`/projects/${TICKETS_PROJECT.id}/tickets`)
+
+  await page.getByLabel('Statut').selectOption('done')
+  await expect(page.getByRole('region', { name: 'À faire' }).getByRole('article')).toHaveCount(0)
+  await expect(page.getByRole('region', { name: 'Terminé' }).getByRole('article')).toHaveCount(1)
+  await expect(page.getByTestId('tickets-count')).toHaveText('1 sur 3 tickets')
+
+  await page.getByRole('link', { name: 'Liste' }).click()
+  await page.waitForURL('**/tickets?vue=liste')
+  await expect(page.getByRole('row')).toHaveCount(2) // en-tête + le ticket terminé
+})

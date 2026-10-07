@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TicketBoard } from '@/components/tickets/TicketBoard'
 import { useTicketsStore } from '@/lib/tickets/store'
+import { NO_FILTERS } from '@/lib/tickets/types'
 import { makeTicket } from '../../lib/tickets/fixtures'
 
 const updateTicket = vi.fn().mockResolvedValue(true)
@@ -23,7 +24,11 @@ function hydrate(role: 'editor' | 'viewer' = 'editor') {
   })
 }
 
-beforeEach(() => updateTicket.mockClear())
+beforeEach(() => {
+  updateTicket.mockClear()
+  // Les filtres survivent à `hydrate` (voulu) : sans remise à zéro, un test hériterait du précédent.
+  useTicketsStore.setState({ filters: NO_FILTERS, drag: null, editor: null })
+})
 
 describe('TicketBoard', () => {
   it('rend les trois colonnes, avec leur compteur, même vides', () => {
@@ -91,5 +96,14 @@ describe('TicketBoard', () => {
     fireEvent.pointerCancel(card, { pointerId: 1 })
     expect(useTicketsStore.getState().drag).toBeNull()
     expect(updateTicket).not.toHaveBeenCalled()
+  })
+
+  it('les filtres du store s\'appliquent aussi au kanban', () => {
+    hydrate()
+    useTicketsStore.getState().setFilter('status', 'doing')
+    render(<TicketBoard />)
+    expect(within(screen.getByRole('region', { name: 'À faire' })).getByText('Vide')).toBeInTheDocument()
+    expect(within(screen.getByRole('region', { name: 'À faire' })).getByText('0')).toBeInTheDocument()
+    expect(within(screen.getByRole('region', { name: 'En cours' })).getByRole('article', { name: '#2 En cours ça' })).toBeInTheDocument()
   })
 })

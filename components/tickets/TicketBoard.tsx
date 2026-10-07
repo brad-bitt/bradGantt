@@ -1,21 +1,23 @@
 'use client'
 import { useMemo } from 'react'
 import { useTicketsStore } from '@/lib/tickets/store'
-import { ticketsByStatus } from '@/lib/tickets/summary'
+import { filterTickets, ticketsByStatus } from '@/lib/tickets/summary'
 import { STATUS_ORDER } from '@/lib/tickets/types'
 import { TicketColumn } from './TicketColumn'
 import { useTicketDrag } from './useTicketDrag'
 
 export function TicketBoard() {
   const tickets = useTicketsStore((s) => s.tickets)
+  const filters = useTicketsStore((s) => s.filters)
   const drag = useTicketDrag()
-  // Mémoïsé : `ticketsByStatus` construit trois tableaux neufs à chaque appel, et le sélecteur
-  // Zustand compare par référence — le calculer dans le sélecteur bouclerait.
-  const columns = useMemo(() => ticketsByStatus(Object.values(tickets)), [tickets])
+  // Les filtres de la barre d'outils s'appliquent AUSSI ici : un « Terminé » posé en liste doit
+  // se retrouver au kanban. Mémoïsé : `ticketsByStatus` construit trois tableaux neufs à chaque
+  // appel, et le sélecteur Zustand compare par référence — le calculer dedans bouclerait.
+  const columns = useMemo(() => ticketsByStatus(filterTickets(Object.values(tickets), filters)), [tickets, filters])
 
   return (
     <div
-      className="grid min-h-0 flex-1 gap-3 overflow-y-auto p-3 sm:gap-4 sm:p-6 md:grid-cols-3"
+      className="grid min-h-0 flex-1 content-start gap-6 overflow-y-auto p-3 sm:p-6 md:grid-cols-3"
       onPointerMove={drag.onPointerMove}
       onPointerUp={drag.onPointerUp}
       // Geste annulé par le navigateur ou l'OS (ex. : un défilement tactile reprend la main) :
