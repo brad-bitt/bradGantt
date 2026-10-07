@@ -1,4 +1,4 @@
-import { test, expect, devices } from '@playwright/test'
+import { test, expect, devices, type Page } from '@playwright/test'
 import { loginAs, TICKETS_PROJECT } from './helpers'
 
 /**
@@ -9,6 +9,34 @@ import { loginAs, TICKETS_PROJECT } from './helpers'
 test.use({ ...devices['Pixel 7'], viewport: { width: 390, height: 844 } })
 
 const DEMO = '/projects/c0000000-0000-0000-0000-000000000001'
+
+async function createProject(page: Page, name: string) {
+  await page.goto('/projects')
+  await page.getByRole('button', { name: 'Nouveau projet' }).click()
+  await page.getByLabel('Nom du projet').fill(name)
+  await page.getByRole('button', { name: 'Créer' }).click()
+  await page.waitForURL(/\/projects\/[0-9a-f-]{36}$/)
+}
+
+/**
+ * Nettoyage de fin de test, par l'UI : la carte est cherchée par son nom EXACT, propre au test
+ * (`Date.now()`), si bien qu'on ne supprime jamais que le projet que ce test a créé. Un projet à
+ * nom démesuré laissé en base ferait déborder la liste des runs suivants.
+ */
+async function deleteOwnProject(page: Page, name: string) {
+  await page.goto('/projects')
+  const card = page.getByRole('article', { name, exact: true })
+  if ((await card.count()) === 0) return
+  await expect(card).toHaveCount(1)
+  page.once('dialog', (d) => {
+    // Le message de confirmation cite le projet visé : on vérifie que c'est bien le nôtre.
+    expect(d.message()).toContain(name)
+    void d.accept()
+  })
+  await card.getByRole('button', { name: 'Actions du projet' }).click()
+  await page.getByRole('menuitem', { name: 'Supprimer' }).click()
+  await expect(card).toHaveCount(0)
+}
 
 test('la liste et la connexion tiennent dans la largeur du téléphone', async ({ page }) => {
   await page.goto('/login')
@@ -71,30 +99,39 @@ test('l\'en-tête de projet passe sur deux rangées, même avec un nom de 100 ca
   await loginAs(page, 'alice')
   // Review Focus 2 : le nom le plus long qu'accepte la validation.
   const name = `Projet au nom interminable ${Date.now()} `.padEnd(100, 'x')
-  await page.getByRole('button', { name: 'Nouveau projet' }).click()
-  await page.getByLabel('Nom du projet').fill(name)
-  await page.getByRole('button', { name: 'Créer' }).click()
-  await page.waitForURL(/\/projects\/[0-9a-f-]{36}$/)
+  try {
+    await createProject(page, name)
 
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
-  const header = page.getByRole('banner')
-  const tabs = header.getByRole('navigation', { name: 'Sections du projet' })
-  await expect(tabs.getByRole('link', { name: 'Membres' })).toBeInViewport()
-  await expect(header.getByRole('button', { name: 'Menu du compte' })).toBeInViewport()
-  // Le fil d'Ariane se réduit au nom : le lien « Projets » est masqué, le signe en tient lieu.
-  await expect(header.getByRole('link', { name: 'Projets', exact: true })).toBeHidden()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
+    const header = page.getByRole('banner')
+    await expect(header.getByRole('heading', { name })).toBeVisible()
+    const tabs = header.getByRole('navigation', { name: 'Sections du projet' })
+    await expect(tabs.getByRole('link', { name: 'Membres' })).toBeInViewport()
+    await expect(header.getByRole('button', { name: 'Menu du compte' })).toBeInViewport()
+    // Le fil d'Ariane se réduit au nom : le lien « Projets » est masqué, le signe en tient lieu.
+    await expect(header.getByRole('link', { name: 'Projets', exact: true })).toBeHidden()
 
-  // Deux rangées : les onglets passent SOUS le nom du projet.
-  const title = (await header.getByRole('heading').boundingBox())!
-  const tabsBox = (await tabs.boundingBox())!
-  expect(tabsBox.y).toBeGreaterThanOrEqual(title.y + title.height)
+    // Deux rangées : les onglets passent SOUS le nom du projet.
+    const title = (await header.getByRole('heading').boundingBox())!
+    const tabsBox = (await tabs.boundingBox())!
+    expect(tabsBox.y).toBeGreaterThanOrEqual(title.y + title.height)
+  } finally {
+    await deleteOwnProject(page, name)
+  }
+})
 
-  // Nettoyage par l'UI : un projet à nom de 100 caractères laissé en base ferait déborder la
-  // liste des runs suivants.
-  page.once('dialog', (d) => d.accept())
-  await header.getByRole('button', { name: 'Actions du projet' }).click()
-  await page.getByRole('menuitem', { name: 'Supprimer' }).click()
-  await page.waitForURL(/\/projects$/)
+test('un nom de projet long et sans espace ne fait pas déborder la liste', async ({ page }) => {
+  await loginAs(page, 'alice')
+  // Sans espace, le navigateur n'a aucun point de coupure : la carte doit couper le mot.
+  const name = `Projetsansespace${Date.now()}`.padEnd(100, 'x')
+  try {
+    await createProject(page, name)
+    await page.goto('/projects')
+    await expect(page.getByRole('article', { name, exact: true })).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
+  } finally {
+    await deleteOwnProject(page, name)
+  }
 })
 
 test('les pages Tickets et Membres tiennent dans la largeur du téléphone', async ({ page }) => {
