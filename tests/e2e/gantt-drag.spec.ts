@@ -320,7 +320,7 @@ test('la barre reste déplaçable ET redimensionnable aux trois zooms', async ({
 
   const releve: Record<string, unknown> = {}
   for (const zoom of ['Jour', 'Semaine', 'Mois']) {
-    await page.getByRole('button', { name: zoom }).click()
+    await page.getByRole('button', { name: zoom, exact: true }).click()
     await expect(bar).toBeInViewport()
     const largeur = Math.round((await bar.boundingBox())!.width)
     const { counts: c, centre } = await cibles(bar)
