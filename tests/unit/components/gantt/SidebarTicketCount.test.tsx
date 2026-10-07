@@ -32,28 +32,29 @@ function renderSidebar(compact: boolean) {
 }
 
 describe('compteur de tickets dans la sidebar', () => {
-  it('affiche « terminés / total » sur une tâche qui a des tickets', () => {
+  it('affiche « ⌗ terminés/total » sur une tâche qui a des tickets', () => {
     hydrate({ enabled: true, done: 2, total: 5 })
     renderSidebar(false)
     expect(screen.getByText('2 tickets terminés sur 5')).toHaveClass('sr-only')
-    expect(screen.getByText('2/5')).toHaveAttribute('aria-hidden', 'true')
+    expect(screen.getByText('⌗ 2/5')).toHaveAttribute('aria-hidden', 'true')
+    expect(screen.getByText('⌗ 2/5')).toHaveClass('font-mono')
   })
 
   it('n\'affiche rien sur un projet dont les tickets sont désactivés', () => {
     hydrate({ enabled: false, done: 2, total: 5 })
     renderSidebar(false)
-    expect(screen.queryByText('2/5')).not.toBeInTheDocument()
+    expect(screen.queryByText('⌗ 2/5')).not.toBeInTheDocument()
   })
 
   it('n\'affiche rien sur une tâche sans ticket', () => {
     hydrate({ enabled: true, done: 0, total: 0 })
     renderSidebar(false)
-    expect(screen.queryByText(/\d+\/\d+/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/⌗/)).not.toBeInTheDocument()
   })
 
   it('s\'efface sur un écran étroit, où chaque pixel est pris sur le titre', () => {
     hydrate({ enabled: true, done: 2, total: 5 })
     renderSidebar(true)
-    expect(screen.queryByText('2/5')).not.toBeInTheDocument()
+    expect(screen.queryByText('⌗ 2/5')).not.toBeInTheDocument()
   })
 })

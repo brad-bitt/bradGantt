@@ -98,3 +98,28 @@ test('clic droit sur une flèche : supprimer le lien ; un lecteur n’a pas de m
   await expect(page.getByRole('menu')).toHaveCount(0)
   await expect(page.locator('[data-row-task-id]')).toHaveCount(2)
 })
+
+test('le ⋯ d\'une ligne ouvre le même menu que le clic droit, et Échap rend le focus', async ({ page }) => {
+  await loginAs(page, 'alice')
+  await createProject(page, `Points ${Date.now()}`)
+  await createTask(page, 'Cadrage', isoInDays(0), isoInDays(3))
+
+  const row = page.locator('[data-row-task-id]', { hasText: 'Cadrage' })
+  const dots = row.getByRole('button', { name: 'Actions de « Cadrage »' })
+  // Révélé au survol de la ligne, par l'opacité : le bouton existe déjà dans le document.
+  await expect(dots).toHaveCSS('opacity', '0')
+  await row.hover()
+  await expect(dots).toHaveCSS('opacity', '1')
+
+  await dots.click()
+  const menu = page.getByRole('menu')
+  // Premier item du menu d'une tâche (`buildMenuItems`) : « Modifier… ».
+  await expect(menu.getByRole('menuitem', { name: 'Modifier…' })).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(menu).toHaveCount(0)
+  await expect(dots).toBeFocused()
+
+  await dots.click()
+  await page.getByRole('menuitem', { name: 'Dupliquer' }).click()
+  await expect(page.locator('[data-row-task-id]', { hasText: 'Cadrage (copie)' })).toHaveCount(1)
+})

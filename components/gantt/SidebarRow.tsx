@@ -34,6 +34,7 @@ export function SidebarRow({ row }: { row: Row }) {
   // directement ne provoque pas de boucle, contrairement à un calcul fait dans le sélecteur.
   const ticketSummaries = useGanttStore((s) => s.ticketsByTask[task.id])
   const openMenu = useOpenContextMenu()
+  const openMenuAt = useGanttStore((s) => s.openMenu)
 
   return (
     <div
@@ -99,9 +100,10 @@ export function SidebarRow({ row }: { row: Row }) {
         return (
           // Texte masqué plutôt qu'aria-label : sur un <span> sans rôle, le nom n'est pas
           // annoncé de façon fiable.
-          <span className="shrink-0 font-mono text-xs text-ink-soft">
+          <span className="shrink-0">
             <span className="sr-only">{`${done} ticket${done > 1 ? 's' : ''} terminé${done > 1 ? 's' : ''} sur ${total}`}</span>
-            <span aria-hidden>{done}/{total}</span>
+            {/* « ⌗ » dit de quoi parle la fraction : un « 1/2 » nu se lisait comme une date. */}
+            <span aria-hidden className="border border-ink/40 px-1 font-mono text-xs text-ink-soft">⌗ {done}/{total}</span>
           </span>
         )
       })()}
@@ -138,6 +140,32 @@ export function SidebarRow({ row }: { row: Row }) {
           onClick={(e) => { e.stopPropagation(); openEditor({ mode: 'create', parentId: task.id, type: 'task' }) }}
         >
           +
+        </button>
+      )}
+      {/* Le chemin VISIBLE vers le menu de la ligne. Clic droit et double-clic restent, mais ne
+          se devinent pas — et au doigt, ce bouton est la seule porte : il reste affiché en
+          permanence en mode compact. Il ouvre le MÊME menu contextuel, ancré sous lui, pour ne
+          pas maintenir deux listes de commandes. */}
+      {canEdit && (
+        <button
+          type="button"
+          aria-label={`Actions de « ${task.title} »`}
+          aria-haspopup="menu"
+          className={cn(
+            'size-6 shrink-0 font-bold leading-none hover:bg-yellow hover:text-on-data brutal-focus',
+            compact
+              ? 'opacity-100'
+              : 'opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100 focus-visible:opacity-100 touch:opacity-100',
+          )}
+          onClick={(e) => {
+            e.stopPropagation()
+            const r = e.currentTarget.getBoundingClientRect()
+            select({ kind: 'task', id: task.id })
+            openMenuAt({ x: r.left, y: r.bottom + 4, target: { kind: 'task', id: task.id } })
+          }}
+          onDoubleClick={(e) => e.stopPropagation()}
+        >
+          <span aria-hidden>⋯</span>
         </button>
       )}
     </div>

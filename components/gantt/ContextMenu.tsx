@@ -113,6 +113,9 @@ function Menu({ menu, onClose }: { menu: Exclude<ContextMenuState, null>; onClos
   const tasks = useGanttStore((s) => s.tasks)
   const items = buildMenuItems(menu.target, tasks)
   const ref = useRef<HTMLDivElement>(null)
+  // Élément qui avait le focus à l'ouverture — le « ⋯ » d'une ligne, quand on vient du clavier.
+  // Lu au premier rendu, AVANT que `useLayoutEffect` ne déplace le focus sur le premier item.
+  const opener = useRef<Element | null>(typeof document === 'undefined' ? null : document.activeElement)
   // Position définitive, calculée UNE FOIS le menu mesuré : posé au point du clic, il déborde
   // de la fenêtre près d'un bord droit ou bas, on le rabat alors vers l'intérieur.
   const [pos, setPos] = useState<{ x: number; y: number }>({ x: menu.x, y: menu.y })
@@ -152,6 +155,19 @@ function Menu({ menu, onClose }: { menu: Exclude<ContextMenuState, null>; onClos
     }
   }, [onClose])
 
+  useEffect(() => {
+    const node = ref.current
+    const from = opener.current
+    return () => {
+      // À la fermeture, le focus revient d'où il venait — seulement s'il était dans le menu (le
+      // menu retiré, il retombe sur `body`) : un clic ailleurs a déjà posé le focus là où
+      // l'utilisateur le voulait.
+      const active = document.activeElement
+      const lost = active === document.body || (node?.contains(active) ?? false)
+      if (lost && from instanceof HTMLElement && document.contains(from)) from.focus({ preventScroll: true })
+    }
+  }, [])
+
   if (items.length === 0) return null
 
   return (
@@ -171,7 +187,8 @@ function Menu({ menu, onClose }: { menu: Exclude<ContextMenuState, null>; onClos
           role="menuitem"
           onClick={() => { onClose(); void item.run() }}
           className={cn(
-            'block w-full px-4 py-2 text-left text-sm font-bold uppercase tracking-wide outline-none hover:bg-yellow hover:text-on-data focus-visible:bg-yellow focus-visible:text-on-data',
+            // Casse mixte : un menu est une liste de commandes, pas une suite de titres.
+            'block w-full px-4 py-2 text-left text-sm font-bold outline-none hover:bg-yellow hover:text-on-data focus-visible:bg-yellow focus-visible:text-on-data',
             // Le destructif est sobre au repos (texte rouge) et ne s'aplatit en rouge qu'au survol.
             item.danger && 'text-danger hover:bg-danger hover:text-on-data focus-visible:bg-danger',
             item.danger && i > 0 && 'mt-1 border-t-[3px] border-ink pt-2',
