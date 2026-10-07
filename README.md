@@ -75,20 +75,33 @@ serveur uniquement (jamais `NEXT_PUBLIC_*`), lue au runtime — mais un build pr
 avec la variable positionnée ne peut plus la refermer sans reconstruire (voir le
 commentaire dans `lib/e2e.ts`).
 
+## Navigation
+
+L'en-tête noir change selon le contexte. Sur `/projects`, il porte la marque et le menu du
+compte. Dans un projet, il porte le fil d'Ariane « Projets / Nom », les onglets **Gantt**,
+**Tickets** et **Membres**, la pile d'avatars et le menu du compte ; le propriétaire a un menu
+« ⋯ » à côté du nom (renommer, activer ou désactiver les tickets, supprimer). Côté code, les
+deux en-têtes vivent dans deux groupes de routes : `app/(app)/(accueil)` et `app/(app)/(projet)`.
+
+Chaque écran n'a qu'une action principale (fond noir) ; les commandes secondaires ont une
+bordure sans ombre, les commandes d'objet sont du texte révélé au survol. Sur `/projects`,
+« N en retard » filtre la liste (`?filtre=retard`) ; dans le Gantt, le même chiffre en pied de
+page met les barres en retard en évidence (Échap pour l'éteindre).
+
 ## Tickets
 
 Chaque projet peut ouvrir un backlog de tickets numérotés (`#1`, `#2`, …), rattachables aux
 tâches de la frise. Un ticket porte un titre, une description, un statut (À faire / En cours /
 Terminé) et un assigné.
 
-La fonctionnalité est **désactivée par défaut**. Le propriétaire l'active depuis le bouton
-« Tickets » de la carte du projet, sur `/projects`. La désactiver masque les tickets sans en
-supprimer aucun : les réactiver les rend tels quels.
+La fonctionnalité est **désactivée par défaut**. Le propriétaire l'active depuis le menu « ⋯ »
+du projet — sur sa carte dans `/projects`, ou à côté de son nom dans l'en-tête. La désactiver
+masque les tickets sans en supprimer aucun : les réactiver les rend tels quels.
 
-Une fois activés, la barre d'outils de la frise porte un lien « Tickets » vers
-`/projects/<id>/tickets`, qui s'ouvre sur un kanban à trois colonnes (`?vue=liste` pour la vue
-tableau filtrable). Les lignes de la frise affichent alors un compteur « terminés / total », et
-l'éditeur d'une tâche liste ses tickets.
+Une fois activés, l'en-tête du projet porte un onglet « Tickets » vers `/projects/<id>/tickets`,
+qui s'ouvre sur un kanban à trois colonnes (`?vue=liste` pour la vue tableau). Les filtres de la
+barre d'outils (statut, assigné, tâche) valent pour les deux vues. Les lignes du Gantt affichent
+un badge « ⌗ terminés/total », et l'éditeur d'une tâche liste ses tickets.
 
 Côté seed, « Projet tickets » est le seul projet avec un backlog, et il sert de terrain aux
 tests de bout en bout. « Projet démo » en est volontairement dépourvu : des specs comptent ses
@@ -176,7 +189,8 @@ Les tests `tests/e2e/mobile.spec.ts` tournent en émulation Pixel 7 (portrait pu
 
 ## Thème sombre
 
-La bascule est dans l'en-tête (et en haut à droite de la page de connexion). Un choix explicite
+La bascule est dans le menu du compte (l'avatar, en haut à droite de l'en-tête) et en haut à
+droite de la page de connexion. Un choix explicite
 est enregistré dans `localStorage` ; sans choix, la page suit le réglage du système, y compris
 quand il change en cours de session. Un script inséré en tête du `<body>` par le layout racine
 pose `data-theme` sur `<html>` avant le premier rendu, pour éviter l'éclair clair d'une page
@@ -191,9 +205,9 @@ pour rester sombre dans les deux thèmes.
 
 ## Membres et invitations
 
-Le propriétaire d'un projet ouvre le dialog **Membres** (la pile d'avatars dans la barre du
-projet) pour inviter, changer un rôle (`editor` / `viewer`) ou retirer quelqu'un. La ligne
-`owner` est intouchable : pas de transfert de propriété dans cette version.
+L'onglet **Membres** de l'en-tête du projet (`/projects/<id>/membres`) liste l'équipe. Le
+propriétaire y invite, change un rôle (Éditeur / Lecteur) ou retire quelqu'un. La ligne du
+propriétaire est intouchable : pas de transfert de propriété dans cette version.
 
 Inviter une adresse suit deux chemins :
 
