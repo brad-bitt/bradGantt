@@ -11,6 +11,7 @@ export function MilestoneMark({ task, rect }: { task: Task; rect: Rect }) {
   const openEditor = useGanttStore((s) => s.openEditor)
   const { drag, canEdit } = useGanttView()
   const openMenu = useOpenContextMenu()
+  const highlightLate = useGanttStore((s) => s.highlightLate)
   const size = rect.height * 0.75
   return (
     <div
@@ -18,7 +19,8 @@ export function MilestoneMark({ task, rect }: { task: Task; rect: Rect }) {
       title={`${task.title} — ${task.startDate}`}
       // Un jalon se déplace mais ne se redimensionne pas : il tient sur un jour par contrainte
       // de base (`tasks_milestone_single_day`), et `resizeTask` le refuse déjà. Pas de poignée.
-      className={cn('group/ms absolute flex items-center select-none touch-none', canEdit && 'cursor-grab active:cursor-grabbing')}
+      // Un jalon n'est jamais « en retard » : pendant la mise en évidence, il recule avec le reste.
+      className={cn('group/ms absolute flex items-center select-none touch-none', canEdit && 'cursor-grab active:cursor-grabbing', highlightLate && 'opacity-50')}
       style={{ left: rect.x + rect.width / 2 - size / 2, top: rect.y, width: size, height: rect.height }}
       onPointerDown={(e) => drag.onBarPointerDown(e, task.id, 'move')}
       onDoubleClick={() => canEdit && openEditor({ mode: 'edit', taskId: task.id })}

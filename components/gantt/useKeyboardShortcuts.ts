@@ -27,7 +27,10 @@ export function useKeyboardShortcuts() {
       if (inField(e.target)) return
       const s = useGanttStore.getState()
       if (e.key === 'Escape') {
+        // Un Échap défait UNE chose, la plus récente en surface : l'éditeur, puis la mise en
+        // évidence du retard, puis la sélection.
         if (s.editor) s.closeEditor()
+        else if (s.highlightLate) s.setHighlightLate(false)
         else s.select(null)
         return
       }

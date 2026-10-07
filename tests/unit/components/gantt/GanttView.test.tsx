@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { GanttView } from '@/components/gantt/GanttView'
 import { useGanttStore } from '@/lib/gantt/store'
 import { dateToX, initialScrollLeft, PX_PER_DAY, computeRange, SIDEBAR_WIDTH } from '@/lib/gantt/geometry'
@@ -167,5 +167,41 @@ describe('GanttView : la timeline remplit la largeur du conteneur', () => {
     render(<GanttView />)
     // 1280 − 300 = 980 visibles, 980 / 4 = 245 jours pile, donc 980 px de timeline.
     expect(contentWidth()).toBe(SIDEBAR_WIDTH + 980)
+  })
+})
+
+describe('GanttView : mise en évidence du retard', () => {
+  const late = makeTask({ id: 'late', projectId: 'p1', startDate: '2026-09-01', endDate: '2026-09-05', progress: 0 })
+
+  function hydrateWithLate() {
+    act(() => {
+      useGanttStore.getState().hydrate({
+        projectId: 'p1', projectName: 'Projet', myRole: 'owner', members: [], tasks: [task, late], dependencies: [], today: TODAY,
+      })
+    })
+  }
+
+  it('liseré rouge sur la barre en retard, demi-opacité pour les autres', () => {
+    hydrateWithLate()
+    const { container } = render(<GanttView />)
+    act(() => { useGanttStore.getState().toggleHighlightLate() })
+    const lateBar = container.querySelector('[data-task-id="late"]')!
+    const other = container.querySelector('[data-task-id="a"]')!
+    expect(lateBar).toHaveClass('border-danger')
+    expect(lateBar).not.toHaveClass('opacity-50')
+    expect(other).toHaveClass('opacity-50')
+    expect(other).toHaveClass('border-ink')
+  })
+
+  it('Échap éteint la mise en évidence avant de désélectionner', () => {
+    hydrateWithLate()
+    render(<GanttView />)
+    act(() => {
+      useGanttStore.getState().select({ kind: 'task', id: 'a' })
+      useGanttStore.getState().toggleHighlightLate()
+    })
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(useGanttStore.getState().highlightLate).toBe(false)
+    expect(useGanttStore.getState().selection).toEqual({ kind: 'task', id: 'a' })
   })
 })

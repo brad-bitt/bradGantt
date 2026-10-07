@@ -5,6 +5,7 @@ import { fr } from 'date-fns/locale'
 import { useGanttStore } from '@/lib/gantt/store'
 import { projectSummary } from '@/lib/gantt/summary'
 import { parseDate } from '@/lib/gantt/dates'
+import { cn } from '@/lib/utils'
 
 function short(iso: string) {
   return format(parseDate(iso), 'd MMM yyyy', { locale: fr })
@@ -13,23 +14,23 @@ function short(iso: string) {
 function Stat({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex shrink-0 items-baseline gap-2">
-      <span className="font-mono text-[11px] uppercase tracking-wide text-ink-soft">{label}</span>
-      <span className="font-bold text-sm">{children}</span>
+      {/* Casse mixte, encre douce : l'intitulé s'efface devant le chiffre qu'il présente. */}
+      <span className="text-sm text-ink-soft">{label}</span>
+      <span className="text-sm font-bold">{children}</span>
     </div>
   )
 }
 
 /**
- * Barre de synthèse sous le diagramme.
- *
- * Elle occupe le bas de l'écran, que le diagramme laissait nu sur tout projet de quelques
- * lignes, et elle y met les chiffres qu'on allait autrement chercher en comptant les barres à
- * l'œil. Elle reste du DÉCOR au sens de la charte : encre douce pour les intitulés, aplat blanc,
- * aucune couleur de donnée — sauf le compteur de retard, qui est le seul signal à voir.
+ * Barre de synthèse sous le diagramme : les chiffres qu'on allait autrement chercher en comptant
+ * les barres à l'œil. Elle reste du DÉCOR (encre douce, aplat blanc), sauf le retard — le seul
+ * signal à voir, et la seule commande : il allume la mise en évidence des barres en retard.
  */
 export function GanttSummary() {
   const tasks = useGanttStore((s) => s.tasks)
   const today = useGanttStore((s) => s.today)
+  const highlightLate = useGanttStore((s) => s.highlightLate)
+  const toggleHighlightLate = useGanttStore((s) => s.toggleHighlightLate)
   const summary = useMemo(() => projectSummary(Object.values(tasks), today), [tasks, today])
 
   if (summary.taskCount === 0 && summary.milestoneCount === 0) return null
@@ -41,22 +42,19 @@ export function GanttSummary() {
       // la hauteur ; la carte du projet dans la liste porte déjà ces chiffres.
       className="hidden shrink-0 flex-wrap items-center gap-x-6 gap-y-2 border-t-[3px] border-ink bg-paper px-6 py-2 sm:flex short:hidden"
     >
-      <Stat label="Tâches">{summary.taskCount}</Stat>
-      {summary.groupCount > 0 && <Stat label="Groupes">{summary.groupCount}</Stat>}
-      {summary.milestoneCount > 0 && <Stat label="Jalons">{summary.milestoneCount}</Stat>}
+      <Stat label="Tâches"><span className="font-mono">{summary.taskCount}</span></Stat>
+      {summary.groupCount > 0 && <Stat label="Groupes"><span className="font-mono">{summary.groupCount}</span></Stat>}
+      {summary.milestoneCount > 0 && <Stat label="Jalons"><span className="font-mono">{summary.milestoneCount}</span></Stat>}
 
       {summary.range && (
         <Stat label="Période">
-          <span className="font-mono text-xs">
-            {short(summary.range.start)} → {short(summary.range.end)}
-          </span>
+          <span className="font-mono text-xs">{short(summary.range.start)} → {short(summary.range.end)}</span>
         </Stat>
       )}
 
       <div className="flex shrink-0 items-center gap-2">
-        <span className="font-mono text-[11px] uppercase tracking-wide text-ink-soft">Avancement</span>
-        {/* Barre de progression du projet. Hachures d'encre, comme l'avancement d'une tâche :
-            c'est la même information, elle se lit avec le même vocabulaire. */}
+        <span className="text-sm text-ink-soft">Avancement</span>
+        {/* Hachures d'encre, comme l'avancement d'une tâche : même information, même vocabulaire. */}
         <span
           role="progressbar"
           aria-valuenow={summary.progress}
@@ -65,12 +63,9 @@ export function GanttSummary() {
           aria-label="Avancement du projet"
           className="relative block h-4 w-24 border-[3px] border-ink bg-paper"
         >
-          <span
-            className="absolute inset-y-0 left-0 hatch opacity-40"
-            style={{ width: `${summary.progress}%` }}
-          />
+          <span className="absolute inset-y-0 left-0 hatch opacity-40" style={{ width: `${summary.progress}%` }} />
         </span>
-        <span className="font-bold text-sm">{summary.progress} %</span>
+        <span className="font-mono text-sm font-bold">{summary.progress} %</span>
       </div>
 
       {summary.nextMilestone && (
@@ -78,16 +73,26 @@ export function GanttSummary() {
           <span className="inline-flex items-center gap-2">
             <span aria-hidden className="size-2 rotate-45 bg-ink" />
             {summary.nextMilestone.title}
-            <span className="font-mono text-xs text-ink-soft">{short(summary.nextMilestone.date)}</span>
+            <span className="font-mono text-xs font-normal text-ink-soft">{short(summary.nextMilestone.date)}</span>
           </span>
         </Stat>
       )}
 
       {summary.lateCount > 0 && (
-        // Sobre au repos comme toute alerte du projet : du texte rouge, jamais un aplat.
-        <span className="ml-auto shrink-0 font-bold text-sm text-danger">
-          {summary.lateCount} en retard
-        </span>
+        // Niveau 3 au repos (texte rouge, jamais un aplat) ; jaune quand la mise en évidence est
+        // allumée — le jaune dit « actif ». Un second clic ou Échap l'éteint.
+        <button
+          type="button"
+          aria-pressed={highlightLate}
+          onClick={toggleHighlightLate}
+          title={highlightLate ? 'Ne plus distinguer le retard (Échap)' : 'Distinguer les tâches en retard'}
+          className={cn(
+            'ml-auto shrink-0 border-[3px] px-2 py-0.5 text-sm font-bold brutal-focus',
+            highlightLate ? 'border-ink bg-yellow text-on-data' : 'border-transparent text-danger underline-offset-4 hover:underline',
+          )}
+        >
+          <span className="font-mono">{summary.lateCount}</span> en retard
+        </button>
       )}
     </div>
   )

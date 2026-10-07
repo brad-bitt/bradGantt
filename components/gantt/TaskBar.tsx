@@ -5,12 +5,16 @@ import type { Rect, Task } from '@/lib/gantt/types'
 import { cn } from '@/lib/utils'
 import { useGanttView } from './GanttView'
 import { useOpenContextMenu } from './ContextMenu'
+import { isLate } from '@/lib/gantt/summary'
 
 export function TaskBar({ task, rect }: { task: Task; rect: Rect }) {
   const selected = useGanttStore((s) => s.selection?.kind === 'task' && s.selection.id === task.id)
   const openEditor = useGanttStore((s) => s.openEditor)
   const { drag, canEdit } = useGanttView()
   const openMenu = useOpenContextMenu()
+  const highlightLate = useGanttStore((s) => s.highlightLate)
+  const today = useGanttStore((s) => s.today)
+  const late = isLate(task, today)
   // Bornée au quart de la barre : à 8 px fixes, les deux poignées mangeaient toute barre plus
   // étroite que 16 px et il ne restait plus rien à saisir pour la déplacer (au zoom mois, une
   // tâche de 3 jours fait 12 px). Il reste désormais au moins la moitié de la barre.
@@ -24,7 +28,10 @@ export function TaskBar({ task, rect }: { task: Task; rect: Rect }) {
         // barre. Le rognage du titre est assuré par le `truncate` du <span>, à qui `min-w-0`
         // donne le droit de rétrécir sous sa largeur de contenu (un enfant flex ne le fait pas
         // de lui-même).
-        'group/bar absolute flex items-center border-[3px] border-ink shadow-brutal select-none touch-none',
+        'group/bar absolute flex items-center border-[3px] shadow-brutal select-none touch-none',
+        // Mise en évidence : le retard prend un liseré rouge, tout le reste recule de moitié.
+        highlightLate && late ? 'border-danger' : 'border-ink',
+        highlightLate && !late && 'opacity-50',
         canEdit && 'cursor-grab active:cursor-grabbing',
         selected && 'outline-[3px] outline-dashed outline-ink outline-offset-2',
       )}

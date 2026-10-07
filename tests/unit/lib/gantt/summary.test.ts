@@ -1,4 +1,4 @@
-import { projectSummary } from '@/lib/gantt/summary'
+import { isLate, projectSummary } from '@/lib/gantt/summary'
 import { makeTask } from './fixtures'
 
 const today = '2026-09-10'
@@ -99,5 +99,20 @@ describe('projectSummary', () => {
       today,
     )
     expect(s.lateCount).toBe(1)
+  })
+})
+
+describe('isLate', () => {
+  const today = '2026-10-06'
+  it('une tâche inachevée dont la fin est passée', () => {
+    expect(isLate({ type: 'task', title: 'a', startDate: '2026-09-01', endDate: '2026-10-05', progress: 50 }, today)).toBe(true)
+  })
+  it('pas une tâche qui finit aujourd\'hui : la journée n\'est pas écoulée', () => {
+    expect(isLate({ type: 'task', title: 'a', startDate: '2026-09-01', endDate: today, progress: 0 }, today)).toBe(false)
+  })
+  it('ni une tâche achevée, ni un jalon, ni un groupe', () => {
+    expect(isLate({ type: 'task', title: 'a', startDate: '2026-09-01', endDate: '2026-09-02', progress: 100 }, today)).toBe(false)
+    expect(isLate({ type: 'milestone', title: 'm', startDate: '2026-09-01', endDate: '2026-09-01', progress: 0 }, today)).toBe(false)
+    expect(isLate({ type: 'group', title: 'g', startDate: '2026-09-01', endDate: '2026-09-02', progress: 0 }, today)).toBe(false)
   })
 })

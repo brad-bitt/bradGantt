@@ -56,4 +56,32 @@ describe('useGanttStore', () => {
     useGanttStore.getState().hydrate(payload)
     expect(useGanttStore.getState().scrollTarget).toBeNull()
   })
+
+  it('allumer la mise en évidence du retard recentre sur la tâche en retard qui commence le plus tôt', () => {
+    useGanttStore.getState().hydrate({
+      ...payload,
+      today: '2026-10-06',
+      tasks: [
+        makeTask({ id: 'late-b', startDate: '2026-09-20', endDate: '2026-09-25', progress: 0 }),
+        makeTask({ id: 'late-a', startDate: '2026-09-10', endDate: '2026-09-12', progress: 40 }),
+        makeTask({ id: 'ok', startDate: '2026-10-05', endDate: '2026-10-10', progress: 0 }),
+      ],
+      dependencies: [],
+    })
+    useGanttStore.getState().toggleHighlightLate()
+    expect(useGanttStore.getState().highlightLate).toBe(true)
+    expect(useGanttStore.getState().scrollTarget?.date).toBe('2026-09-10')
+
+    // L'éteindre ne bouge pas la vue.
+    const seq = useGanttStore.getState().scrollTarget!.seq
+    useGanttStore.getState().toggleHighlightLate()
+    expect(useGanttStore.getState().highlightLate).toBe(false)
+    expect(useGanttStore.getState().scrollTarget!.seq).toBe(seq)
+  })
+
+  it('hydrate éteint la mise en évidence : elle n\'est jamais persistée', () => {
+    useGanttStore.getState().setHighlightLate(true)
+    useGanttStore.getState().hydrate(payload)
+    expect(useGanttStore.getState().highlightLate).toBe(false)
+  })
 })

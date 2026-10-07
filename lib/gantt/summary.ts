@@ -32,6 +32,16 @@ const EMPTY: ProjectSummary = {
 }
 
 /**
+ * Une tâche en retard : une TÂCHE (un jalon n'a pas d'avancement, un groupe pas de dates
+ * propres), inachevée, dont la fin est passée. Une tâche qui finit AUJOURD'HUI n'est pas en
+ * retard : la journée n'est pas écoulée. Partagée par la synthèse et par la mise en évidence
+ * du Gantt : les deux doivent compter les mêmes barres.
+ */
+export function isLate(t: SummaryTask, today: string): boolean {
+  return t.type === 'task' && t.progress < 100 && t.endDate < today
+}
+
+/**
  * Chiffres de tête d'un projet, calculés pour la barre de synthèse sous le diagramme.
  *
  * Les GROUPES sont exclus de tous les calculs de dates et d'avancement : leurs colonnes
@@ -75,7 +85,6 @@ export function projectSummary(tasks: SummaryTask[], today: string): ProjectSumm
     // Arrondi seulement à la fin : arrondir chaque tâche ferait dériver le total.
     progress: totalDays > 0 ? Math.round(weighted / totalDays) : 0,
     nextMilestone: upcoming ? { title: upcoming.title, date: upcoming.startDate } : null,
-    // Une tâche qui finit AUJOURD'HUI n'est pas en retard : la journée n'est pas écoulée.
-    lateCount: plain.filter((t) => t.progress < 100 && t.endDate < today).length,
+    lateCount: plain.filter((t) => isLate(t, today)).length,
   }
 }

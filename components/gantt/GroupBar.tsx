@@ -10,6 +10,7 @@ export function GroupBar({ task, rect }: { task: Task; rect: Rect }) {
   const openEditor = useGanttStore((s) => s.openEditor)
   const canEdit = useGanttStore(selectCanEdit)
   const openMenu = useOpenContextMenu()
+  const highlightLate = useGanttStore((s) => s.highlightLate)
   return (
     <div
       data-task-id={task.id}
@@ -18,7 +19,7 @@ export function GroupBar({ task, rect }: { task: Task; rect: Rect }) {
       // en encre pleine, terminé par deux losanges, dominait des barres de tâche pourtant
       // porteuses de l'information. Il devient une équerre fine en encre douce — même empan,
       // même lecture, un cran en retrait.
-      className={cn('absolute bg-ink-soft select-none', selected && 'outline-[3px] outline-dashed outline-ink outline-offset-2')}
+      className={cn('absolute bg-ink-soft select-none', selected && 'outline-[3px] outline-dashed outline-ink outline-offset-2', highlightLate && 'opacity-50')}
       style={{ left: rect.x, top: rect.y + rect.height / 2 - 3, width: rect.width, height: 6 }}
       onClick={() => select({ kind: 'task', id: task.id })}
       onDoubleClick={() => canEdit && openEditor({ mode: 'edit', taskId: task.id })}

@@ -2,6 +2,12 @@ import { test, expect } from '@playwright/test'
 import { loginAs } from './helpers'
 import { SIDEBAR_WIDTH } from '../../lib/gantt/geometry'
 
+function isoInDays(n: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() + n)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 const DEMO = '/projects/c0000000-0000-0000-0000-000000000001'
 // Second projet du seed, dont alice est aussi owner : il n'existe que pour prouver l'isolation.
 const NEIGHBOUR = '/projects/c0000000-0000-0000-0000-000000000002'
@@ -163,4 +169,39 @@ test('un projet sans tâche affiche sa carte d’accueil, dans le champ de visio
   // y a réellement de quoi défiler et l'assertion n'est pas gratuite.
   await page.getByTestId('gantt-scroll').evaluate((el) => { el.scrollLeft = el.scrollWidth })
   await expect(message).toBeInViewport()
+})
+
+test('« N en retard » met les barres en retard en évidence, Échap l\'éteint', async ({ page }) => {
+  await loginAs(page, 'alice')
+  // Projet jetable : jamais d'écriture dans le projet démo.
+  await page.goto('/projects')
+  await page.getByRole('button', { name: 'Nouveau projet' }).click()
+  await page.getByLabel('Nom du projet').fill(`Retard ${Date.now()}`)
+  await page.getByRole('button', { name: 'Créer' }).click()
+  await page.waitForURL(/\/projects\/[0-9a-f-]{36}$/)
+
+  for (const [title, start, end] of [['Ancienne', -10, -5], ['Actuelle', 0, 3]] as const) {
+    await page.getByRole('button', { name: '+ Tâche' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Nouvelle tâche' })
+    await dialog.getByLabel('Titre').fill(title)
+    await dialog.getByLabel('Début').fill(isoInDays(start))
+    await dialog.getByLabel('Fin').fill(isoInDays(end))
+    await dialog.getByRole('button', { name: 'Créer', exact: true }).click()
+    await expect(page.locator('[data-row-task-id]', { hasText: title })).toHaveCount(1)
+  }
+
+  const late = page.locator('[data-task-id]', { hasText: 'Ancienne' })
+  const current = page.locator('[data-task-id]', { hasText: 'Actuelle' })
+  const toggle = page.getByTestId('gantt-summary').getByRole('button', { name: '1 en retard' })
+
+  await toggle.click()
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true')
+  await expect(late).toHaveClass(/border-danger/)
+  await expect(current).toHaveCSS('opacity', '0.5')
+  // La frise est allée chercher le retard : la barre est dans le champ.
+  await expect(late).toBeInViewport()
+
+  await page.keyboard.press('Escape')
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false')
+  await expect(current).toHaveCSS('opacity', '1')
 })
