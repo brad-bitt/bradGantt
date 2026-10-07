@@ -218,6 +218,8 @@ async function deleteFromCard(page: Page, name: string) {
 }
 
 test('la fenêtre « Renommer » d\'une carte passe au-dessus des cartes suivantes', async ({ page }) => {
+  // Deux projets créés puis supprimés par l'interface : plus long que les 30 s par défaut.
+  test.setTimeout(90_000)
   await loginAs(page, 'alice')
   const stamp = Date.now()
   const second = `Dessous ${stamp}`
@@ -272,6 +274,7 @@ test('la fenêtre « Renommer » d\'une carte passe au-dessus des cartes suivant
     await expect(page.getByRole('article', { name: `${first} v2` })).toBeVisible()
   } finally {
     await page.setViewportSize({ width: 1280, height: 720 })
+    // Renommé si le test est allé au bout, sous son nom d'origine sinon.
     await deleteFromCard(page, `${first} v2`)
     await deleteFromCard(page, first)
     await deleteFromCard(page, second)
