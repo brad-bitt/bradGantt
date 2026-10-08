@@ -96,4 +96,13 @@ describe('Menu', () => {
     expect(onClick).not.toHaveBeenCalled()
     expect(onDoubleClick).not.toHaveBeenCalled()
   })
+
+  it('le déclencheur porte l’anneau de focus, la liste est une surface ombrée', async () => {
+    render(<Menu label="Actions" entries={[{ id: 'a', label: 'Renommer', onSelect: () => {} }]} />)
+    const trigger = screen.getByRole('button', { name: 'Actions' })
+    expect(trigger).toHaveClass('focus-ring')
+    await userEvent.click(trigger)
+    expect(screen.getByRole('menu', { name: 'Actions' })).toHaveClass('rounded-card', 'bg-surface', 'shadow-float')
+    expect(screen.getByRole('menuitem', { name: 'Renommer' })).toHaveClass('rounded-control')
+  })
 })

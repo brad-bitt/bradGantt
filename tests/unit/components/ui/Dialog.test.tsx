@@ -151,3 +151,20 @@ describe('Dialog', () => {
     expect(onParentPointerDown).not.toHaveBeenCalled()
   })
 })
+
+describe('Dialog : couche flottante (spec §4)', () => {
+  it('surface arrondie et ombrée, voile qui vient du bas sur téléphone, pied qui passe à la ligne', () => {
+    render(<Dialog open onClose={() => {}} title="Renommer" footer={<button>Ok</button>}>corps</Dialog>)
+    const dialog = screen.getByRole('dialog', { name: 'Renommer' })
+    expect(dialog).toHaveClass('rounded-t-dialog', 'sm:rounded-dialog', 'bg-surface', 'shadow-dialog')
+    expect(dialog).not.toHaveClass('border-[3px]')
+    expect(dialog.parentElement).toHaveClass('items-end', 'sm:items-center')
+    expect(screen.getByText('Ok').closest('footer')).toHaveClass('flex-wrap')
+    expect(screen.getByRole('heading', { name: 'Renommer' })).toHaveClass('font-display')
+  })
+
+  it('l’accent de statut est un liseré à gauche du titre', () => {
+    render(<Dialog open onClose={() => {}} title="Ticket #3" accentClassName="bg-blue">corps</Dialog>)
+    expect(screen.getByTestId('dialog-accent')).toHaveClass('bg-blue', 'rounded-full', 'w-1')
+  })
+})

@@ -49,7 +49,6 @@ export function ProjectHeader({ projectId, projectName, ticketsEnabled, myRole, 
             projectName={projectName}
             ticketsEnabled={ticketsEnabled}
             leaveOnDelete
-            tone="header"
             triggerClassName="shrink-0 text-on-header"
           />
         )}

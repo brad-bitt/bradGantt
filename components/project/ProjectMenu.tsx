@@ -11,7 +11,6 @@ export interface ProjectMenuProps {
   ticketsEnabled: boolean
   /** Vrai dans l'en-tête : la page courante appartient au projet supprimé, il faut en sortir. */
   leaveOnDelete?: boolean
-  tone?: 'default' | 'header'
   triggerClassName?: string
 }
 
@@ -22,7 +21,7 @@ export interface ProjectMenuProps {
  * Le libellé de bascule dit l'action (« Activer » / « Désactiver ») : dans un menu, il n'y a pas
  * d'état enfoncé à lire comme sur l'ancien bouton « Tickets ».
  */
-export function ProjectMenu({ projectId, projectName, ticketsEnabled, leaveOnDelete = false, tone, triggerClassName }: ProjectMenuProps) {
+export function ProjectMenu({ projectId, projectName, ticketsEnabled, leaveOnDelete = false, triggerClassName }: ProjectMenuProps) {
   const [renaming, setRenaming] = useState(false)
   const [, start] = useTransition()
 
@@ -50,7 +49,7 @@ export function ProjectMenu({ projectId, projectName, ticketsEnabled, leaveOnDel
 
   return (
     <>
-      <Menu label="Actions du projet" entries={entries} tone={tone} triggerClassName={triggerClassName} />
+      <Menu label="Actions du projet" entries={entries} triggerClassName={triggerClassName} />
       {renaming && <RenameProjectDialog projectId={projectId} currentName={projectName} open onClose={() => setRenaming(false)} />}
     </>
   )

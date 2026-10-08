@@ -11,7 +11,7 @@ export interface DialogProps {
   children: ReactNode
   footer?: ReactNode
   /**
-   * Classe d'aplat d'une bande de 7 px à gauche du titre. La fenêtre d'un ticket y reprend la
+   * Classe de couleur d'un liseré de 4 px à gauche du titre. La fenêtre d'un ticket y reprend la
    * couleur de son statut, comme la carte d'où elle s'ouvre : on reconnaît l'objet qu'on édite.
    */
   accentClassName?: string
@@ -121,37 +121,36 @@ export function Dialog({ open, onClose, title, children, footer, accentClassName
   if (!open) return null
   return createPortal(
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-40 flex items-end justify-center bg-black/35 p-0 dark:bg-black/55 sm:items-center sm:p-4"
       onPointerDown={stop}
       onDoubleClick={stop}
       onClick={(e) => { e.stopPropagation(); onClose() }}
     >
       {/* `max-h-full` + colonne flex : une modale plus haute que la fenêtre débordait des deux
           côtés à la fois — l'overlay est en `fixed`, la page ne défile donc pas, et NI le titre
-          NI les boutons du pied n'étaient atteignables. Mesuré sur l'éditeur de tâche en
-          1280x600 : titre à y = -54 (hors écran par le haut), « Créer » à y = 611 pour une
-          fenêtre de 600 px de haut — formulaire impossible à valider autrement qu'au clavier.
-          Header et pied restent donc ancrés, seul le contenu défile. */}
+          NI les boutons du pied n'étaient atteignables. Header et pied restent ancrés, seul le
+          contenu défile. Sur un téléphone, elle vient du bas, pleine largeur, coins hauts
+          arrondis (spec §4). */}
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}
-        className="flex max-h-full w-full max-w-lg flex-col bg-paper text-ink border-[3px] border-ink shadow-brutal-xl brutal-focus"
+        className="flex max-h-full w-full flex-col rounded-t-dialog border border-line/60 bg-surface text-ink shadow-dialog focus-ring dark:border-line sm:max-w-lg sm:rounded-dialog"
         onClick={(e) => e.stopPropagation()}>
-        <header className="flex shrink-0 items-stretch justify-between border-b-[3px] border-ink px-5 py-3 bg-cream">
+        <header className="flex shrink-0 items-start justify-between gap-3 px-6 pb-3 pt-6">
           <div className="flex min-w-0 items-center gap-3">
-            {/* Marges négatives : la bande court du haut au bas du bandeau, padding compris. */}
+            {/* Liseré de statut : la fenêtre d'un ticket reprend la couleur de sa carte. */}
             {accentClassName && (
-              <span aria-hidden data-testid="dialog-accent" className={cn('-my-3 -ml-5 w-[7px] shrink-0 self-stretch border-r-[3px] border-ink', accentClassName)} />
+              <span aria-hidden data-testid="dialog-accent" className={cn('w-1 shrink-0 self-stretch rounded-full', accentClassName)} />
             )}
-            <h2 id={titleId} className="text-xl">{title}</h2>
+            <h2 id={titleId} className="font-display text-[22px] font-medium leading-tight">{title}</h2>
           </div>
-          <Button variant="quiet" size="sm" className="self-center" onClick={onClose} aria-label="Fermer">✕</Button>
+          <Button variant="quiet" size="sm" className="-mr-2 -mt-1" onClick={onClose} aria-label="Fermer">✕</Button>
         </header>
         {/* `min-h-0` : sans lui, un enfant flex refuse de rétrécir sous sa hauteur de contenu et
             `overflow-y-auto` n'a jamais rien à faire défiler. */}
-        <div ref={contentRef} className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
+        <div ref={contentRef} className="min-h-0 flex-1 overflow-y-auto px-6 py-2">{children}</div>
         {/* `flex-wrap` : sur un téléphone, « Supprimer », « Annuler » et « Enregistrer » ne tiennent
             pas sur une rangée ; sans retour à la ligne, `justify-end` poussait « Supprimer » hors
             du panneau, par la gauche. */}
-        {footer && <footer className="flex shrink-0 flex-wrap justify-end gap-3 border-t-[3px] border-ink px-5 py-3">{footer}</footer>}
+        {footer && <footer className="flex shrink-0 flex-wrap justify-end gap-2 px-6 pb-6 pt-3">{footer}</footer>}
       </div>
     </div>,
     document.body,

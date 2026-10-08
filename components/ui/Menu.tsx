@@ -17,8 +17,6 @@ export interface MenuProps {
   triggerClassName?: string
   /** Bord du déclencheur sur lequel la liste s'aligne. */
   align?: 'start' | 'end'
-  /** `header` : le focus passe au jaune, l'encre ne se voit pas sur la bande noire. */
-  tone?: 'default' | 'header'
   className?: string
 }
 
@@ -39,7 +37,7 @@ const stop = (e: SyntheticEvent) => e.stopPropagation()
  * englobant les arrête, si bien qu'un clic dans le menu n'arme pas le glisser d'une carte de
  * ticket, n'ouvre pas son éditeur au double-clic, et ne suit pas le lien d'une carte de projet.
  */
-export function Menu({ label, entries, trigger, triggerClassName, align = 'end', tone = 'default', className }: MenuProps) {
+export function Menu({ label, entries, trigger, triggerClassName, align = 'end', className }: MenuProps) {
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState({ top: 0, left: 0 })
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -131,11 +129,10 @@ export function Menu({ label, entries, trigger, triggerClassName, align = 'end',
         aria-expanded={open}
         aria-controls={open ? listId : undefined}
         className={cn(
-          'inline-flex items-center justify-center',
-          tone === 'header' ? 'brutal-focus-header' : 'brutal-focus',
+          'inline-flex items-center justify-center rounded-control focus-ring',
           // Une seule taille pour tous les « ⋯ » : un `size-*` ajouté par l'appelant entrerait en
           // conflit avec celui-ci, et l'ordre des classes générées déciderait au hasard.
-          dots && 'size-7 text-base font-bold leading-none hover:bg-yellow hover:text-on-data',
+          dots && 'size-7 text-base leading-none text-ink-soft hover:bg-surface hover:text-ink',
           triggerClassName,
         )}
         onClick={() => (open ? close(false) : setOpen(true))}
@@ -151,9 +148,8 @@ export function Menu({ label, entries, trigger, triggerClassName, align = 'end',
           id={listId}
           role="menu"
           aria-label={label}
-          // Surface posée : bordure, fond papier, ombre brutale (spec §3). `text-ink` explicite :
-          // ouvert depuis l'en-tête, la liste hériterait sinon de l'encre crème de la bande noire.
-          className="fixed z-50 min-w-52 border-[3px] border-ink bg-paper py-1 text-ink shadow-brutal"
+          // Surface flottante (spec §4) : arrondie, ombrée, un filet pour se détacher la nuit.
+          className="fixed z-50 min-w-52 rounded-card border border-line/60 bg-surface p-1.5 text-ink shadow-float dark:border-line"
           style={{ top: pos.top, left: pos.left }}
           onKeyDown={onListKeyDown}
           onPointerDown={stop}
@@ -162,7 +158,7 @@ export function Menu({ label, entries, trigger, triggerClassName, align = 'end',
         >
           {entries.map((entry) =>
             entry.kind === 'heading' ? (
-              <div key={entry.id} role="presentation" className="px-4 pb-1 pt-2 font-mono text-xs text-ink-soft">
+              <div key={entry.id} role="presentation" className="px-3 pb-1 pt-2 text-xs text-ink-soft">
                 {entry.label}
               </div>
             ) : (
@@ -174,11 +170,11 @@ export function Menu({ label, entries, trigger, triggerClassName, align = 'end',
                 tabIndex={-1}
                 onClick={() => { close(true); entry.onSelect() }}
                 className={cn(
-                  'block w-full px-4 py-2 text-left text-sm font-bold outline-none',
+                  'block w-full rounded-control px-3 py-2 text-left text-base font-medium outline-none',
                   entry.danger
-                    // Destructif sobre au repos, aplat rouge seulement sous le pointeur ou le focus.
-                    ? 'text-danger hover:bg-danger hover:text-on-data focus:bg-danger focus:text-on-data'
-                    : 'hover:bg-yellow hover:text-on-data focus:bg-yellow focus:text-on-data',
+                    // Destructif sobre au repos, rouge voilé seulement sous le pointeur ou le focus.
+                    ? 'text-danger hover:bg-danger/8 focus:bg-danger/8'
+                    : 'hover:bg-paper focus:bg-paper',
                 )}
               >
                 {entry.label}
