@@ -14,7 +14,7 @@ export function Sidebar() {
     // la place visée a changé, il n'y a donc rien à annuler.
     <div
       data-testid="gantt-sidebar"
-      className="sticky left-0 z-20 touch-none border-r-[3px] border-ink bg-paper"
+      className="sticky left-0 z-20 touch-none border-r border-line bg-surface"
       style={{ width: sidebarWidth, minWidth: sidebarWidth }}
       onPointerMove={reorder.onPointerMove}
       onPointerUp={reorder.onPointerUp}
@@ -29,7 +29,7 @@ export function Sidebar() {
         <button
           type="button"
           data-testid="sidebar-add-row"
-          className="flex w-full items-center gap-2 border-b border-dashed border-ink/30 pr-2 text-left font-bold text-sm text-ink-soft hover:bg-band hover:text-ink brutal-focus"
+          className="flex w-full items-center gap-2 border-b border-dashed border-line pr-2 text-left text-sm font-medium text-ink-soft hover:bg-paper hover:text-ink focus-ring"
           style={{ height: ROW_HEIGHT, paddingLeft: compact ? 12 : 32 }}
           onClick={() => openEditor({ mode: 'create', parentId: null, type: 'task' })}
         >

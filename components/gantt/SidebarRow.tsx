@@ -40,13 +40,13 @@ export function SidebarRow({ row }: { row: Row }) {
     <div
       data-row-task-id={task.id}
       className={cn(
-        'group/row flex items-center border-b border-ink/20 pr-2 select-none',
+        'group/row flex items-center border-b border-line pr-2 select-none',
         // Sur un écran étroit, chaque pixel d'interligne est pris sur le titre.
         compact ? 'gap-1' : 'gap-2',
         // La ligne de groupe se distingue par un fond, pas par un trait de plus : elle coiffe ses
         // enfants, la sidebar doit le dire sans ajouter de bordure au décompte.
-        task.type === 'group' && 'bg-band',
-        selected && 'bg-yellow text-on-data',
+        task.type === 'group' && 'bg-paper',
+        selected && 'bg-accent-soft',
         isDropTarget && 'shadow-[inset_0_3px_0_var(--color-ink)]',
       )}
       // Retrait d'enfant resserré sur un écran étroit : 32 px, c'est un quart d'une sidebar compacte.
@@ -63,7 +63,7 @@ export function SidebarRow({ row }: { row: Row }) {
           aria-label="Réordonner"
           // Même règle que la poignée de liaison : l'opacité tombe, le bouton reste. La colonne
           // garde donc sa largeur, et la ligne ne sursaute pas au passage de la souris.
-          className="w-4 shrink-0 cursor-grab font-mono leading-none text-ink/40 opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 touch:opacity-100 active:cursor-grabbing brutal-focus"
+          className="w-4 shrink-0 cursor-grab font-mono leading-none text-ink-soft opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 touch:opacity-100 active:cursor-grabbing focus-ring"
           onPointerDown={(e) => reorder.onGripPointerDown(e, task.id)}
           onClick={(e) => e.stopPropagation()}
         >
@@ -79,7 +79,7 @@ export function SidebarRow({ row }: { row: Row }) {
         <button
           type="button"
           aria-label={task.collapsed ? 'Déplier' : 'Replier'}
-          className="w-5 shrink-0 text-center font-mono brutal-focus"
+          className="w-5 shrink-0 text-center font-mono focus-ring"
           onClick={(e) => { e.stopPropagation(); void getGanttCommands().toggleGroup(task.id) }}
         >
           {task.collapsed ? '▸' : '▾'}
@@ -91,8 +91,8 @@ export function SidebarRow({ row }: { row: Row }) {
         // seulement : sur un téléphone, ces 20 px de vide sont un cinquième du titre.
         <span className="w-5 shrink-0" />
       ) : null}
-      {task.type === 'milestone' && <span className="size-3 shrink-0 rotate-45 bg-ink" aria-hidden />}
-      <span className={cn('flex-1 truncate text-sm', task.type === 'group' && 'font-display uppercase')}>{task.title}</span>
+      {task.type === 'milestone' && <span className="size-3 shrink-0 rotate-45 bg-ink-soft" aria-hidden />}
+      <span className={cn('flex-1 truncate text-base', task.type === 'group' && 'font-display font-medium')}>{task.title}</span>
       {/* Compteur de tickets, effacé en mode compact comme l'avatar : sur un téléphone, ces
           quelques pixels sont pris sur le titre, qui est la seule chose indispensable. */}
       {ticketsEnabled && ticketSummaries && ticketSummaries.length > 0 && !compact && (() => {
@@ -103,7 +103,7 @@ export function SidebarRow({ row }: { row: Row }) {
           <span className="shrink-0">
             <span className="sr-only">{`${done} ticket${done > 1 ? 's' : ''} terminé${done > 1 ? 's' : ''} sur ${total}`}</span>
             {/* « ⌗ » dit de quoi parle la fraction : un « 1/2 » nu se lisait comme une date. */}
-            <span aria-hidden className="border border-ink/40 px-1 font-mono text-xs text-ink-soft">⌗ {done}/{total}</span>
+            <span aria-hidden className="rounded-full border border-line px-1.5 font-mono text-xs text-ink-soft">⌗ {done}/{total}</span>
           </span>
         )
       })()}
@@ -118,7 +118,7 @@ export function SidebarRow({ row }: { row: Row }) {
           type="button"
           aria-label={`Ajouter après « ${task.title} »`}
           title={`Ajouter après « ${task.title} »`}
-          className="size-6 shrink-0 border-[3px] border-ink bg-paper font-mono text-xs leading-none opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 touch:opacity-100 hover:bg-yellow hover:text-on-data brutal-focus"
+          className="size-6 shrink-0 rounded-control text-ink-soft font-mono text-xs leading-none opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 touch:opacity-100 hover:bg-paper hover:text-ink focus-ring"
           onClick={(e) => {
             e.stopPropagation()
             openEditor({
@@ -136,7 +136,7 @@ export function SidebarRow({ row }: { row: Row }) {
         <button
           type="button"
           aria-label="Ajouter une tâche au groupe"
-          className="size-6 shrink-0 border-[3px] border-ink bg-paper font-bold leading-none opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 touch:opacity-100 hover:bg-yellow hover:text-on-data brutal-focus"
+          className="size-6 shrink-0 rounded-control text-ink-soft font-medium leading-none opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 touch:opacity-100 hover:bg-paper hover:text-ink focus-ring"
           onClick={(e) => { e.stopPropagation(); openEditor({ mode: 'create', parentId: task.id, type: 'task' }) }}
         >
           +
@@ -152,7 +152,7 @@ export function SidebarRow({ row }: { row: Row }) {
           aria-label={`Actions de « ${task.title} »`}
           aria-haspopup="menu"
           className={cn(
-            'size-6 shrink-0 font-bold leading-none hover:bg-yellow hover:text-on-data brutal-focus',
+            'size-6 shrink-0 font-medium leading-none hover:bg-paper hover:text-ink focus-ring',
             compact
               ? 'opacity-100'
               : 'opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100 focus-visible:opacity-100 touch:opacity-100',

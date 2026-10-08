@@ -215,4 +215,11 @@ describe('GanttView : mise en évidence du retard', () => {
     expect(container.querySelector('[data-task-id="a"]')).not.toHaveClass('opacity-50')
     expect(container.querySelector('[data-task-id="late"]')).not.toHaveClass('data-bar-late')
   })
+
+  it('la colonne du jour est en or voilé, le trait du jour reste rouge (spec §7)', () => {
+    hydrate()
+    const { container } = render(<GanttView />)
+    expect(container.querySelector('[data-testid="today-line"]')).toHaveClass('bg-today')
+    expect(container.querySelector('[data-testid="today-column"]')).toHaveClass('bg-accent-soft')
+  })
 })

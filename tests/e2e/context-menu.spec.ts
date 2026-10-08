@@ -35,7 +35,7 @@ test('clic droit sur une tâche : dupliquer, puis supprimer avec confirmation', 
   const menu = page.getByRole('menu')
   await expect(menu).toBeVisible()
   // Le clic droit sélectionne sa cible, comme dans un logiciel de bureau.
-  await expect(row).toHaveClass(/bg-yellow/)
+  await expect(row).toHaveClass(/bg-accent-soft/)
   await menu.getByRole('menuitem', { name: 'Dupliquer' }).click()
   await expect(menu).toHaveCount(0)
   await expect(page.locator('[data-row-task-id]', { hasText: 'Cadrage (copie)' })).toHaveCount(1)

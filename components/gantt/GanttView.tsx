@@ -129,7 +129,7 @@ export function GanttView() {
 
   return (
     <GanttViewContext.Provider value={value}>
-      <div ref={scrollRef} data-testid="gantt-scroll" className="relative flex-1 overflow-auto bg-cream">
+      <div ref={scrollRef} data-testid="gantt-scroll" className="relative flex-1 overflow-auto bg-paper">
         {/* `min-h-full` + colonne flex : sur un projet de quelques lignes, la grille et la sidebar
             s'arrêtaient net en plein écran, laissant le fond crème nu et le bord droit de la
             sidebar interrompu. Le corps s'étire désormais jusqu'en bas du conteneur. */}
@@ -146,7 +146,7 @@ export function GanttView() {
         >
           <div className="sticky top-0 z-30 flex" style={{ height: HEADER_HEIGHT }}>
             <div
-              className="sticky left-0 z-40 flex items-center border-b-[3px] border-r-[3px] border-ink bg-cream px-3 font-display uppercase"
+              className="sticky left-0 z-40 flex items-center border-b border-r border-line bg-surface px-3 font-display font-medium"
               style={{ width: sidebarWidth, minWidth: sidebarWidth }}
             >
               Tâches

@@ -35,7 +35,7 @@ export function TimelineGrid() {
           et la timeline se lisait comme une étendue de crème : le rythme des mois donne
           l'échelle sans ajouter de trait. Posées en premier, donc sous tout le reste. */}
       {months.map((m, i) => (
-        i % 2 === 1 && <div key={m.key} className="absolute top-0 bottom-0 bg-band" style={{ left: m.x, width: m.width }} />
+        i % 2 === 1 && <div key={m.key} className="absolute top-0 bottom-0 bg-surface" style={{ left: m.x, width: m.width }} />
       ))}
       {/* Week-ends : une bande unie à tous les zooms, et des hachures PAR-DESSUS au zoom jour
           seulement. Le motif rayé sur toute la hauteur et à tous les zooms faisait un moiré
@@ -45,14 +45,14 @@ export function TimelineGrid() {
       {cols.filter((c) => c.isWeekend).map((c) => (
         <div
           key={c.date}
-          className={cn('absolute top-0 bottom-0 bg-ink/[0.06]', zoom === 'day' && 'hatch opacity-[0.12]')}
+          className={cn('absolute top-0 bottom-0 bg-ink/[0.03]', zoom === 'day' && 'hatch opacity-[0.06]')}
           style={{ left: c.x, width: c.width }}
         />
       ))}
-      {/* Colonne d'aujourd'hui : une teinte sur toute la hauteur, sous le trait rouge. Le jour
-          courant devient une colonne qu'on lit d'un coup d'œil, pas seulement une ligne. */}
+      {/* Colonne d'aujourd'hui : une teinte d'or voilé sur toute la hauteur, sous le trait rouge.
+          Le jour courant est l'état actif de l'axe du temps ; il se lit d'un coup d'œil. */}
       {inRange && (
-        <div className="absolute top-0 bottom-0 bg-today/10" style={{ left: todayX, width: PX_PER_DAY[zoom] }} />
+        <div data-testid="today-column" className="absolute top-0 bottom-0 bg-accent-soft" style={{ left: todayX, width: PX_PER_DAY[zoom] }} />
       )}
       {/* Séparations de jours. Un trait plein par jour dessinait un quadrillage de cahier ; le
           rythme est désormais à deux niveaux — pointillé fin entre les jours, trait net au lundi —
@@ -61,7 +61,7 @@ export function TimelineGrid() {
           de mois suffisent. */}
       {zoom === 'day' && cols.map((c) => (
         isMonday(c.date) ? (
-          <div key={c.date} className="absolute top-0 bottom-0 w-px bg-ink/35" style={{ left: c.x }} />
+          <div key={c.date} className="absolute top-0 bottom-0 w-px bg-ink-soft/50" style={{ left: c.x }} />
         ) : (
           <div key={c.date} className="absolute top-0 bottom-0 w-px day-tick" style={{ left: c.x }} />
         )
@@ -73,7 +73,7 @@ export function TimelineGrid() {
           tâche redessinerait un tableau vide, ce que le voile ne rattraperait pas — un trait
           horizontal se lit comme une ligne à remplir, une bande de mois non. */}
       {layout.rows.map((r) => (
-        <div key={r.task.id} className="absolute left-0 right-0 border-b border-ink/20" style={{ top: r.index * ROW_HEIGHT, height: ROW_HEIGHT }} />
+        <div key={r.task.id} className="absolute left-0 right-0 border-b border-line" style={{ top: r.index * ROW_HEIGHT, height: ROW_HEIGHT }} />
       ))}
       {inRange && (
         // Centrée sur la colonne du jour, d'où le décalage d'une demi-colonne moins la moitié
@@ -83,7 +83,7 @@ export function TimelineGrid() {
       {/* Voile. Posé EN DERNIER, donc par-dessus tout le décor : sous la zone de données, bandes
           de mois, week-ends et trait du jour s'estompent au lieu de disputer l'attention aux
           barres. Il laisse l'axe du temps lisible sans le laisser dominer. */}
-      <div className="absolute inset-x-0 bottom-0 bg-cream/55" style={{ top: dataHeight }} />
+      <div className="absolute inset-x-0 bottom-0 bg-paper/55" style={{ top: dataHeight }} />
     </div>
   )
 }

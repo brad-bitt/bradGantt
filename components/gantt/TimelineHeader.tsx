@@ -13,14 +13,14 @@ export function TimelineHeader() {
   const todayInRange = today >= layout.range.start && today <= layout.range.end
   const todayX = dateToX(today, layout.range, zoom) + PX_PER_DAY[zoom] / 2 - 1.5
   return (
-    <div className="relative border-b-[3px] border-ink bg-paper" style={{ width: layout.width, height: '100%' }}>
+    <div className="relative border-b border-line bg-surface" style={{ width: layout.width, height: '100%' }}>
       {/* Même alternance que la grille, pour que l'en-tête et le corps se lisent d'un bloc. */}
       {months.map((m, i) => (
         <div
           key={m.key}
           className={cn(
-            'absolute top-0 h-7 border-r border-ink/20 px-2 font-display text-xs uppercase leading-7 truncate',
-            i % 2 === 1 && 'bg-band',
+            'absolute top-0 h-7 border-r border-line px-2 font-display text-xs font-medium leading-7 truncate',
+            i % 2 === 1 && 'bg-paper',
           )}
           style={{ left: m.x, width: m.width }}
         >
@@ -30,7 +30,7 @@ export function TimelineHeader() {
       {subs.map((c) => (
         <div
           key={c.key}
-          className="absolute top-7 h-7 border-r border-ink/20 border-t border-t-ink/20 text-center font-mono text-[11px] leading-7 truncate"
+          className="absolute top-7 h-7 border-r border-line border-t border-t-line text-center font-mono text-xs leading-7 truncate text-ink-soft"
           style={{ left: c.x, width: c.width }}
         >
           {/* En dessous de ~24 px la cellule ne peut pas afficher son libellé sans le tronquer

@@ -27,7 +27,7 @@ export function MilestoneMark({ task, rect }: { task: Task; rect: Rect }) {
       onContextMenu={(e) => openMenu(e, { kind: 'task', id: task.id })}
     >
       <div
-        className={cn('rotate-45 border-[3px] border-ink shadow-brutal', selected && 'outline-[3px] outline-dashed outline-ink outline-offset-2')}
+        className={cn('rotate-45 border border-ink-soft', selected && 'outline-2 outline-accent outline-offset-2')}
         style={{ width: size, height: size, backgroundColor: task.color }}
       />
       {/* Le conteneur du jalon n'a pas de bordure — contrairement à la barre, `-LINK_HANDLE_PX`
@@ -38,7 +38,7 @@ export function MilestoneMark({ task, rect }: { task: Task; rect: Rect }) {
           aria-label="Créer une dépendance"
           style={{ width: LINK_HANDLE_PX, height: LINK_HANDLE_PX, right: -LINK_HANDLE_PX }}
           className={cn(
-            'absolute top-1/2 z-20 -translate-y-1/2 border-[3px] border-ink bg-paper cursor-crosshair hover:bg-yellow',
+            'absolute top-1/2 z-20 -translate-y-1/2 rounded-full border border-ink-soft bg-surface cursor-crosshair hover:bg-accent-soft',
             'opacity-0 transition-opacity group-hover/ms:opacity-100 focus-visible:opacity-100 touch:opacity-100',
             selected && 'opacity-100',
           )}

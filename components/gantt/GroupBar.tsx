@@ -19,15 +19,15 @@ export function GroupBar({ task, rect }: { task: Task; rect: Rect }) {
       // en encre pleine, terminé par deux losanges, dominait des barres de tâche pourtant
       // porteuses de l'information. Il devient une équerre fine en encre douce — même empan,
       // même lecture, un cran en retrait.
-      className={cn('absolute bg-ink-soft select-none', selected && 'outline-[3px] outline-dashed outline-ink outline-offset-2', highlightLate && 'opacity-50')}
+      className={cn('absolute bg-ink-soft select-none', selected && 'outline-2 outline-accent outline-offset-2', highlightLate && 'opacity-50')}
       style={{ left: rect.x, top: rect.y + rect.height / 2 - 3, width: rect.width, height: 6 }}
       onClick={() => select({ kind: 'task', id: task.id })}
       onDoubleClick={() => canEdit && openEditor({ mode: 'edit', taskId: task.id })}
       onContextMenu={(e) => openMenu(e, { kind: 'task', id: task.id })}
     >
       {/* Montants d'extrémité : ils bornent l'empan du groupe sans le fermer comme un objet. */}
-      <span className="absolute left-0 -top-[6px] h-[18px] w-[3px] bg-ink-soft" aria-hidden />
-      <span className="absolute right-0 -top-[6px] h-[18px] w-[3px] bg-ink-soft" aria-hidden />
+      <span className="absolute left-0 -top-[6px] h-[18px] w-[2px] bg-ink-soft" aria-hidden />
+      <span className="absolute right-0 -top-[6px] h-[18px] w-[2px] bg-ink-soft" aria-hidden />
     </div>
   )
 }
