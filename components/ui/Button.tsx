@@ -10,25 +10,23 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants: Record<Variant, string> = {
-  /* Niveau 1 : l'action principale, une seule par écran. C'est le seul bouton qui porte l'ombre
-     brutale — quand chaque bouton en avait une, aucun ne se détachait. */
-  primary: 'bg-ink text-cream brutal brutal-press',
-  /* Niveau 2 : même bordure, sans ombre. Il se voit, il ne réclame pas. */
-  secondary: 'bg-paper text-ink border-[3px] border-ink hover:bg-band',
+  /* Niveau 1 : l'action principale, une seule par écran. Le seul aplat d'encre parmi les boutons. */
+  primary: 'bg-ink text-paper hover:bg-ink/88',
+  /* Niveau 2 : un filet, pas de fond. Il se voit, il ne réclame pas. */
+  secondary: 'bg-transparent text-ink border border-line hover:bg-surface hover:border-ink-soft',
   /* Niveau 3 : du texte. La bordure transparente garde la hauteur des deux autres niveaux, pour
      qu'une barre qui les mélange ne sautille pas d'un bouton à l'autre. */
-  quiet: 'bg-transparent text-ink border-[3px] border-transparent underline-offset-4 hover:underline',
+  quiet: 'bg-transparent text-ink border border-transparent hover:bg-surface',
   /* Réservé au bouton de CONFIRMATION d'une suppression : l'accent va à la décision, pas à la
-     tentation. */
-  danger: 'bg-danger text-on-data brutal brutal-press',
-  /* Destructif au repos : rouge, mais sans aplat. Sur une liste de projets, « Supprimer » en
-     aplat rouge était l'élément le plus visible de l'écran alors que c'est l'action la plus rare. */
-  'danger-quiet': 'bg-transparent text-danger border-[3px] border-transparent hover:bg-danger hover:text-on-data',
+     tentation. Texte blanc fixe : le rouge ne suit pas le thème. */
+  danger: 'bg-danger text-white hover:bg-danger/90',
+  /* Destructif au repos : rouge, mais sans aplat. */
+  'danger-quiet': 'bg-transparent text-danger border border-transparent hover:bg-danger/8',
 }
 
 const sizes: Record<Size, string> = {
-  sm: 'px-3 py-1 text-sm',
-  md: 'px-5 py-2 text-base',
+  sm: 'h-8 px-3 text-sm',
+  md: 'h-10 px-4 text-base',
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
@@ -41,9 +39,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       type={type}
       className={cn(
         // `whitespace-nowrap` : dans une barre qui replie ses boutons, un bouton ne se casse pas
-        // en deux lignes, c'est la barre qui passe à la ligne. Casse mixte : les capitales sont
-        // réservées aux titres (spec §3).
-        'inline-flex items-center justify-center gap-2 whitespace-nowrap font-ui font-bold brutal-focus disabled:opacity-50 disabled:pointer-events-none',
+        // en deux lignes, c'est la barre qui passe à la ligne. Casse mixte et graisse 500 : les
+        // capitales n'existent plus nulle part (spec §3).
+        'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-control font-ui font-medium focus-ring disabled:opacity-50 disabled:pointer-events-none',
         variants[variant],
         sizes[size],
         className,

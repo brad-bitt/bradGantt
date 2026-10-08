@@ -26,8 +26,8 @@ describe('GanttToolbar', () => {
     hydrate('editor')
     render(<GanttToolbar />)
     expect(screen.getByRole('button', { name: '+ Tâche' })).toHaveClass('bg-ink')
-    expect(screen.getByRole('button', { name: '+ Jalon' })).toHaveClass('bg-paper')
-    expect(screen.getByRole('button', { name: '+ Groupe' })).toHaveClass('bg-paper')
+    expect(screen.getByRole('button', { name: '+ Jalon' })).toHaveClass('border-line')
+    expect(screen.getByRole('button', { name: '+ Groupe' })).toHaveClass('border-line')
     // Le rôle d'un éditeur n'est plus affiché : seul l'état « lecture seule » mérite d'être dit.
     expect(screen.queryByText('Lecture seule')).not.toBeInTheDocument()
   })
