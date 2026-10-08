@@ -1,17 +1,17 @@
 import { ImageResponse } from 'next/og'
 
-export const alt = 'BradGantt — des Gantt partagés, brutalement simples'
+export const alt = 'BradGantt — des Gantt partagés, simplement'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
 /**
- * Police d'affichage pour l'image d'aperçu. `next/font` ne sert que le HTML : ici il faut le
- * fichier TTF lui-même. On le demande à Google Fonts au moment de générer l'image ; sans
- * réseau, on retombe sur la police système — l'aperçu reste correct, seulement moins typé.
+ * Fonte de titre pour l'image d'aperçu. `next/font` ne sert que le HTML : ici il faut le fichier
+ * TTF lui-même. On le demande à Google Fonts au moment de générer l'image ; sans réseau, on
+ * retombe sur la police système — l'aperçu reste correct, seulement moins typé.
  */
-async function archivoBlack(): Promise<ArrayBuffer | null> {
+async function fraunces(): Promise<ArrayBuffer | null> {
   try {
-    const css = await (await fetch('https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap')).text()
+    const css = await (await fetch('https://fonts.googleapis.com/css2?family=Fraunces:wght@500&display=swap')).text()
     const url = css.match(/src: url\(([^)]+)\) format\('(?:truetype|opentype)'\)/)?.[1]
     if (!url) return null
     return await (await fetch(url)).arrayBuffer()
@@ -20,63 +20,74 @@ async function archivoBlack(): Promise<ArrayBuffer | null> {
   }
 }
 
+const PAPER = '#F6F3EC'
+const SURFACE = '#FBF9F4'
+const INK = '#2A2622'
+const LINE = '#DED7C8'
+
+/** Une frise de quatre barres teinte + liseré, comme dans le produit (spec §11). */
 const BARS = [
-  { color: '#5B9DFF', left: 0, width: 300 },
-  { color: '#FF8A3D', left: 120, width: 300 },
-  { color: '#FF6FA3', left: 240, width: 240 },
+  { color: '#FF8A3D', left: 0, width: 360, label: 'Maquettes' },
+  { color: '#5B9DFF', left: 220, width: 380, label: 'Intégration' },
+  { color: '#3ECF8E', left: 470, width: 300, label: 'Recette' },
+  { color: '#A78BFA', left: 700, width: 260, label: 'Mise en ligne' },
 ]
 
+function tint(hex: string, paper = SURFACE, part = 0.32): string {
+  const c = (s: string, i: number) => parseInt(s.slice(i, i + 2), 16)
+  const mix = (a: number, b: number) => Math.round(a * part + b * (1 - part))
+  const r = mix(c(hex, 1), c(paper, 1)), g = mix(c(hex, 3), c(paper, 3)), b = mix(c(hex, 5), c(paper, 5))
+  return `rgb(${r}, ${g}, ${b})`
+}
+
 /**
- * Aperçu de lien (Slack, Teams, LinkedIn…) : le signe en grand, le nom, la promesse. Même
- * vocabulaire que le site — carré d'encre, barres en escalier, bordures de 6 px, ombre portée
- * pleine — sans image externe.
+ * Aperçu de lien (Slack, Teams, LinkedIn…) : le signe, le nom en Fraunces, la promesse, et une
+ * frise. Même vocabulaire que le site — papier chaud, filets, barres à liseré — sans image externe.
+ * `next/og` n'évalue pas `color-mix` : la teinte est calculée ici.
  */
 export default async function OpenGraphImage() {
-  const font = await archivoBlack()
+  const font = await fraunces()
   return new ImageResponse(
     (
       <div
         style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 64,
-          background: '#FDF6E3',
-          backgroundImage: 'radial-gradient(rgba(17,17,17,0.09) 2px, transparent 2px)',
-          backgroundSize: '28px 28px',
-          fontFamily: font ? 'Archivo Black' : 'sans-serif',
-          color: '#111111',
+          width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          gap: 48, padding: '64px 80px', background: PAPER, color: INK,
+          fontFamily: font ? 'Fraunces' : 'serif',
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            gap: 26,
-            width: 340,
-            height: 340,
-            padding: 40,
-            background: '#111111',
-            border: '8px solid #FDF6E3',
-            boxShadow: '16px 16px 0 #111111',
-          }}
-        >
-          {BARS.map((b) => (
-            <div key={b.color} style={{ display: 'flex', marginLeft: b.left / 2, width: b.width / 2, height: 44, background: b.color }} />
-          ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 9, width: 96, height: 96, padding: 14, background: INK }}>
+            <div style={{ display: 'flex', width: 40, height: 13, background: '#5B9DFF' }} />
+            <div style={{ display: 'flex', marginLeft: 15, width: 40, height: 13, background: '#FF8A3D' }} />
+            <div style={{ display: 'flex', marginLeft: 30, width: 30, height: 13, background: '#FF6FA3' }} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ fontSize: 88, lineHeight: 1, letterSpacing: -2 }}>BradGantt</div>
+            <div style={{ fontSize: 34, lineHeight: 1.2, color: '#746D62' }}>Des Gantt partagés, simplement.</div>
+          </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-          <div style={{ fontSize: 112, lineHeight: 1 }}>BradGantt</div>
-          <div style={{ fontSize: 36, lineHeight: 1.2, maxWidth: 560 }}>Des Gantt partagés, brutalement simples.</div>
+        <div style={{ display: 'flex', flexDirection: 'column', background: SURFACE, border: `2px solid ${LINE}`, borderRadius: 20, padding: 24, gap: 14, position: 'relative' }}>
+          {BARS.map((b) => (
+            <div key={b.label} style={{ display: 'flex', height: 48 }}>
+              <div
+                style={{
+                  display: 'flex', alignItems: 'center', marginLeft: b.left, width: b.width, height: 48,
+                  background: tint(b.color), border: `2px solid ${tint(b.color, SURFACE, 0.4)}`,
+                  borderLeftWidth: 8, borderLeftColor: b.color, borderRadius: '8px 12px 12px 8px', paddingLeft: 18, fontSize: 26, whiteSpace: 'nowrap',
+                }}
+              >
+                {b.label}
+              </div>
+            </div>
+          ))}
+          <div style={{ position: 'absolute', top: 0, bottom: 0, left: 474, width: 4, background: '#E5342A' }} />
         </div>
       </div>
     ),
     {
       ...size,
-      fonts: font ? [{ name: 'Archivo Black', data: font, style: 'normal', weight: 400 }] : [],
+      fonts: font ? [{ name: 'Fraunces', data: font, style: 'normal', weight: 500 }] : [],
     },
   )
 }
