@@ -13,11 +13,11 @@ export function Avatar({ name, color, src, size = 'md', className }: AvatarProps
   const dim = size === 'sm' ? 'size-7 text-xs' : 'size-10 text-sm'
   if (src) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={src} alt={name} title={name} className={cn('border-[3px] border-ink object-cover', dim, className)} />
+    return <img src={src} alt={name} title={name} className={cn('rounded-full object-cover', dim, className)} />
   }
   return (
     <span title={name} style={{ backgroundColor: color }}
-      className={cn('inline-flex items-center justify-center border-[3px] border-ink font-display text-on-data', dim, className)}>
+      className={cn('inline-flex items-center justify-center rounded-full font-ui font-semibold text-black/80', dim, className)}>
       {initials(name)}
     </span>
   )

@@ -18,4 +18,12 @@ describe('Avatar', () => {
     render(<Avatar name="Alice" color="#FFD500" src="https://x/y.png" />)
     expect(screen.getByRole('img', { name: 'Alice' })).toHaveAttribute('src', 'https://x/y.png')
   })
+
+  it('est rond, en Plex semi-gras, texte sombre fixe sur la couleur', () => {
+    render(<Avatar name="Alice Test" color="#FF6B9D" />)
+    const el = screen.getByTitle('Alice Test')
+    expect(el).toHaveClass('rounded-full', 'font-ui', 'font-semibold', 'text-black/80')
+    expect(el).not.toHaveClass('border-[3px]')
+    expect(el).not.toHaveClass('font-display')
+  })
 })
