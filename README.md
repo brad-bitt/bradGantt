@@ -4,7 +4,7 @@ BradGantt est une application de diagrammes de Gantt collaboratifs : plusieurs
 utilisateurs partagent un projet (owner/editor/viewer), y organisent des tâches,
 groupes et jalons avec dépendances, et voient les changements des autres en temps réel.
 Stack : Next.js 15 (App Router) + TypeScript + Tailwind v4 + Supabase (Postgres, Auth,
-RLS), dans un style néo-brutaliste.
+RLS), dans un style éditorial (papier, encre, Fraunces).
 
 ## Prérequis
 
@@ -77,14 +77,14 @@ commentaire dans `lib/e2e.ts`).
 
 ## Navigation
 
-L'en-tête noir change selon le contexte. Sur `/projects`, il porte la marque et le menu du
+L'en-tête change selon le contexte. Sur `/projects`, il porte la marque et le menu du
 compte. Dans un projet, il porte le fil d'Ariane « Projets / Nom », les onglets **Gantt**,
 **Tickets** et **Membres**, la pile d'avatars et le menu du compte ; le propriétaire a un menu
 « ⋯ » à côté du nom (renommer, activer ou désactiver les tickets, supprimer). Côté code, les
 deux en-têtes vivent dans deux groupes de routes : `app/(app)/(accueil)` et `app/(app)/(projet)`.
 
-Chaque écran n'a qu'une action principale (fond noir) ; les commandes secondaires ont une
-bordure sans ombre, les commandes d'objet sont du texte révélé au survol. Sur `/projects`,
+Chaque écran n'a qu'une action principale (encre pleine) ; les commandes secondaires ont un
+filet, les commandes d'objet sont du texte révélé au survol. Sur `/projects`,
 « N en retard » filtre la liste (`?filtre=retard`) ; dans le Gantt, le même chiffre en pied de
 page met les barres en retard en évidence (Échap pour l'éteindre).
 
@@ -158,6 +158,25 @@ les groupes sont exclus de tous les calculs : leurs colonnes `start_date` / `end
 jamais réécrites quand leurs enfants bougent, c'est `computeLayout` qui recalcule leur empan à
 l'affichage. La liste des projets réutilise la même fonction pour la vignette de chaque carte.
 
+## Design
+
+BradGantt a une identité **éditoriale** (spec `docs/superpowers/specs/2026-10-08-bradgantt-identite-editoriale-design.md`) :
+papier chaud et encre graphite, Fraunces pour les titres, IBM Plex Sans pour l'interface,
+JetBrains Mono pour les chiffres et les dates. Les jetons vivent dans `app/globals.css` et
+s'organisent par registre : structure (`paper`, `surface`, `ink`, `ink-soft`, `line`), état
+(`accent`, l'or, qui ne signifie que « actif », et `accent-soft`), repères (`today`, `danger`),
+données (huit couleurs de tâches, portées en teinte pâle et liseré par l'utilitaire `data-bar`).
+
+Trois règles gouvernent les écrans : une seule action principale (encre pleine) par écran, une
+fenêtre ouverte comptant comme un écran ; les commandes d'objet (« ⋯ », poignées, flèches) sont
+révélées au survol par l'opacité, jamais par rendu conditionnel ; une action destructive est sobre
+au repos (texte rouge) et ne devient rouge pleine qu'à la confirmation. Les ombres n'appartiennent
+qu'à ce qui flotte (`shadow-float` pour un menu, `shadow-dialog` pour une fenêtre).
+
+L'échelle de texte remplace celle de Tailwind : `text-xs` vaut 13 px, `text-sm` 14, `text-base`
+15 — rien ne descend sous 13 px, aucune capitale n'est forcée, et `tests/unit/design/` le vérifie
+en lisant les sources.
+
 ## Marque et icônes
 
 Le signe (trois barres en escalier sur un carré d'encre) vit en deux exemplaires qui doivent
@@ -165,11 +184,11 @@ rester identiques : `components/layout/Logo.tsx` pour l'interface et `app/icon.s
 favicon. `node scripts/make-icons.mjs` en dérive `app/favicon.ico` (16/32/48) et
 `app/apple-icon.png` (180) avec `sharp`, qui vient des dépendances de Next ; les fichiers
 produits sont versionnés. L'aperçu de lien (`app/opengraph-image.tsx`) est généré par `next/og`
-et va chercher Archivo Black chez Google Fonts au moment du rendu, avec repli sur la police
+et va chercher Fraunces chez Google Fonts au moment du rendu, avec repli sur la police
 système sans réseau.
 
-Le nom s'écrit « BradGantt », en casse mixte et sans soulignement : le jaune ne signifie plus
-que « actif », partout.
+Le nom s'écrit « BradGantt », en Fraunces et en casse mixte. Le signe est un carré d'encre nu :
+plus de cadre clair, il n'a plus de bandeau sombre d'où se détacher.
 
 ## Téléphone
 
@@ -199,10 +218,10 @@ l'éclair clair d'une page sombre (`components/layout/ThemeToggle.tsx`).
 
 Les couleurs sont des jetons Tailwind dans un `@theme` non inline (`app/globals.css`) : les
 utilitaires référencent `var(--color-…)`, et le bloc `:root[data-theme="dark"]` les redéfinit.
-Seule la STRUCTURE s'inverse (crème, papier, encre, bandes). Les couleurs de tâches et le jaune ne
-changent pas, et le texte posé sur elles utilise le jeton `on-data` (encre noire fixe) — `text-ink`
-deviendrait crème sur tangerine la nuit. L'en-tête a ses propres jetons (`header`, `on-header`)
-pour rester sombre dans les deux thèmes.
+Seule la STRUCTURE s'inverse (`paper`, `surface`, `ink`, `ink-soft`, `line`). L'or, les rouges et
+les huit couleurs de tâches ne changent pas ; une barre les porte en teinte pâle (`--data-tint`,
+32 % le jour, 45 % la nuit) sous un texte en encre du thème, et le CSS de `.data-bar` fait seul la
+conversion. La variante Tailwind `dark:` cible `[data-theme="dark"]`.
 
 ## Membres et invitations
 
