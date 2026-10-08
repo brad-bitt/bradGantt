@@ -206,7 +206,7 @@ test('un lecteur ne peut pas déplacer une barre', async ({ page }) => {
 
   // Le clic sélectionne quand même : le glisser-déposer a remplacé le `onClick` de la barre,
   // et la sélection reste ouverte aux lecteurs.
-  await expect(bar).toHaveClass(/outline-dashed/)
+  await expect(bar).toHaveClass(/outline-accent/)
 
   await page.reload()
   await expect(page.locator('[data-task-id]', { hasText: 'Spécifications' })).toHaveAttribute('title', avant)

@@ -42,9 +42,9 @@ test('un viewer voit le Gantt sans aucune action d\'édition', async ({ page }) 
   await expect(page.locator('[data-task-id]')).toHaveCount(4)
 
   // La sélection, elle, reste ouverte au lecteur : c'est de la lecture, pas de l'édition.
-  await expect(bar).toHaveClass(/outline-dashed/)
+  await expect(bar).toHaveClass(/outline-accent/)
   await page.keyboard.press('Escape')
-  await expect(bar).not.toHaveClass(/outline-dashed/)
+  await expect(bar).not.toHaveClass(/outline-accent/)
 
   expect(ecritures).toEqual([])
 })
