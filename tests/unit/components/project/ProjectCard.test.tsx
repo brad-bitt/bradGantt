@@ -68,4 +68,15 @@ describe('ProjectCard', () => {
     expect(screen.getByText('Aucune tâche')).toBeInTheDocument()
     expect(screen.queryByText('Frise vide')).not.toBeInTheDocument()
   })
+
+  it('est une surface à filet, sans ombre, titre en Fraunces (spec §6)', () => {
+    render(<ProjectCard project={item()} />)
+    const card = screen.getByRole('article')
+    expect(card).toHaveClass('rounded-card', 'border-line', 'bg-surface')
+    expect(Array.from(card.classList).some((c) => c.includes('shadow'))).toBe(false)
+    // Le titre de la carte est son lien (pas un `h*`) : c'est lui qui porte Fraunces.
+    const title = screen.getByRole('link', { name: 'Alpha' })
+    expect(title).toHaveClass('font-display', 'font-medium')
+    expect(title).not.toHaveClass('uppercase')
+  })
 })

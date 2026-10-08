@@ -60,17 +60,17 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
     <article
       aria-label={project.name}
       className={
-        'group/card relative flex h-full cursor-pointer flex-col gap-3 bg-paper brutal p-4 outline-offset-2 transition-shadow ' +
-        // Liseré jaune au survol et au focus du lien : le jaune dit « c'est ceci que tu vises ».
-        'hover:shadow-brutal-lg hover:outline-[3px] hover:outline-yellow ' +
-        'has-[[data-card-link]:focus-visible]:outline-[3px] has-[[data-card-link]:focus-visible]:outline-yellow'
+        'group/card relative flex h-full cursor-pointer flex-col gap-3 rounded-card border border-line bg-surface p-5 transition-colors ' +
+        // Filet plus sombre au survol, sans ombre ni déplacement ; anneau d'or au focus du lien.
+        'hover:border-ink-soft ' +
+        'has-[[data-card-link]:focus-visible]:outline-2 has-[[data-card-link]:focus-visible]:outline-accent has-[[data-card-link]:focus-visible]:outline-offset-2'
       }
     >
       <div className="flex items-start justify-between gap-3">
         <Link
           href={base}
           data-card-link
-          className="min-w-0 font-display text-xl uppercase leading-tight [overflow-wrap:anywhere] outline-none after:absolute after:inset-0 after:z-[1] after:content-['']"
+          className="min-w-0 font-display text-[19px] font-medium leading-tight [overflow-wrap:anywhere] outline-none after:absolute after:inset-0 after:z-[1] after:content-['']"
         >
           {project.name}
         </Link>
@@ -110,21 +110,21 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-label={`Avancement de ${project.name}`}
-                className="relative h-3 flex-1 border-[3px] border-ink bg-paper"
+                className="relative h-1 flex-1 overflow-hidden rounded-full bg-line"
               >
-                <span className="absolute inset-y-0 left-0 hatch opacity-40" style={{ width: `${summary.progress}%` }} />
+                <span className="absolute inset-y-0 left-0 bg-ink" style={{ width: `${summary.progress}%` }} />
               </div>
-              <span className="w-10 text-right font-mono text-xs font-bold">{summary.progress} %</span>
+              <span className="w-10 text-right font-mono text-xs font-medium">{summary.progress} %</span>
             </div>
           )}
           {summary.lateCount > 0 && (
             // Sobre au repos, comme toute alerte du projet : du texte rouge, jamais un aplat.
-            <p className="text-sm font-bold text-danger"><span className="font-mono">{summary.lateCount}</span> en retard</p>
+            <p className="text-sm font-medium text-danger"><span className="font-mono">{summary.lateCount}</span> en retard</p>
           )}
         </div>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t-[3px] border-ink pt-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
         <span className="flex -space-x-2">
           {members.slice(0, MAX_AVATARS).map((m) => (
             <Avatar key={m.userId} name={m.displayName} color={m.color} src={m.avatarUrl} size="sm" />
@@ -136,14 +136,14 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
         <span className="flex min-w-0 items-center gap-3 text-sm">
           {summary.nextMilestone && (
             <span className="flex min-w-0 items-center gap-2">
-              <span aria-hidden className="size-2 shrink-0 rotate-45 bg-ink" />
-              <span className="truncate font-bold">{summary.nextMilestone.title}</span>
+              <span aria-hidden className="size-2 shrink-0 rotate-45 bg-ink-soft" />
+              <span className="truncate font-medium">{summary.nextMilestone.title}</span>
               <span className="shrink-0 font-mono text-xs text-ink-soft">{short(summary.nextMilestone.date)}</span>
             </span>
           )}
           {project.ticketsEnabled && (
             // Niveau 3 : un lien discret, au-dessus du lien de la carte pour mener au kanban.
-            <Link href={`${base}/tickets`} className="relative z-10 shrink-0 text-ink-soft underline-offset-4 hover:text-ink hover:underline brutal-focus">
+            <Link href={`${base}/tickets`} className="relative z-10 shrink-0 text-ink-soft underline-offset-4 hover:text-ink hover:underline focus-ring">
               Tickets{project.ticketCount !== null && <> · <span className="font-mono">{project.ticketCount}</span></>}
             </Link>
           )}

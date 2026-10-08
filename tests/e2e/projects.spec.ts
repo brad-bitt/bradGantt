@@ -296,11 +296,12 @@ test('ouverte depuis l\'en-tête en thème clair, la fenêtre « Renommer » gar
     await page.getByRole('menuitem', { name: 'Renommer' }).click()
     const dialog = page.getByRole('dialog', { name: 'Renommer le projet' })
     await expect(dialog).toBeVisible()
-    // Hors du `banner` : rendue dans l'en-tête, elle en héritait l'encre crème.
+    // Hors du `banner` : rendue dans l'en-tête, elle en héritait l'encre. Le titre porte l'encre
+    // du thème, celle du corps de la page, quel que soit le conteneur d'où elle s'ouvre.
     await expect(header.getByRole('dialog')).toHaveCount(0)
-    const headerColor = await header.getByRole('heading', { name }).evaluate((el) => getComputedStyle(el).color)
+    const inkColor = await page.evaluate(() => getComputedStyle(document.body).color)
     const titleColor = await dialog.getByRole('heading', { name: 'Renommer le projet' }).evaluate((el) => getComputedStyle(el).color)
-    expect(titleColor).not.toBe(headerColor)
+    expect(titleColor).toBe(inkColor)
     await page.keyboard.press('Escape')
   } finally {
     await deleteFromCard(page, name)

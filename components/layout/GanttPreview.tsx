@@ -24,10 +24,10 @@ const STUB = 6
 
 export function GanttPreview() {
   return (
-    <div aria-hidden className="bg-paper brutal shadow-brutal-lg select-none">
-      <div className="flex items-center justify-between border-b-[3px] border-ink bg-header px-3 py-1.5 text-on-header">
-        <span className="font-display text-xs uppercase">Refonte du site</span>
-        <span className="font-mono text-[10px] opacity-70">SEPT — DÉC</span>
+    <div aria-hidden className="select-none overflow-hidden rounded-card border border-line bg-surface">
+      <div className="flex items-center justify-between border-b border-line px-3 py-1.5">
+        <span className="font-display text-xs font-medium">Refonte du site</span>
+        <span className="font-mono text-xs text-ink-soft">sept. — déc.</span>
       </div>
 
       {/* Piste interne : toutes les abscisses en pourcentage se mesurent SUR ELLE et non sur le
@@ -37,7 +37,7 @@ export function GanttPreview() {
         {/* Colonnes de mois : le rythme de fond, en retrait, comme dans l'application. */}
         <div className="absolute inset-0 flex">
           {[0, 1, 2, 3].map((i) => (
-            <span key={i} className={i % 2 === 1 ? 'flex-1 bg-band' : 'flex-1'} />
+            <span key={i} className={i % 2 === 1 ? 'flex-1 bg-paper' : 'flex-1'} />
           ))}
         </div>
 
@@ -51,11 +51,11 @@ export function GanttPreview() {
           return (
             <span key={`link-${bar.label}`}>
               <span
-                className="absolute w-[3px] bg-ink"
+                className="absolute w-[2px] bg-ink-soft"
                 style={{ left: `calc(${from}% + ${STUB}px)`, top: centerY(i), height: ROW_H }}
               />
               <span
-                className="absolute h-[3px] bg-ink"
+                className="absolute h-[2px] bg-ink-soft"
                 style={{ left: `calc(${from}% + ${STUB}px)`, top: centerY(i + 1), width: `calc(${to - from}% - ${STUB}px)` }}
               />
             </span>
@@ -65,26 +65,17 @@ export function GanttPreview() {
         {BARS.map((bar, i) => (
           <div
             key={bar.label}
-            className="absolute flex items-center border-[3px] border-ink shadow-brutal"
-            style={{
-              top: i * ROW_H + 6,
-              left: `${bar.left}%`,
-              width: `${bar.width}%`,
-              height: BAR_H,
-              backgroundColor: bar.color,
-            }}
+            className="absolute flex items-center data-bar"
+            style={{ top: i * ROW_H + 6, left: `${bar.left}%`, width: `${bar.width}%`, height: BAR_H, '--bar-color': bar.color } as React.CSSProperties}
           >
-            <span
-              className="absolute inset-y-0 left-0 hatch-data opacity-25"
-              style={{ width: `${bar.progress}%` }}
-            />
-            <span className="relative truncate px-1.5 text-[10px] font-bold text-on-data">{bar.label}</span>
+            <span className="absolute bottom-0 left-0 data-bar-progress" style={{ width: `${bar.progress}%` }} />
+            <span className="relative truncate px-1.5 text-xs font-medium text-ink">{bar.label}</span>
           </div>
         ))}
 
         {/* Jalon de clôture : le losange du produit, posé après la dernière barre. */}
         <span
-          className="absolute size-3 rotate-45 border-[3px] border-ink bg-violet"
+          className="absolute size-3 rotate-45 border border-ink-soft bg-violet/40"
           style={{ top: centerY(BARS.length - 1) - 6, left: 'calc(100% - 12px)' }}
         />
       </div>

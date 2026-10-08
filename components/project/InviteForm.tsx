@@ -35,7 +35,7 @@ export function InviteForm({ projectId }: { projectId: string }) {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3 border-t-[3px] border-ink pt-4">
+    <form onSubmit={submit} className="space-y-3 border-t border-line pt-4">
       <h3 className="text-lg">Inviter</h3>
       <div className="grid grid-cols-[1fr_auto] gap-3 items-end">
         <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} error={error ?? undefined} required placeholder="collegue@exemple.fr" />
@@ -44,7 +44,7 @@ export function InviteForm({ projectId }: { projectId: string }) {
       <Button type="submit" disabled={busy}>Inviter</Button>
       {inviteUrl && (
         // Uniquement en mode test : la route ne renvoie `inviteUrl` que sous `E2E_ENABLED`.
-        <p className="bg-yellow text-on-data border-[3px] border-ink p-2 font-mono text-xs break-all" data-testid="invite-url">
+        <p className="break-all rounded-control border border-line bg-paper p-2 font-mono text-xs" data-testid="invite-url">
           Lien d&apos;invitation (mode test) : {inviteUrl}
         </p>
       )}

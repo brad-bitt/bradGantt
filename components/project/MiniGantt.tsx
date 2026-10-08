@@ -25,24 +25,24 @@ export function MiniGantt({ tasks, range, today }: { tasks: MiniTask[]; range: R
   const height = LANES * LANE_H + (LANES - 1) * GAP
 
   return (
-    <div aria-hidden className="relative w-full overflow-hidden border-[3px] border-ink bg-cream" style={{ height: height + 12 }}>
+    <div aria-hidden className="relative w-full overflow-hidden rounded-[6px] border border-line bg-paper" style={{ height: height + 12 }}>
       {/* Quatre bandes verticales : le rythme des mois du vrai diagramme, à l'échelle de la carte. */}
       <div className="absolute inset-0 flex">
-        {[0, 1, 2, 3].map((i) => <span key={i} className={i % 2 === 1 ? 'flex-1 bg-band' : 'flex-1'} />)}
+        {[0, 1, 2, 3].map((i) => <span key={i} className={i % 2 === 1 ? 'flex-1 bg-surface' : 'flex-1'} />)}
       </div>
       {todayLeft !== null && <span className="absolute inset-y-0 w-[2px] bg-today" style={{ left: `${todayLeft}%` }} />}
       {bars.map((b, i) =>
         b.milestone ? (
           <span
             key={i}
-            className="absolute rotate-45 border-2 border-ink"
+            className="absolute rotate-45 border border-ink-soft"
             style={{ left: `calc(${b.left}% - 4px)`, top: 6 + b.lane * (LANE_H + GAP) - 1, width: 8, height: 8, backgroundColor: b.color }}
           />
         ) : (
           <span
             key={i}
-            className="absolute border-2 border-ink"
-            style={{ left: `${b.left}%`, width: `${b.width}%`, top: 6 + b.lane * (LANE_H + GAP), height: LANE_H, backgroundColor: b.color }}
+            className="absolute data-bar"
+            style={{ left: `${b.left}%`, width: `${b.width}%`, top: 6 + b.lane * (LANE_H + GAP), height: LANE_H, '--bar-color': b.color } as React.CSSProperties}
           />
         ),
       )}
@@ -56,7 +56,7 @@ export function MiniGanttPlaceholder() {
   return (
     <div
       aria-hidden
-      className="flex w-full items-center justify-center border-[3px] border-dashed border-ink/30 text-xs text-ink-soft"
+      className="flex w-full items-center justify-center rounded-[6px] border border-dashed border-line text-xs text-ink-soft"
       style={{ height: height + 12 }}
     >
       Aucune tâche

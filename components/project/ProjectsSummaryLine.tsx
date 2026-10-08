@@ -14,7 +14,7 @@ export interface SummaryFigures {
 function n(count: number, one: string, many: string) {
   return (
     <span>
-      <span className="font-mono font-bold text-ink">{count}</span> {count > 1 ? many : one}
+      <span className="font-mono font-medium text-ink">{count}</span> {count > 1 ? many : one}
     </span>
   )
 }
@@ -44,18 +44,18 @@ export function ProjectsSummaryLine({ figures, lateOnly }: { figures: SummaryFig
           href={`/projects?filtre=${LATE_FILTER}`}
           aria-current={lateOnly ? 'page' : undefined}
           className={cn(
-            'font-bold text-danger underline-offset-4 hover:underline brutal-focus',
-            // Jaune = actif : le filtre posé se voit comme un segment sélectionné.
-            lateOnly && 'bg-yellow px-1 text-on-data',
+            'rounded-control px-1.5 font-medium text-danger focus-ring hover:bg-danger/8',
+            // Or voilé = actif : le filtre posé se voit comme un segment sélectionné.
+            lateOnly && 'bg-accent-soft text-ink hover:bg-accent-soft',
           )}
         >
           <span className="font-mono">{figures.late}</span> en retard
         </Link>
       ) : (
-        <span><span className="font-mono font-bold text-ink">0</span> en retard</span>
+        <span><span className="font-mono font-medium text-ink">0</span> en retard</span>
       )}
       {lateOnly && (
-        <Link href="/projects" className="ml-2 text-ink underline-offset-4 hover:underline brutal-focus">Tout afficher</Link>
+        <Link href="/projects" className="ml-2 text-ink underline-offset-4 hover:underline focus-ring">Tout afficher</Link>
       )}
     </p>
   )
