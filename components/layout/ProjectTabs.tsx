@@ -44,9 +44,9 @@ export function ProjectTabs({ projectId, ticketsEnabled, isOwner, className }: {
           href={t.href}
           aria-current={current === t.id ? 'page' : undefined}
           className={cn(
-            // Souligné de 3 px, jaune pour le courant : le jaune ne signifie que « actif ».
-            'flex shrink-0 items-center border-b-[3px] text-sm font-bold brutal-focus-header',
-            current === t.id ? 'border-yellow text-on-header' : 'border-transparent text-on-header/70 hover:text-on-header',
+            // Souligné de 2 px, or pour le courant : l'or ne signifie que « actif ».
+            'flex shrink-0 items-center border-b-2 text-base focus-ring',
+            current === t.id ? 'border-accent font-medium text-ink' : 'border-transparent text-ink-soft hover:text-ink',
           )}
         >
           {t.label}

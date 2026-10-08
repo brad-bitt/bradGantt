@@ -9,7 +9,7 @@ import { useProfile } from './ProfileProvider'
 /**
  * L'avatar de l'utilisateur, à droite des deux en-têtes. Nom, thème et déconnexion passent
  * derrière lui : à côté du fil d'Ariane et des onglets d'un projet, trois commandes de compte
- * en clair dans la bande noire faisaient jeu égal avec la navigation.
+ * en clair dans l'en-tête faisaient jeu égal avec la navigation.
  */
 export function UserMenu() {
   const profile = useProfile()
@@ -27,14 +27,14 @@ export function UserMenu() {
   return (
     <Menu
       label="Menu du compte"
-      trigger={<Avatar name={profile.displayName} color={profile.color} src={profile.avatarUrl} size="sm" />}
+      trigger={<Avatar name={profile.displayName} color="var(--color-accent)" src={profile.avatarUrl} size="sm" />}
       entries={[
         {
           kind: 'heading',
           id: 'who',
           label: (
             <>
-              <span className="block font-ui text-sm font-bold text-ink">{profile.displayName}</span>
+              <span className="block font-ui text-sm font-medium text-ink">{profile.displayName}</span>
               <span className="block">{profile.email}</span>
             </>
           ),

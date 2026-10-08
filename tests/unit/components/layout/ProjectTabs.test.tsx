@@ -35,4 +35,14 @@ describe('ProjectTabs', () => {
     render(<ProjectTabs projectId="p1" ticketsEnabled={false} isOwner />)
     expect(screen.getByRole('link', { name: 'Tickets' })).toHaveAttribute('href', '/projects/p1/tickets')
   })
+
+  it('l’onglet courant est en encre, souligné d’or ; les autres en encre douce (spec §5)', () => {
+    mockPathname = '/projects/p1/tickets'
+    render(<ProjectTabs projectId="p1" ticketsEnabled isOwner />)
+    const current = screen.getByRole('link', { name: 'Tickets' })
+    expect(current).toHaveClass('border-accent', 'text-ink', 'font-medium')
+    const other = screen.getByRole('link', { name: 'Gantt' })
+    expect(other).toHaveClass('border-transparent', 'text-ink-soft')
+    expect(other).not.toHaveClass('text-on-header/70')
+  })
 })

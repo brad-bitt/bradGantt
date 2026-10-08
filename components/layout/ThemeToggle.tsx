@@ -81,7 +81,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       aria-label={dark ? 'Passer au thème clair' : 'Passer au thème sombre'}
       title={dark ? 'Thème clair' : 'Thème sombre'}
       className={cn(
-        'inline-flex h-8 items-center gap-2 border-[3px] border-current px-2 text-xs font-bold brutal-focus',
+        'inline-flex h-8 items-center gap-2 rounded-control border border-line px-2 text-sm font-medium focus-ring hover:bg-surface',
         className,
       )}
     >

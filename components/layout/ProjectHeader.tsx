@@ -18,7 +18,7 @@ export interface ProjectHeaderProps {
 }
 
 /**
- * En-tête noir d'un projet : où l'on est (fil d'Ariane), où l'on peut aller (onglets), avec qui
+ * En-tête d'un projet : où l'on est (fil d'Ariane), où l'on peut aller (onglets), avec qui
  * (pile d'avatars), et le compte. Composant SERVEUR : seuls les onglets et le menu du compte
  * ont besoin du client.
  *
@@ -29,18 +29,18 @@ export interface ProjectHeaderProps {
 export function ProjectHeader({ projectId, projectName, ticketsEnabled, myRole, members }: ProjectHeaderProps) {
   const isOwner = myRole === 'owner'
   return (
-    <header className="flex shrink-0 flex-wrap items-center gap-x-3 border-b-[3px] border-ink bg-header px-3 text-on-header sm:h-14 sm:flex-nowrap sm:gap-x-6 sm:px-6">
+    <header className="flex shrink-0 flex-wrap items-center gap-x-3 border-b border-line bg-paper px-4 sm:h-14 sm:flex-nowrap sm:gap-x-6 sm:px-6">
       {/* Le signe seul ramène à la liste : sur téléphone, le fil d'Ariane se réduit au nom. */}
-      <Link href="/projects" aria-label="Mes projets" className="flex h-12 shrink-0 items-center brutal-focus-header sm:h-auto">
+      <Link href="/projects" aria-label="Mes projets" className="flex h-12 shrink-0 items-center rounded-control focus-ring sm:h-auto">
         <Mark />
       </Link>
       <nav aria-label="Fil d'Ariane" className="flex min-w-0 flex-1 items-center gap-2 sm:max-w-sm sm:flex-none">
-        <Link href="/projects" className="hidden shrink-0 text-sm text-on-header/70 hover:text-on-header hover:underline brutal-focus-header sm:inline">
+        <Link href="/projects" className="hidden shrink-0 text-sm text-ink-soft hover:text-ink focus-ring sm:inline">
           Projets
         </Link>
-        <span aria-hidden className="hidden text-on-header/50 sm:inline">/</span>
+        <span aria-hidden className="hidden text-ink-soft/60 sm:inline">/</span>
         {/* Le nom est LE titre de chaque page du projet : un `h1`, tronqué plutôt que replié. */}
-        <h1 className="min-w-0 truncate text-base sm:text-lg" title={projectName}>{projectName}</h1>
+        <h1 className="min-w-0 truncate font-display text-base font-medium sm:text-lg" title={projectName}>{projectName}</h1>
         {isOwner && (
           // Même menu que la carte de projet : le propriétaire agit sur son projet sans revenir
           // à la liste. `leaveOnDelete` : supprimé d'ici, le projet emporte la page courante.
@@ -49,7 +49,7 @@ export function ProjectHeader({ projectId, projectName, ticketsEnabled, myRole, 
             projectName={projectName}
             ticketsEnabled={ticketsEnabled}
             leaveOnDelete
-            triggerClassName="shrink-0 text-on-header"
+            triggerClassName="shrink-0"
           />
         )}
       </nav>

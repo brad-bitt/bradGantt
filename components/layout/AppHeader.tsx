@@ -8,9 +8,9 @@ import { Wordmark } from './Logo'
  */
 export function AppHeader() {
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b-[3px] border-ink bg-header px-3 text-on-header sm:px-6">
-      {/* Signe + nom, sans filet jaune : le jaune ne signifie que « actif ». */}
-      <Link href="/projects" className="brutal-focus-header"><Wordmark /></Link>
+    <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-line bg-paper px-4 sm:px-6">
+      {/* Signe + nom, sans soulignement : l'or ne signifie que « actif ». */}
+      <Link href="/projects" className="rounded-control focus-ring"><Wordmark /></Link>
       <UserMenu />
     </header>
   )
