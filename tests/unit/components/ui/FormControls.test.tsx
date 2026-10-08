@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Checkbox } from '@/components/ui/Checkbox'
+import { Textarea } from '@/components/ui/Textarea'
 
 describe('Input', () => {
   it('associe le label au champ', () => {
@@ -54,5 +55,35 @@ describe('Checkbox', () => {
   it('reste type="checkbox" même si un `type` différent est fourni via les props', () => {
     render(<Checkbox label="Replié" type="text" />)
     expect(screen.getByLabelText('Replié')).toHaveAttribute('type', 'checkbox')
+  })
+})
+
+describe('champs à filet (spec §4)', () => {
+  it('Input, Select et Textarea partagent le même gabarit', () => {
+    render(
+      <>
+        <Input label="Titre" />
+        <Select label="Statut" options={[{ value: 'a', label: 'A' }]} />
+        <Textarea label="Description" />
+      </>,
+    )
+    for (const el of [screen.getByLabelText('Titre'), screen.getByLabelText('Statut'), screen.getByLabelText('Description')]) {
+      expect(el).toHaveClass('rounded-control', 'border', 'border-line', 'bg-surface', 'focus-ring')
+      expect(el).not.toHaveClass('border-[3px]')
+    }
+    expect(screen.getByLabelText('Titre')).toHaveClass('h-10')
+    expect(screen.getByText('Titre')).toHaveClass('font-medium', 'text-sm')
+  })
+
+  it('une erreur passe le filet en rouge', () => {
+    render(<Input label="Courriel" error="Adresse invalide" />)
+    expect(screen.getByLabelText('Courriel')).toHaveClass('border-danger')
+    expect(screen.getByRole('alert')).toHaveClass('text-danger')
+  })
+
+  it('la case à cocher est native, en encre', () => {
+    render(<Checkbox label="Lier" />)
+    expect(screen.getByLabelText('Lier')).toHaveClass('accent-ink', 'focus-ring')
+    expect(screen.getByLabelText('Lier')).not.toHaveClass('appearance-none')
   })
 })

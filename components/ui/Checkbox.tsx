@@ -13,10 +13,13 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
     <label htmlFor={inputId} className="inline-flex items-center gap-2 cursor-pointer select-none">
       {/* `type="checkbox"` après `{...props}` : ce composant DOIT toujours rendre une
           case à cocher, quel que soit ce qu'un appelant fournirait par erreur via
-          `props.type`. Un attribut posé avant le spread serait silencieusement écrasé. */}
+          `props.type`. Un attribut posé avant le spread serait silencieusement écrasé.
+          Case native : `accent-color` la peint en encre, et le navigateur garantit une coche
+          lisible dans les deux thèmes — ce qu'un `appearance-none` redessiné ne faisait pas la
+          nuit. */}
       <input ref={ref} id={inputId}
-        className={cn('appearance-none size-5 border-[3px] border-ink bg-paper checked:bg-ink brutal-focus', className)} {...props} type="checkbox" />
-      <span className="font-bold text-sm">{label}</span>
+        className={cn('size-[18px] shrink-0 rounded-[4px] accent-ink focus-ring', className)} {...props} type="checkbox" />
+      <span className="text-sm font-medium">{label}</span>
     </label>
   )
 })
