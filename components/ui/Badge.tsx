@@ -1,25 +1,25 @@
 import { cn } from '@/lib/utils'
 
-export type BadgeColor = 'violet' | 'blue' | 'cyan' | 'rose' | 'emerald' | 'yellow' | 'ink' | 'paper'
+export type BadgeColor = 'violet' | 'blue' | 'cyan' | 'rose' | 'emerald' | 'accent' | 'ink' | 'paper'
 
-// Texte `on-data` (encre noire fixe) sur toute couleur de DONNÉE : les couleurs sont calées assez
-// claires pour ça, et le thème sombre ne doit pas y poser une encre crème. `paper` est l'exception :
-// c'est une couleur de STRUCTURE (le statut « À faire »), son texte suit donc le thème.
+// Une couleur de DONNÉES se porte en teinte pâle, texte en encre du thème — comme une barre du
+// Gantt (spec §3). La nuit, la teinte monte pour que l'encre claire reste lisible. `ink` est le
+// seul aplat ; `paper` est la couleur de STRUCTURE du statut « À faire ».
 const colors: Record<BadgeColor, string> = {
-  violet: 'bg-violet text-on-data',
-  blue: 'bg-blue text-on-data',
-  cyan: 'bg-cyan text-on-data',
-  rose: 'bg-rose text-on-data',
-  emerald: 'bg-emerald text-on-data',
-  yellow: 'bg-yellow text-on-data',
-  ink: 'bg-ink text-cream',
-  paper: 'bg-paper text-ink',
+  violet: 'bg-violet/30 border-violet/40 text-ink dark:bg-violet/45',
+  blue: 'bg-blue/30 border-blue/40 text-ink dark:bg-blue/45',
+  cyan: 'bg-cyan/30 border-cyan/40 text-ink dark:bg-cyan/45',
+  rose: 'bg-rose/30 border-rose/40 text-ink dark:bg-rose/45',
+  emerald: 'bg-emerald/30 border-emerald/40 text-ink dark:bg-emerald/45',
+  accent: 'bg-accent-soft border-accent/40 text-ink',
+  ink: 'bg-ink border-ink text-paper',
+  paper: 'bg-surface border-line text-ink',
 }
 
 export function Badge({ color = 'ink', className, children }: { color?: BadgeColor; className?: string; children: React.ReactNode }) {
   // Casse mixte et police d'interface : un badge de rôle ou de statut est un mot, pas un chiffre.
   return (
-    <span className={cn('inline-block border-[3px] border-ink px-2 py-0.5 text-xs font-bold', colors[color], className)}>
+    <span className={cn('inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium', colors[color], className)}>
       {children}
     </span>
   )

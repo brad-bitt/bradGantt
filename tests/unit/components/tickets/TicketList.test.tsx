@@ -76,7 +76,7 @@ describe('TicketList', () => {
     hydrate()
     renderList()
     const alpha = screen.getAllByRole('row').find((r) => r.textContent?.includes('Alpha'))!
-    expect(within(alpha).getByText('À faire')).toHaveClass('bg-paper')
+    expect(within(alpha).getByText('À faire')).toHaveClass('bg-surface')
     expect(within(alpha).getByText('À faire')).not.toHaveClass('uppercase')
   })
 
