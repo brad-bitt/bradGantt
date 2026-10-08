@@ -4,9 +4,9 @@ import type { Range, Rect, Zoom } from './types'
 import { addDays, daysBetween, durationDays, formatDate, isWeekend, maxDate, minDate, parseDate } from './dates'
 
 export const PX_PER_DAY: Record<Zoom, number> = { day: 40, week: 12, month: 4 }
-export const ROW_HEIGHT = 44
+export const ROW_HEIGHT = 48
 export const HEADER_HEIGHT = 56
-export const BAR_INSET = 8
+export const BAR_INSET = 10
 export const SIDEBAR_WIDTH = 300
 /**
  * Sous cette largeur de conteneur (en pixels), la vue est dite COMPACTE : sidebar réduite,
@@ -47,9 +47,10 @@ export const DRAG_THRESHOLD_PX = 4
  * de 12 px se retrouvait ainsi au MILIEU du dessin, les deux poignées occupant à elles seules les
  * 6 px de la boîte de contenu et ne laissant « déplaçables » que les deux liserés de bordure. Les
  * poignées débordent donc de la bordure (`-BAR_BORDER_PX`) pour couvrir les bords VISIBLES de la
- * barre, et le milieu reste ce qu'il doit être : la zone de déplacement.
+ * barre, et le milieu reste ce qu'il doit être : la zone de déplacement. Le filet fait 1 px
+ * depuis l'identité éditoriale ; le liseré gauche de 4 px est traité par `TaskBar`.
  */
-export const BAR_BORDER_PX = 3
+export const BAR_BORDER_PX = 1
 
 /**
  * Côté de la poignée de liaison, en pixels — doit rester égal au `size-4` de son bouton.

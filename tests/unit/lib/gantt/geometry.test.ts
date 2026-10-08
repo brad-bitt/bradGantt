@@ -175,7 +175,8 @@ describe('arrowPath', () => {
   it('contourne quand la cible commence avant la fin de la source', () => {
     const from = { x: 0, y: 8, width: 200, height: 28 }
     const to = { x: 100, y: 52, width: 40, height: 28 }
-    expect(arrowPath(from, to)).toBe('M200,22 H210 V44 H90 V66 H100')
+    // Le détour passe sous la source, à `BAR_INSET` de son bord bas : entre deux lignes.
+    expect(arrowPath(from, to)).toBe(`M200,22 H210 V${8 + 28 + BAR_INSET} H90 V66 H100`)
   })
   it('trace vers une cible remontante sans chevauchement', () => {
     // Ligne 0 : y=8, ligne 1 : y=52 (au-dessus)
