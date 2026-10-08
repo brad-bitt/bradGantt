@@ -7,6 +7,9 @@ import { useGanttView } from './GanttView'
 import { useOpenContextMenu } from './ContextMenu'
 import { isLate } from '@/lib/gantt/summary'
 
+/** Épaisseur du liseré gauche de `.data-bar` (globals.css). */
+const ACCENT_PX = 4
+
 export function TaskBar({ task, rect }: { task: Task; rect: Rect }) {
   const selected = useGanttStore((s) => s.selection?.kind === 'task' && s.selection.id === task.id)
   const openEditor = useGanttStore((s) => s.openEditor)
@@ -28,22 +31,26 @@ export function TaskBar({ task, rect }: { task: Task; rect: Rect }) {
         // barre. Le rognage du titre est assuré par le `truncate` du <span>, à qui `min-w-0`
         // donne le droit de rétrécir sous sa largeur de contenu (un enfant flex ne le fait pas
         // de lui-même).
-        'group/bar absolute flex items-center border-[3px] shadow-brutal select-none touch-none',
+        // `data-bar` : teinte pâle, filet à 40 %, liseré gauche (globals.css). La barre ne pose
+        // que sa couleur, en variable ; la part de teinte vient du thème.
+        'group/bar absolute flex items-center data-bar select-none touch-none',
         // Mise en évidence : le retard prend un liseré rouge, tout le reste recule de moitié.
-        highlightLate && late ? 'border-danger' : 'border-ink',
+        highlightLate && late && 'data-bar-late',
         highlightLate && !late && 'opacity-50',
         canEdit && 'cursor-grab active:cursor-grabbing',
-        selected && 'outline-[3px] outline-dashed outline-ink outline-offset-2',
+        selected && 'outline-2 outline-accent outline-offset-1',
       )}
-      style={{ left: rect.x, top: rect.y, width: rect.width, height: rect.height, backgroundColor: task.color }}
+      style={{ left: rect.x, top: rect.y, width: rect.width, height: rect.height, '--bar-color': task.color } as React.CSSProperties}
       // `onPointerDown` et non `onClick` : le geste doit être armé avant le premier déplacement.
       // La sélection reste assurée (le hook la pose même pour un lecteur).
       onPointerDown={(e) => drag.onBarPointerDown(e, task.id, 'move')}
       onDoubleClick={() => canEdit && openEditor({ mode: 'edit', taskId: task.id })}
       onContextMenu={(e) => openMenu(e, { kind: 'task', id: task.id })}
     >
+      {/* Avancement : un trait de couleur pleine le long du bord bas (spec §7). Plus de hachures
+          sous le titre, qui se lisait mal par-dessus. */}
       <div
-        className="absolute inset-y-0 left-0 hatch-data opacity-25"
+        className="absolute bottom-0 left-0 data-bar-progress"
         style={{ width: `${task.progress}%` }}
         aria-hidden
       />
@@ -52,11 +59,12 @@ export function TaskBar({ task, rect }: { task: Task; rect: Rect }) {
           {/* Enfants de la barre : leur `stopPropagation` (dans le hook) empêche la barre
               d'armer un déplacement par-dessus le redimensionnement. */}
           {/* Décalées de l'épaisseur de la bordure : posées à `left: 0`, elles commenceraient
-              après elle et se retrouveraient au milieu d'une barre étroite. */}
+              après elle et se retrouveraient au milieu d'une barre étroite. À gauche, c'est le
+              liseré de 4 px qu'il faut couvrir, pas le filet. */}
           <div
             data-handle="resize-start"
             className="absolute z-10 cursor-ew-resize"
-            style={{ width: handle, left: -BAR_BORDER_PX, top: -BAR_BORDER_PX, bottom: -BAR_BORDER_PX }}
+            style={{ width: handle, left: -ACCENT_PX, top: -BAR_BORDER_PX, bottom: -BAR_BORDER_PX }}
             onPointerDown={(e) => drag.onBarPointerDown(e, task.id, 'resize-start')}
           />
           <div
@@ -67,7 +75,7 @@ export function TaskBar({ task, rect }: { task: Task; rect: Rect }) {
           />
           {/* Posée entièrement HORS de la barre : voir `LINK_HANDLE_PX`. Un décalage exprimé en
               classe (`-right-4`) ne le permet pas — il faut y ajouter l'épaisseur de la bordure. */}
-          {/* Invisible au repos : une pastille blanche par barre, en permanence, se lisait comme
+          {/* Invisible au repos : une pastille claire par barre, en permanence, se lisait comme
               un artefact détaché du dessin. C'est l'OPACITÉ qui tombe, pas le rendu — la pastille
               reste dans le document, donc la zone de saisie du geste ne bouge pas d'un pixel
               selon qu'on survole ou non. Elle revient au survol, au clavier et sur la barre
@@ -77,7 +85,7 @@ export function TaskBar({ task, rect }: { task: Task; rect: Rect }) {
             aria-label="Créer une dépendance"
             style={{ width: LINK_HANDLE_PX, height: LINK_HANDLE_PX, right: -(LINK_HANDLE_PX + BAR_BORDER_PX) }}
             className={cn(
-              'absolute top-1/2 z-20 -translate-y-1/2 border-[3px] border-ink bg-paper cursor-crosshair hover:bg-yellow',
+              'absolute top-1/2 z-20 -translate-y-1/2 rounded-full border border-ink-soft bg-surface cursor-crosshair hover:bg-accent-soft',
               'opacity-0 transition-opacity group-hover/bar:opacity-100 focus-visible:opacity-100 touch:opacity-100',
               selected && 'opacity-100',
             )}
@@ -87,7 +95,7 @@ export function TaskBar({ task, rect }: { task: Task; rect: Rect }) {
           />
         </>
       )}
-      <span className="relative min-w-0 truncate px-2 text-sm font-bold text-on-data">{task.title}</span>
+      <span className="relative min-w-0 truncate px-2 text-sm font-medium text-ink">{task.title}</span>
     </div>
   )
 }

@@ -187,10 +187,10 @@ describe('GanttView : mise en évidence du retard', () => {
     act(() => { useGanttStore.getState().toggleHighlightLate() })
     const lateBar = container.querySelector('[data-task-id="late"]')!
     const other = container.querySelector('[data-task-id="a"]')!
-    expect(lateBar).toHaveClass('border-danger')
+    expect(lateBar).toHaveClass('data-bar-late')
     expect(lateBar).not.toHaveClass('opacity-50')
     expect(other).toHaveClass('opacity-50')
-    expect(other).toHaveClass('border-ink')
+    expect(other).not.toHaveClass('data-bar-late')
   })
 
   it('Échap éteint la mise en évidence avant de désélectionner', () => {
@@ -213,6 +213,6 @@ describe('GanttView : mise en évidence du retard', () => {
     // Le retard est achevé : le bouton de pied de page disparaît, le drapeau resterait allumé.
     act(() => { useGanttStore.getState().apply({ type: 'task.updated', taskId: 'late', patch: { progress: 100 } }) })
     expect(container.querySelector('[data-task-id="a"]')).not.toHaveClass('opacity-50')
-    expect(container.querySelector('[data-task-id="late"]')).toHaveClass('border-ink')
+    expect(container.querySelector('[data-task-id="late"]')).not.toHaveClass('data-bar-late')
   })
 })
