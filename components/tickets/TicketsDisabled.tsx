@@ -23,7 +23,7 @@ export function TicketsDisabled({ projectId }: { projectId: string }) {
 
   return (
     <main className="mx-auto w-full max-w-2xl overflow-y-auto p-4 sm:p-8">
-      <div className="bg-paper brutal p-6 space-y-3">
+      <div className="space-y-3 rounded-card border border-line bg-surface p-6">
         <h2 className="text-2xl">Tickets</h2>
         <p className="text-sm">
           Ce projet n&apos;a pas de backlog. En l&apos;activant, tu obtiens une liste de tickets

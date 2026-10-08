@@ -90,4 +90,12 @@ describe('TicketCard', () => {
     expect(screen.queryByRole('button', { name: /Actions du ticket/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Déplacer vers/ })).not.toBeInTheDocument()
   })
+
+  it('est une surface à filet et liseré de statut, sans ombre (spec §8)', () => {
+    render(<TicketCard ticket={{ ...todo, status: 'doing' }} onPointerDown={() => {}} />)
+    const card = screen.getByRole('article')
+    expect(card).toHaveClass('rounded-card', 'border-line', 'bg-surface')
+    expect(Array.from(card.classList).some((c) => c.includes('shadow'))).toBe(false)
+    expect(screen.getByTestId('status-accent')).toHaveClass('bg-blue', 'w-1', 'rounded-full')
+  })
 })

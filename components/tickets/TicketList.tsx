@@ -28,15 +28,15 @@ export function TicketList() {
       ) : (
         // Le tableau défile DANS son propre cadre : sur un téléphone, laisser la page défiler
         // horizontalement décalerait aussi la barre d'outils.
-        <div className="overflow-x-auto border-[3px] border-ink">
-          <table className="w-full border-collapse bg-paper text-sm">
+        <div className="overflow-x-auto rounded-card border border-line">
+          <table className="w-full border-collapse bg-surface text-base">
             <thead>
-              <tr className="border-b-[3px] border-ink bg-band text-left">
-                <th scope="col" className="px-3 py-2 font-display uppercase text-xs">#</th>
-                <th scope="col" className="px-3 py-2 font-display uppercase text-xs">Titre</th>
-                <th scope="col" className="px-3 py-2 font-display uppercase text-xs">Statut</th>
-                <th scope="col" className="px-3 py-2 font-display uppercase text-xs">Assigné</th>
-                <th scope="col" className="px-3 py-2 font-display uppercase text-xs">Tâche</th>
+              <tr className="border-b border-line text-left">
+                <th scope="col" className="px-3 py-2 text-xs font-medium text-ink-soft">#</th>
+                <th scope="col" className="px-3 py-2 text-xs font-medium text-ink-soft">Titre</th>
+                <th scope="col" className="px-3 py-2 text-xs font-medium text-ink-soft">Statut</th>
+                <th scope="col" className="px-3 py-2 text-xs font-medium text-ink-soft">Assigné</th>
+                <th scope="col" className="px-3 py-2 text-xs font-medium text-ink-soft">Tâche</th>
               </tr>
             </thead>
             <tbody>
@@ -44,7 +44,7 @@ export function TicketList() {
                 const assignee = members.find((m) => m.userId === t.assigneeId)
                 const task = tasks.find((k) => k.id === t.taskId)
                 return (
-                  <tr key={t.id} className="border-b border-ink/20 last:border-b-0">
+                  <tr key={t.id} className="h-12 border-b border-line last:border-b-0">
                     <td className="px-3 py-2 font-mono text-xs text-ink-soft">#{t.number}</td>
                     <td className="px-3 py-2">
                       {/* Un vrai bouton et non une ligne cliquable : la liste doit se parcourir
@@ -55,13 +55,13 @@ export function TicketList() {
                           // Le numéro a sa propre colonne : le répéter à l'écran serait du bruit, mais
                           // un lecteur d'écran n'a pas le contexte de la colonne en parcourant les boutons.
                           aria-label={`#${t.number} ${t.title}`}
-                          className="text-left font-bold underline-offset-4 hover:underline brutal-focus"
+                          className="text-left font-medium underline-offset-4 hover:underline focus-ring"
                           onClick={() => openEditor({ mode: 'edit', ticketId: t.id })}
                         >
                           {t.title}
                         </button>
                       ) : (
-                        <span className="font-bold">{t.title}</span>
+                        <span className="font-medium">{t.title}</span>
                       )}
                     </td>
                     <td className="px-3 py-2"><Badge color={TICKET_STATUS_BADGE[t.status]}>{STATUS_LABELS[t.status]}</Badge></td>

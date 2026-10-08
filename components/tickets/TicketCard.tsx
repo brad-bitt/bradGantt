@@ -9,7 +9,7 @@ import { STATUS_SWATCH } from './status'
 import { cn } from '@/lib/utils'
 
 /** Flèches de statut : commandes d'objet, niveau 3 — elles ne réclament rien au repos. */
-const ARROW = 'size-6 font-mono text-xs leading-none text-ink-soft hover:bg-yellow hover:text-on-data brutal-focus'
+const ARROW = 'size-6 rounded-control text-xs leading-none text-ink-soft hover:bg-paper hover:text-ink focus-ring'
 
 export function TicketCard({ ticket, onPointerDown }: {
   ticket: Ticket
@@ -50,10 +50,10 @@ export function TicketCard({ ticket, onPointerDown }: {
       // si bien que chaque dépôt produirait aussi un clic simple qui ouvrirait la modale.
       onDoubleClick={() => canEdit && openEditor({ mode: 'edit', ticketId: ticket.id })}
       className={cn(
-        // Surface posée : ombre brutale de 3 px (spec §7). `touch-none` réservé aux éditeurs, et
+        // Surface à filet, liseré de statut (spec §8). `touch-none` réservé aux éditeurs, et
         // seulement dès md : sous ce seuil les colonnes s'empilent, la carte couvrirait presque
         // tout l'écran et empêcherait de faire défiler au doigt.
-        'group/card flex border-[3px] border-ink bg-paper shadow-[3px_3px_0_var(--color-ink)] select-none',
+        'group/card flex gap-3 rounded-card border border-line bg-surface p-3 select-none',
         canEdit && 'cursor-grab active:cursor-grabbing md:touch-none',
         // Terminé : la carte recule, le travail restant passe devant.
         ticket.status === 'done' && 'opacity-75',
@@ -62,8 +62,8 @@ export function TicketCard({ ticket, onPointerDown }: {
       )}
     >
       {/* L'accent de statut : la couleur se lit avant le texte, même colonne repliée. */}
-      <span aria-hidden data-testid="status-accent" className={cn('w-[7px] shrink-0 border-r-[3px] border-ink', STATUS_SWATCH[ticket.status])} />
-      <div className="flex min-w-0 flex-1 flex-col gap-2 p-3">
+      <span aria-hidden data-testid="status-accent" className={cn('w-1 shrink-0 self-stretch rounded-full', STATUS_SWATCH[ticket.status])} />
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex h-7 items-center gap-1">
           <span className="font-mono text-xs text-ink-soft">#{ticket.number}</span>
           {canEdit && (
@@ -100,10 +100,10 @@ export function TicketCard({ ticket, onPointerDown }: {
             </div>
           )}
         </div>
-        <p className="line-clamp-2 text-sm font-bold leading-snug">{ticket.title}</p>
+        <p className="line-clamp-2 text-sm font-medium leading-snug">{ticket.title}</p>
         <div className="flex items-center gap-2">
           {taskTitle
-            ? <span className="min-w-0 truncate border border-ink/40 px-1 font-mono text-xs">↳ {taskTitle}</span>
+            ? <span className="min-w-0 truncate rounded-full border border-line px-1.5 font-mono text-xs text-ink-soft">↳ {taskTitle}</span>
             : <span className="text-xs text-ink-soft">Sans tâche</span>}
           {assignee && (
             <span className="ml-auto shrink-0">

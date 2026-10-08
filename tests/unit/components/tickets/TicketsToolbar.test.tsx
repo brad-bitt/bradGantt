@@ -25,12 +25,12 @@ describe('TicketsToolbar', () => {
     expect(screen.getByTestId('tickets-count')).toHaveTextContent('1 sur 3 tickets')
   })
 
-  it('la vue courante est un segment jaune, marqué courant', () => {
+  it('la vue courante est un segment en or voilé, marqué courant', () => {
     hydrate()
     render(<TicketsToolbar view="list" />)
     const list = screen.getByRole('link', { name: 'Liste' })
     expect(list).toHaveAttribute('aria-current', 'page')
-    expect(list).toHaveClass('bg-yellow')
+    expect(list).toHaveClass('bg-accent-soft')
     expect(list).toHaveAttribute('href', '/projects/p1/tickets?vue=liste')
     expect(screen.getByRole('link', { name: 'Kanban' })).not.toHaveAttribute('aria-current')
   })

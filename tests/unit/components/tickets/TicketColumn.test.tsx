@@ -17,7 +17,7 @@ describe('TicketColumn', () => {
     const column = screen.getByRole('region', { name: 'Terminé' })
     expect(column).not.toHaveClass('border-[3px]')
     expect(screen.getByRole('heading', { name: 'Terminé' })).toBeInTheDocument()
-    expect(screen.getByTestId('status-swatch')).toHaveClass('bg-emerald')
+    expect(screen.getByTestId('status-swatch')).toHaveClass('bg-emerald', 'rounded-full')
     expect(screen.getByText('0')).toHaveClass('font-mono')
   })
 
@@ -27,14 +27,14 @@ describe('TicketColumn', () => {
     expect(screen.getByText('Vide')).toBeInTheDocument()
   })
 
-  it('pendant un glisser, les AUTRES colonnes offrent « Déposer ici », jaune quand on les survole', () => {
+  it('pendant un glisser, les AUTRES colonnes offrent « Déposer ici », en or voilé quand on les survole', () => {
     render(<TicketColumn status="done" tickets={[]} onCardPointerDown={() => {}} />)
     act(() => useTicketsStore.getState().setDrag({ ticketId: 'a', overStatus: 'todo' }))
     const slot = screen.getByTestId('drop-slot')
     expect(slot).toHaveTextContent('Déposer ici')
-    expect(slot).not.toHaveClass('bg-yellow')
+    expect(slot).not.toHaveClass('bg-accent-soft')
     act(() => useTicketsStore.getState().setDrag({ ticketId: 'a', overStatus: 'done' }))
-    expect(screen.getByTestId('drop-slot')).toHaveClass('bg-yellow')
+    expect(screen.getByTestId('drop-slot')).toHaveClass('bg-accent-soft')
   })
 
   it('la colonne d\'origine n\'offre pas d\'emplacement : y déposer ne ferait rien', () => {

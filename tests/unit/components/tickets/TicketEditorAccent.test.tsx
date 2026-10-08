@@ -8,7 +8,7 @@ vi.mock('@/lib/tickets/client-commands', () => ({
   getTicketCommands: () => ({ createTicket: vi.fn(), updateTicket: vi.fn(), deleteTicket: vi.fn() }),
 }))
 
-describe('TicketEditor : bande de statut', () => {
+describe('TicketEditor : liseré de statut', () => {
   it('le bandeau de titre porte la couleur du statut, et la suit quand on le change', async () => {
     act(() => {
       useTicketsStore.getState().hydrate({

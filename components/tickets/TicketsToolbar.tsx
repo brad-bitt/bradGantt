@@ -35,8 +35,8 @@ export function TicketsToolbar({ view }: { view: 'board' | 'list' }) {
       href={target === 'list' ? `/projects/${projectId}/tickets?vue=liste` : `/projects/${projectId}/tickets`}
       aria-current={view === target ? 'page' : undefined}
       className={cn(
-        'border-r-[3px] border-ink px-3 py-1 text-sm font-bold last:border-r-0 brutal-focus',
-        view === target ? 'bg-yellow text-on-data' : 'bg-paper hover:bg-band',
+        'border-r border-line px-3 py-1 text-sm font-medium last:border-r-0 focus-ring',
+        view === target ? 'bg-accent-soft text-ink' : 'hover:bg-paper',
       )}
     >
       {label}
@@ -44,8 +44,8 @@ export function TicketsToolbar({ view }: { view: 'board' | 'list' }) {
   )
 
   return (
-    <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b-[3px] border-ink bg-paper px-3 py-2 sm:gap-4 sm:px-6">
-      <nav aria-label="Vue" className="inline-flex border-[3px] border-ink">{segment('board', 'Kanban')}{segment('list', 'Liste')}</nav>
+    <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface px-4 py-2 sm:gap-4 sm:px-6">
+      <nav aria-label="Vue" className="inline-flex overflow-hidden rounded-control border border-line bg-surface">{segment('board', 'Kanban')}{segment('list', 'Liste')}</nav>
       {/* Au bureau, les filtres en ligne ; sur téléphone, derrière « Filtres » : trois sélecteurs
           côte à côte élargissaient la page. */}
       <div className="hidden items-center gap-2 sm:flex"><TicketFilterFields compact /></div>

@@ -26,9 +26,9 @@ export function TicketColumn({ status, tickets, onCardPointerDown }: {
 
   return (
     <section data-column-status={status} aria-label={STATUS_LABELS[status]} className="flex flex-col gap-3">
-      <header className="flex items-center gap-2 border-b-[3px] border-ink pb-2">
-        <span aria-hidden data-testid="status-swatch" className={cn('size-3 shrink-0 border-2 border-ink', STATUS_SWATCH[status])} />
-        <h2 className="font-display text-sm uppercase">{STATUS_LABELS[status]}</h2>
+      <header className="flex items-center gap-2 pb-2">
+        <span aria-hidden data-testid="status-swatch" className={cn('size-2.5 shrink-0 rounded-full', STATUS_SWATCH[status])} />
+        <h2 className="font-display text-lg font-medium">{STATUS_LABELS[status]}</h2>
         <span className="ml-auto font-mono text-xs text-ink-soft">{tickets.length}</span>
       </header>
       <div className="flex min-h-24 flex-col gap-3">
@@ -39,8 +39,8 @@ export function TicketColumn({ status, tickets, onCardPointerDown }: {
           <div
             data-testid="drop-slot"
             className={cn(
-              'flex h-16 items-center justify-center border-[3px] border-dashed text-sm',
-              hovered ? 'border-ink bg-yellow text-on-data' : 'border-ink/40 text-ink-soft',
+              'flex h-16 items-center justify-center rounded-card border border-dashed text-sm',
+              hovered ? 'border-accent bg-accent-soft text-ink' : 'border-line text-ink-soft',
             )}
           >
             Déposer ici
