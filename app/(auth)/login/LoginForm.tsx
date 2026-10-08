@@ -31,12 +31,12 @@ export function LoginForm({ next }: { next: string | null }) {
     else setSent(true)
   }
 
-  if (sent) return <p className="bg-emerald text-on-data border-[3px] border-ink p-4 font-bold">Lien envoyé ! Ouvre ta boîte mail ({email}).</p>
+  if (sent) return <p className="rounded-control border border-emerald/40 bg-emerald/20 p-4 text-sm font-medium">Lien envoyé ! Ouvre ta boîte mail ({email}).</p>
 
   return (
     <div className="space-y-6">
       <Button variant="secondary" className="w-full" onClick={withGoogle}>Continuer avec Google</Button>
-      <div className="flex items-center gap-3"><span className="h-[3px] flex-1 bg-ink" /><span className="font-mono text-sm">OU</span><span className="h-[3px] flex-1 bg-ink" /></div>
+      <div className="flex items-center gap-3"><span className="h-px flex-1 bg-line" /><span className="text-xs text-ink-soft">ou</span><span className="h-px flex-1 bg-line" /></div>
       <form onSubmit={withMagicLink} className="space-y-4">
         <Input label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} error={error ?? undefined} placeholder="toi@exemple.fr" />
         <Button type="submit" className="w-full" disabled={loading}>Recevoir un lien magique</Button>

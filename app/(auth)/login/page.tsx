@@ -18,30 +18,29 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     <main className="relative flex min-h-screen flex-col items-center justify-center p-4 pt-20 pb-16 sm:p-6 sm:pt-20 lg:pt-6">
       <ThemeToggle className="absolute right-6 top-6" />
       <div className="grid w-full max-w-6xl items-center gap-10 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-16">
-        <div className="w-full bg-paper brutal shadow-brutal-xl p-8 space-y-6">
+        <div className="w-full space-y-6 rounded-dialog border border-line bg-surface p-8">
           {/* Même signe et même nom que dans l'en-tête : on arrive sur la marque qu'on
               retrouvera une fois connecté. */}
           <h1><Wordmark size="lg" /></h1>
-          <p className="font-bold">Connecte-toi pour retrouver tes projets.</p>
-          {error && <p role="alert" className="bg-danger text-on-data border-[3px] border-ink p-3 font-bold">Connexion impossible, réessaie.</p>}
+          <p className="font-medium">Connecte-toi pour retrouver tes projets.</p>
+          {error && <p role="alert" className="rounded-control border border-danger/40 bg-danger/8 p-3 text-sm font-medium text-danger">Connexion impossible, réessaie.</p>}
           <LoginForm next={next ?? null} />
         </div>
 
         <div className="space-y-8">
-          {/* Le titre porte la promesse, en caractères d'affichage et sur trois lignes : c'est
-              la seule fois où le site parle de lui, autant que ça se voie. Le mot-clé est
-              souligné du filet jaune de la marque, pas d'un aplat. */}
+          {/* Le titre porte la promesse, en Fraunces et sur deux lignes : c'est la seule fois où
+              le site parle de lui, autant que ça se voie. */}
           <h2 className="text-3xl leading-[1.05] sm:text-5xl lg:text-6xl">
             Des Gantt partagés,
             <br />
-            <span className="decoration-yellow decoration-[6px] underline underline-offset-8">brutalement</span> simples.
+            simplement.
           </h2>
           <GanttPreview />
           <ol className="grid gap-4 sm:grid-cols-3">
             {ARGUMENTS.map((a) => (
-              <li key={a.n} className="bg-paper brutal p-4 space-y-2">
+              <li key={a.n} className="space-y-2 rounded-card border border-line bg-surface p-4">
                 <span className="font-mono text-xs text-ink-soft">{a.n}</span>
-                <p className="font-display text-base uppercase">{a.title}</p>
+                <p className="font-display text-lg font-medium">{a.title}</p>
                 <p className="text-sm">{a.body}</p>
               </li>
             ))}
@@ -49,7 +48,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         </div>
       </div>
 
-      <p className="absolute inset-x-0 bottom-5 text-center font-mono text-xs text-ink-soft">
+      <p className="absolute inset-x-0 bottom-5 text-center text-xs text-ink-soft">
         BradGantt — diagrammes de Gantt collaboratifs, en temps réel.
       </p>
     </main>

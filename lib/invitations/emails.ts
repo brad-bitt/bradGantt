@@ -9,12 +9,12 @@ function esc(s: string): string {
 }
 
 function layout(title: string, body: string, cta: { label: string; url: string }): string {
-  return `<!doctype html><html lang="fr"><body style="margin:0;padding:32px;background:#FDF6E3;font-family:Arial,sans-serif;color:#111">
-<div style="max-width:520px;margin:0 auto;background:#fff;border:3px solid #111;box-shadow:8px 8px 0 #111;padding:32px">
-<h1 style="margin:0 0 16px;font-size:24px;text-transform:uppercase">${esc(title)}</h1>
+  return `<!doctype html><html lang="fr"><body style="margin:0;padding:32px;background:#F6F3EC;font-family:Arial,sans-serif;color:#2A2622">
+<div style="max-width:520px;margin:0 auto;background:#FBF9F4;border:1px solid #DED7C8;border-radius:12px;padding:32px">
+<h1 style="margin:0 0 16px;font-size:24px;font-family:Georgia,serif;font-weight:500">${esc(title)}</h1>
 <p style="font-size:16px;line-height:1.5">${body}</p>
-<p style="margin-top:24px"><a href="${esc(cta.url)}" style="display:inline-block;background:#FFD500;color:#111;border:3px solid #111;box-shadow:4px 4px 0 #111;padding:12px 20px;font-weight:bold;text-decoration:none;text-transform:uppercase">${esc(cta.label)}</a></p>
-<p style="font-size:12px;color:#555;word-break:break-all">Ou copie ce lien : ${esc(cta.url)}</p>
+<p style="margin-top:24px"><a href="${esc(cta.url)}" style="display:inline-block;background:#2A2622;color:#F6F3EC;border-radius:7px;padding:12px 20px;font-weight:600;text-decoration:none">${esc(cta.label)}</a></p>
+<p style="font-size:12px;color:#746D62;word-break:break-all">Ou copie ce lien : ${esc(cta.url)}</p>
 </div></body></html>`
 }
 

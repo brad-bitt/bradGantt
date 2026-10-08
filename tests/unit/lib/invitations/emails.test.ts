@@ -20,3 +20,19 @@ describe('emails', () => {
     expect(m.html).toContain('&lt;b&gt;x&lt;/b&gt;')
   })
 })
+
+describe('courriels : identité éditoriale (spec §9)', () => {
+  it('bouton en encre pleine arrondi, titre en casse mixte, plus de brutalisme', () => {
+    for (const html of [
+      invitationEmail({ projectName: 'Refonte', inviterName: 'Alice', inviteUrl: 'https://x/i', role: 'editor' }).html,
+      addedEmail({ projectName: 'Refonte', inviterName: 'Alice', projectUrl: 'https://x/p', role: 'viewer' }).html,
+    ]) {
+      expect(html).toContain('background:#2A2622')
+      expect(html).toContain('border-radius:7px')
+      expect(html).not.toContain('text-transform:uppercase')
+      expect(html).not.toContain('box-shadow')
+      expect(html).not.toContain('#FFD500')
+      expect(html).not.toContain('#111')
+    }
+  })
+})
