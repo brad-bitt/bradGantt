@@ -6,7 +6,7 @@ import type { TicketStatus } from '@/lib/tickets/types'
  * couleur d'une vue à l'autre. Couleurs de DONNÉES, identiques dans les deux thèmes.
  */
 export const STATUS_SWATCH: Record<TicketStatus, string> = {
-  todo: 'bg-line',
+  todo: 'bg-ink-soft',
   doing: 'bg-blue',
   done: 'bg-emerald',
 }

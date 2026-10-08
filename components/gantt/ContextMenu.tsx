@@ -188,7 +188,7 @@ function Menu({ menu, onClose }: { menu: Exclude<ContextMenuState, null>; onClos
           onClick={() => { onClose(); void item.run() }}
           className={cn(
             // Casse mixte : un menu est une liste de commandes, pas une suite de titres.
-            'block w-full rounded-control px-3 py-2 text-left text-base font-medium outline-none hover:bg-paper focus-visible:bg-paper',
+            'block w-full rounded-control px-3 py-2 text-left text-base font-medium outline-none hover:bg-paper focus-visible:bg-accent-soft',
             // Le destructif est sobre au repos (texte rouge) et ne s'aplatit en rouge qu'au survol.
             item.danger && 'text-danger hover:bg-danger/8 focus-visible:bg-danger/8',
             item.danger && i > 0 && 'mt-1 border-t border-line pt-2',

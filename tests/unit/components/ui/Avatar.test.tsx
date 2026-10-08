@@ -8,11 +8,13 @@ describe('initials', () => {
 })
 
 describe('Avatar', () => {
-  it('affiche les initiales avec la couleur du membre', () => {
+  it('affiche les initiales, en encre', () => {
     render(<Avatar name="Alice Test" color="#FF6B9D" />)
     const el = screen.getByTitle('Alice Test')
     expect(el).toHaveTextContent('AT')
-    expect(el).toHaveStyle({ backgroundColor: '#FF6B9D' })
+    // Spec §4 : les avatars des autres sont en encre ; seul celui de l'utilisateur est en or.
+    expect(el).toHaveClass('bg-ink', 'text-paper')
+    expect(el.style.backgroundColor).toBe('')
   })
   it("affiche l'image si src fourni", () => {
     render(<Avatar name="Alice" color="#FFD500" src="https://x/y.png" />)
@@ -22,8 +24,15 @@ describe('Avatar', () => {
   it('est rond, en Plex semi-gras, texte sombre fixe sur la couleur', () => {
     render(<Avatar name="Alice Test" color="#FF6B9D" />)
     const el = screen.getByTitle('Alice Test')
-    expect(el).toHaveClass('rounded-full', 'font-ui', 'font-semibold', 'text-black/80')
+    expect(el).toHaveClass('rounded-full', 'font-ui', 'font-semibold')
     expect(el).not.toHaveClass('border-[3px]')
     expect(el).not.toHaveClass('font-display')
+  })
+
+  it('l’avatar de l’utilisateur est en or, sans fond d’encre concurrent', () => {
+    render(<Avatar name="Moi Même" color="#FF6B9D" me />)
+    const el = screen.getByTitle('Moi Même')
+    expect(el).toHaveClass('bg-accent')
+    expect(el).not.toHaveClass('bg-ink')
   })
 })

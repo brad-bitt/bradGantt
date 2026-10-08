@@ -103,6 +103,6 @@ describe('Menu', () => {
     expect(trigger).toHaveClass('focus-ring')
     await userEvent.click(trigger)
     expect(screen.getByRole('menu', { name: 'Actions' })).toHaveClass('rounded-card', 'bg-surface', 'shadow-float')
-    expect(screen.getByRole('menuitem', { name: 'Renommer' })).toHaveClass('rounded-control')
+    expect(screen.getByRole('menuitem', { name: 'Renommer' })).toHaveClass('rounded-control', 'focus:bg-accent-soft')
   })
 })

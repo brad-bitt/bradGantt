@@ -18,8 +18,8 @@ const variants: Record<Variant, string> = {
      qu'une barre qui les mélange ne sautille pas d'un bouton à l'autre. */
   quiet: 'bg-transparent text-ink border border-transparent hover:bg-surface',
   /* Réservé au bouton de CONFIRMATION d'une suppression : l'accent va à la décision, pas à la
-     tentation. Texte blanc fixe : le rouge ne suit pas le thème. */
-  danger: 'bg-danger text-white hover:bg-danger/90',
+     tentation. Encre papier : 4,8:1 sur le rouge du jour, 5,1:1 sur celui de la nuit. */
+  danger: 'bg-danger text-paper hover:bg-danger/90',
   /* Destructif au repos : rouge, mais sans aplat. */
   'danger-quiet': 'bg-transparent text-danger border border-transparent hover:bg-danger/8',
 }

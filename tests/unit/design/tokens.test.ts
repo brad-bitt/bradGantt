@@ -31,9 +31,19 @@ describe('jetons de design', () => {
   })
 
   it('pose les rayons, les deux ombres et la teinte des barres', () => {
-    for (const token of ['--radius-dialog: 12px', '--radius-card: 10px', '--radius-control: 7px', '--radius-bar: 6px', '--shadow-float:', '--shadow-dialog:', '--data-tint: 32%', '--data-tint: 45%']) {
+    for (const token of ['--radius-dialog: 12px', '--radius-card: 10px', '--radius-control: 7px', '--radius-bar: 6px', '--shadow-float:', '--shadow-dialog:', '--data-tint: 32%']) {
       expect(css, token).toContain(token)
     }
+  })
+
+  it('la teinte des barres ne monte pas la nuit : plus de couleur éclaircit le fond sous une encre claire (revue I3)', () => {
+    expect(css).not.toContain('--data-tint: 45%')
+  })
+
+  it('l’anneau de focus a un trait d’encre (3:1 sur papier), l’or en halo (revue I2)', () => {
+    const ring = css.slice(css.indexOf('.focus-ring '), css.indexOf('\n', css.indexOf('.focus-ring ')))
+    expect(ring).toContain('focus-visible:outline-ink')
+    expect(ring).toContain('accent')
   })
 
   it('définit les utilitaires de l’identité et la variante sombre', () => {

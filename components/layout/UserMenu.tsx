@@ -27,7 +27,7 @@ export function UserMenu() {
   return (
     <Menu
       label="Menu du compte"
-      trigger={<Avatar name={profile.displayName} color="var(--color-accent)" src={profile.avatarUrl} size="sm" />}
+      trigger={<Avatar name={profile.displayName} color={profile.color} src={profile.avatarUrl} size="sm" me />}
       entries={[
         {
           kind: 'heading',

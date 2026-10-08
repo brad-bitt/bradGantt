@@ -45,8 +45,8 @@ export function SidebarRow({ row }: { row: Row }) {
         compact ? 'gap-1' : 'gap-2',
         // La ligne de groupe se distingue par un fond, pas par un trait de plus : elle coiffe ses
         // enfants, la sidebar doit le dire sans ajouter de bordure au décompte.
-        task.type === 'group' && 'bg-paper',
-        selected && 'bg-accent-soft',
+        // Exclusifs : `cn` ne fusionne pas deux `bg-*`, l'ordre de la feuille trancherait.
+        selected ? 'bg-accent-soft' : task.type === 'group' && 'bg-paper',
         isDropTarget && 'shadow-[inset_0_3px_0_var(--color-ink)]',
       )}
       // Retrait d'enfant resserré sur un écran étroit : 32 px, c'est un quart d'une sidebar compacte.

@@ -174,7 +174,8 @@ export function Menu({ label, entries, trigger, triggerClassName, align = 'end',
                   entry.danger
                     // Destructif sobre au repos, rouge voilé seulement sous le pointeur ou le focus.
                     ? 'text-danger hover:bg-danger/8 focus:bg-danger/8'
-                    : 'hover:bg-paper focus:bg-paper',
+                    // Le focus clavier en or voilé : un fond papier sur la surface ne se voyait pas.
+                    : 'hover:bg-paper focus:bg-accent-soft',
                 )}
               >
                 {entry.label}

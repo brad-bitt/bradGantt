@@ -3,14 +3,14 @@ import { cn } from '@/lib/utils'
 export type BadgeColor = 'violet' | 'blue' | 'cyan' | 'rose' | 'emerald' | 'accent' | 'ink' | 'paper'
 
 // Une couleur de DONNÉES se porte en teinte pâle, texte en encre du thème — comme une barre du
-// Gantt (spec §3). La nuit, la teinte monte pour que l'encre claire reste lisible. `ink` est le
+// Gantt (spec §3), à la même part de couleur jour et nuit. `ink` est le
 // seul aplat ; `paper` est la couleur de STRUCTURE du statut « À faire ».
 const colors: Record<BadgeColor, string> = {
-  violet: 'bg-violet/30 border-violet/40 text-ink dark:bg-violet/45',
-  blue: 'bg-blue/30 border-blue/40 text-ink dark:bg-blue/45',
-  cyan: 'bg-cyan/30 border-cyan/40 text-ink dark:bg-cyan/45',
-  rose: 'bg-rose/30 border-rose/40 text-ink dark:bg-rose/45',
-  emerald: 'bg-emerald/30 border-emerald/40 text-ink dark:bg-emerald/45',
+  violet: 'bg-violet/30 border-violet/40 text-ink',
+  blue: 'bg-blue/30 border-blue/40 text-ink',
+  cyan: 'bg-cyan/30 border-cyan/40 text-ink',
+  rose: 'bg-rose/30 border-rose/40 text-ink',
+  emerald: 'bg-emerald/30 border-emerald/40 text-ink',
   accent: 'bg-accent-soft border-accent/40 text-ink',
   ink: 'bg-ink border-ink text-paper',
   paper: 'bg-surface border-line text-ink',

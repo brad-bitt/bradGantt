@@ -59,6 +59,12 @@ describe('Button', () => {
     expect(screen.getByRole('button')).not.toHaveClass('bg-danger')
   })
 
+  it('le bouton de confirmation rouge porte une encre papier, lisible dans les deux thèmes (revue I4)', () => {
+    render(<Button variant="danger">Supprimer</Button>)
+    expect(screen.getByRole('button')).toHaveClass('text-paper')
+    expect(screen.getByRole('button')).not.toHaveClass('text-white')
+  })
+
   it('deux hauteurs fixes : 40 px et 32 px', () => {
     render(<><Button>Grand</Button><Button size="sm">Petit</Button></>)
     expect(screen.getByRole('button', { name: 'Grand' })).toHaveClass('h-10')

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { loginAs } from './helpers'
-import { SIDEBAR_WIDTH } from '../../lib/gantt/geometry'
+import { ROW_HEIGHT, SIDEBAR_WIDTH } from '../../lib/gantt/geometry'
 
 function isoInDays(n: number): string {
   const d = new Date()
@@ -92,7 +92,7 @@ test('le corps du Gantt remplit la hauteur disponible', async ({ page }) => {
   // s'interrompaient en plein écran, laissant le fond crème nu en dessous.
   const scroller = (await page.getByTestId('gantt-scroll').boundingBox())!
   const sidebar = (await page.getByTestId('gantt-sidebar').boundingBox())!
-  expect(sidebar.height).toBeGreaterThan(4 * 44 + 100) // au-delà de la hauteur de ses 4 lignes
+  expect(sidebar.height).toBeGreaterThan(4 * ROW_HEIGHT + 100) // au-delà de la hauteur de ses 4 lignes
   expect(sidebar.height).toBeGreaterThan(scroller.height * 0.8) // et jusqu'au bas du conteneur
 })
 

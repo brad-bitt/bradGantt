@@ -6,10 +6,10 @@ import { cn } from '@/lib/utils'
  * du registre DONNÉES ; pas d'or, réservé à l'état actif. C'est le seul endroit, avec l'image
  * d'aperçu, où ces couleurs restent en aplat.
  *
- * Carré d'encre nu : le cadre clair qui le détachait du bandeau sombre n'a plus de bandeau d'où
- * se détacher. Sur un onglet de navigateur sombre, le carré se suffit.
+ * Carré d'encre nu, en encre du THÈME : un carré fixe disparaissait sur le papier sombre. Le
+ * favicon (`app/icon.svg`), lui, garde l'encre claire fixe.
  *
- * Même dessin que `app/icon.svg` (favicon) : si l'un change, l'autre suit.
+ * Même dessin que `app/icon.svg` (favicon) : si l'un change, l'autre suit, couleur du carré exceptée.
  */
 export function Mark({ size = 28, className }: { size?: number; className?: string }) {
   return (
@@ -20,7 +20,7 @@ export function Mark({ size = 28, className }: { size?: number; className?: stri
       viewBox="0 0 64 64"
       className={cn('shrink-0', className)}
     >
-      <rect width="64" height="64" fill="#2A2622" />
+      <rect width="64" height="64" fill="var(--color-ink)" />
       <rect x="12" y="14" width="26" height="9" fill="#5B9DFF" />
       <rect x="22" y="28" width="26" height="9" fill="#FF8A3D" />
       <rect x="32" y="42" width="20" height="9" fill="#FF6FA3" />

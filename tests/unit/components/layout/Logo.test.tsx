@@ -7,7 +7,8 @@ describe('le signe (spec §11)', () => {
     const { container } = render(<Mark />)
     const rects = Array.from(container.querySelectorAll('rect'))
     expect(rects).toHaveLength(4)
-    expect(rects[0]).toHaveAttribute('fill', '#2A2622')
+    // Encre du thème : sur le papier sombre, un carré #2A2622 fixe disparaissait (revue M4).
+    expect(rects[0]).toHaveAttribute('fill', 'var(--color-ink)')
     expect(rects.some((r) => r.getAttribute('stroke'))).toBe(false)
     expect(rects.slice(1).map((r) => r.getAttribute('fill'))).toEqual(['#5B9DFF', '#FF8A3D', '#FF6FA3'])
   })

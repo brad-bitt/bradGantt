@@ -73,7 +73,8 @@
 }
 
 :root {
-  /* Part de couleur dans le fond d'une barre de tâche (`.data-bar`). */
+  /* Part de couleur dans le fond d'une barre de tâche (`.data-bar`). La même la nuit : les teintes
+     sont claires, en mettre plus éclaircirait le fond sous l'encre claire (lime tombait à 4:1). */
   --data-tint: 32%;
 }
 
@@ -95,8 +96,6 @@
   /* Une ombre à 14 % ne se voit pas sur du brun. */
   --shadow-float: 0 8px 24px color-mix(in srgb, var(--color-ink) 40%, transparent), 0 2px 6px color-mix(in srgb, var(--color-ink) 24%, transparent);
   --shadow-dialog: 0 24px 60px color-mix(in srgb, var(--color-ink) 60%, transparent);
-  /* Plus de couleur dans les barres, pour que l'encre claire reste lisible dessus. */
-  --data-tint: 45%;
 }
 
 @layer base {
@@ -108,8 +107,9 @@
 }
 
 @layer utilities {
-  /* Focus visible au clavier seulement : anneau d'or, le seul sens de l'or est « actif ». */
-  .focus-ring { @apply outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2; }
+  /* Focus visible au clavier seulement : un trait d'encre (l'or seul ne fait que 1,5:1 sur le
+     papier) doublé d'un halo d'or, le seul sens de l'or étant « actif ». */
+  .focus-ring { @apply outline-none focus-visible:outline-2 focus-visible:outline-ink focus-visible:outline-offset-2 focus-visible:shadow-[0_0_0_5px_var(--color-accent)]; }
   /* Hachures de week-end sur un fond de structure (encre du thème, donc claires la nuit). */
   .hatch { background-image: repeating-linear-gradient(45deg, var(--color-ink) 0 4px, transparent 4px 8px); }
   /* Graduation d'un jour dans la grille : un pointillé vertical en couleur de filet. */
