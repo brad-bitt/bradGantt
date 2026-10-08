@@ -160,6 +160,8 @@ test('« N en retard » ne garde que les projets en retard, « Tout afficher » 
 })
 
 test('toute la carte ouvre le Gantt, mais son menu ⋯ n\'y emmène pas', async ({ page }) => {
+  // Deux projets, une tâche et quatre navigations : plus long que les 30 s par défaut.
+  test.setTimeout(90_000)
   await loginAs(page, 'alice')
   const stamp = Date.now()
   const empty = `Carte vide ${stamp}`

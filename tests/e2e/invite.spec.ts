@@ -30,6 +30,8 @@ async function signUp(browser: Browser, email: string) {
 }
 
 test('invitation par lien : acceptation, réutilisation refusée, mauvais compte', async ({ page, browser }) => {
+  // Deux comptes et trois passages par le lien : plus long que les 30 s par défaut.
+  test.setTimeout(90_000)
   await loginAs(page, 'alice')
   await page.goto('/projects')
   await page.getByRole('button', { name: 'Nouveau projet' }).click()
