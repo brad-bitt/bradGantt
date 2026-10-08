@@ -104,9 +104,8 @@ test('enchaîner un groupe après un groupe', async ({ page }) => {
   await second.getByLabel('Titre').fill('Phase 2')
   await second.getByRole('button', { name: 'Créer', exact: true }).click()
 
-  // Comparaison en capitales : une ligne de groupe est rendue en `uppercase` par la feuille de
-  // style, `innerText` restitue donc le texte tel qu'il est PEINT et non tel qu'il est stocké.
-  expect((await rowTitles(page)).map((t) => t.toUpperCase())).toEqual(['PHASE 1', 'PHASE 2'])
+  // Plus aucune capitale forcée : `innerText` restitue le titre tel qu'il est saisi.
+  expect(await rowTitles(page)).toEqual(['Phase 1', 'Phase 2'])
 })
 
 test('un projet vide accueille avec des points de départ, un lecteur seulement avec un constat', async ({ page }) => {

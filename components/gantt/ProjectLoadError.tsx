@@ -11,9 +11,9 @@ export function ProjectLoadError({ retryHref, projectName }: { retryHref: string
   return (
     <main className="p-8 space-y-6">
       <h1 className="text-4xl">{projectName ?? 'Projet'}</h1>
-      <div role="alert" className="bg-paper brutal max-w-xl space-y-4 p-6">
-        <p className="font-display text-2xl uppercase">Chargement impossible</p>
-        <p className="font-bold">
+      <div role="alert" className="max-w-xl space-y-4 rounded-card border border-line bg-surface p-6">
+        <p className="font-display text-[22px] font-medium">Chargement impossible</p>
+        <p className="font-medium">
           Les données de ce projet n&apos;ont pas pu être chargées. Rien n&apos;a été perdu : réessaie dans un instant.
         </p>
         <p className="font-mono text-sm">
@@ -21,8 +21,8 @@ export function ProjectLoadError({ retryHref, projectName }: { retryHref: string
         </p>
         <div className="flex gap-4">
           {/* `<a>` et non `<Link>` : on veut un rechargement complet, pas une reprise du cache routeur. */}
-          <a href={retryHref} className="font-mono text-sm underline brutal-focus">Réessayer</a>
-          <Link href="/projects" className="font-mono text-sm underline brutal-focus">← Projets</Link>
+          <a href={retryHref} className="text-sm underline underline-offset-4 focus-ring">Réessayer</a>
+          <Link href="/projects" className="text-sm underline underline-offset-4 focus-ring">← Projets</Link>
         </div>
       </div>
     </main>

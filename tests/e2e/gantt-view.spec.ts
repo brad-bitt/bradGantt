@@ -196,7 +196,7 @@ test('« N en retard » met les barres en retard en évidence, Échap l\'éteint
 
   await toggle.click()
   await expect(toggle).toHaveAttribute('aria-pressed', 'true')
-  await expect(late).toHaveClass(/border-danger/)
+  await expect(late).toHaveClass(/data-bar-late/)
   await expect(current).toHaveCSS('opacity', '0.5')
   // La frise est allée chercher le retard : la barre est dans le champ.
   await expect(late).toBeInViewport()

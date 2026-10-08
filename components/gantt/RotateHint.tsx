@@ -31,17 +31,17 @@ export function RotateHint() {
     <div
       data-testid="rotate-hint"
       role="status"
-      className="hidden portrait:flex sm:portrait:hidden shrink-0 items-center gap-3 border-b-[3px] border-ink bg-yellow px-3 py-2 text-on-data"
+      className="hidden portrait:flex sm:portrait:hidden shrink-0 items-center gap-3 border-b border-line bg-accent-soft px-4 py-2 text-sm"
     >
       <span aria-hidden className="text-xl leading-none">⟳</span>
-      <p className="flex-1 text-sm font-bold leading-tight">
+      <p className="flex-1 text-sm font-medium leading-tight">
         Pour modifier le diagramme à l’aise, tourne ton téléphone à l’horizontale.
       </p>
       <button
         type="button"
         onClick={dismiss}
         aria-label="Fermer ce conseil"
-        className="shrink-0 border-[3px] border-ink bg-paper px-2 py-0.5 font-mono text-xs font-bold text-ink brutal-focus"
+        className="shrink-0 rounded-control border border-line bg-surface px-2 py-0.5 text-xs font-medium text-ink focus-ring"
       >
         OK
       </button>

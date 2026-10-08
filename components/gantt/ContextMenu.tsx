@@ -175,7 +175,7 @@ function Menu({ menu, onClose }: { menu: Exclude<ContextMenuState, null>; onClos
       ref={ref}
       role="menu"
       data-testid="context-menu"
-      className="fixed z-50 min-w-56 bg-paper brutal shadow-brutal-lg py-1"
+      className="fixed z-50 min-w-56 rounded-card border border-line/60 bg-surface p-1.5 shadow-float dark:border-line"
       style={{ left: pos.x, top: pos.y }}
       // Un clic droit SUR le menu ne doit ni rouvrir le menu natif ni fermer celui-ci.
       onContextMenu={(e) => e.preventDefault()}
@@ -188,10 +188,10 @@ function Menu({ menu, onClose }: { menu: Exclude<ContextMenuState, null>; onClos
           onClick={() => { onClose(); void item.run() }}
           className={cn(
             // Casse mixte : un menu est une liste de commandes, pas une suite de titres.
-            'block w-full px-4 py-2 text-left text-sm font-bold outline-none hover:bg-yellow hover:text-on-data focus-visible:bg-yellow focus-visible:text-on-data',
+            'block w-full rounded-control px-3 py-2 text-left text-base font-medium outline-none hover:bg-paper focus-visible:bg-paper',
             // Le destructif est sobre au repos (texte rouge) et ne s'aplatit en rouge qu'au survol.
-            item.danger && 'text-danger hover:bg-danger hover:text-on-data focus-visible:bg-danger',
-            item.danger && i > 0 && 'mt-1 border-t-[3px] border-ink pt-2',
+            item.danger && 'text-danger hover:bg-danger/8 focus-visible:bg-danger/8',
+            item.danger && i > 0 && 'mt-1 border-t border-line pt-2',
           )}
         >
           {item.label}

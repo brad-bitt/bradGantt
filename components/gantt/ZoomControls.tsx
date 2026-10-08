@@ -17,7 +17,7 @@ export function ZoomControls() {
   const zoom = useGanttStore((s) => s.zoom)
   const setZoom = useGanttStore((s) => s.setZoom)
   return (
-    <div role="group" aria-label="Zoom" className="inline-flex border-[3px] border-ink bg-paper">
+    <div role="group" aria-label="Zoom" className="inline-flex overflow-hidden rounded-control border border-line bg-surface">
       {LEVELS.map((l) => (
         <button
           key={l.value}
@@ -28,8 +28,8 @@ export function ZoomControls() {
           // l'initiale est PEINTE, pour que zoom et boutons tiennent sur une ligne.
           aria-label={l.label}
           className={cn(
-            'px-2 py-1 text-sm font-bold border-r-[3px] border-ink last:border-r-0 brutal-focus sm:px-3',
-            zoom === l.value ? 'bg-yellow text-on-data' : 'hover:bg-band',
+            'px-2 py-1 text-sm font-medium border-r border-line last:border-r-0 focus-ring sm:px-3',
+            zoom === l.value ? 'bg-accent-soft text-ink' : 'hover:bg-paper',
           )}
         >
           <span aria-hidden className="sm:hidden">{l.label[0]}</span>

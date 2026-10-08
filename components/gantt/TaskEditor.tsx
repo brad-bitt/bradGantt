@@ -244,14 +244,14 @@ function TaskEditorForm({ existing, defaultType, defaultParentId, afterTaskId, p
             )}
           </div>
         )}
-        {errors.dates && <p role="alert" className="text-danger text-sm font-bold">{errors.dates}</p>}
+        {errors.dates && <p role="alert" className="text-danger text-sm font-medium">{errors.dates}</p>}
 
         {/* Convertir une tâche en jalon écrase sa fin et son avancement, en un clic et sans
             retour possible : repasser en « tâche » ne rend ni l'une ni l'autre. La suppression,
             elle, demande confirmation — cette perte-là ne doit pas être plus discrète. On nomme
             les valeurs en jeu plutôt que d'avertir dans le vide. */}
         {losses.length > 0 && (
-          <p role="status" className="brutal bg-yellow px-3 py-2 text-sm font-bold text-on-data">
+          <p role="status" className="rounded-control bg-accent-soft px-3 py-2 text-sm font-medium">
             Un jalon tient sur un seul jour : {losses.join(' et ')} {losses.length > 1 ? 'seront perdus' : 'sera perdue'}.
           </p>
         )}
@@ -267,11 +267,11 @@ function TaskEditorForm({ existing, defaultType, defaultParentId, afterTaskId, p
             className="font-mono"
           />
         )}
-        {errors.progress && <p role="alert" className="text-danger text-sm font-bold">{errors.progress}</p>}
+        {errors.progress && <p role="alert" className="text-danger text-sm font-medium">{errors.progress}</p>}
 
         {anchor && !existing && (
-          <div className="brutal bg-band px-3 py-2 space-y-2">
-            <p className="text-sm font-bold">
+          <div className="space-y-2 rounded-card border border-line bg-paper px-3 py-2">
+            <p className="text-sm font-medium">
               Enchaînée après « {anchor.title} », qui se termine le{' '}
               {format(parseDate(anchorEnd!), 'd MMMM yyyy', { locale: fr })}.
             </p>
@@ -286,7 +286,7 @@ function TaskEditorForm({ existing, defaultType, defaultParentId, afterTaskId, p
         )}
 
         <fieldset>
-          <legend className="mb-1 font-bold text-sm">Couleur</legend>
+          <legend className="mb-1 font-medium text-sm">Couleur</legend>
           <div className="flex gap-2">
             {TASK_COLORS.map((c) => (
               <button
@@ -296,18 +296,15 @@ function TaskEditorForm({ existing, defaultType, defaultParentId, afterTaskId, p
                 aria-pressed={color === c}
                 onClick={() => setColor(c)}
                 className={cn(
-                  'inline-flex size-8 items-center justify-center border-[3px] border-ink brutal-focus',
-                  color === c && 'shadow-brutal',
+                  'inline-flex size-8 items-center justify-center rounded-full border border-line focus-ring',
+                  color === c && 'border-ink ring-2 ring-ink ring-offset-2 ring-offset-surface',
                 )}
                 style={{ backgroundColor: c }}
               >
-                {/* Coche plutôt que l'`outline-dashed` employé ailleurs pour la sélection :
-                    `brutal-focus` pose `outline-none`, qui l'emporte dans la cascade et
-                    effaçait purement et simplement le liseré (vérifié : `outline-style`
-                    calculé à `none` sur la pastille sélectionnée). Renoncer à `brutal-focus`
-                    aurait coûté l'indicateur de focus clavier, seul repère sur ces six
-                    boutons sans texte. */}
-                {color === c && <span aria-hidden className="font-display text-base leading-none text-on-data">✓</span>}
+                {/* Coche et anneau plutôt qu'un `outline` : l'anneau de focus clavier en est un, et
+                    les deux se seraient écrasés dans la cascade. Une pastille de couleur reste un
+                    aplat : c'est un échantillon, pas une donnée posée sur l'écran. */}
+                {color === c && <span aria-hidden className="text-base leading-none text-black/80">✓</span>}
               </button>
             ))}
           </div>
@@ -335,10 +332,10 @@ function TaskEditorForm({ existing, defaultType, defaultParentId, afterTaskId, p
             encore d'identifiant, il n'y aurait rien à rattacher. Absente aussi sur un GROUPE :
             la page des tickets refuse de rattacher un groupe, le lien mènerait nulle part. */}
         {existing && existing.type !== 'group' && ticketsEnabled && (
-          <section className="brutal bg-band px-3 py-2 space-y-2">
-            <h3 className="font-bold uppercase text-sm">Tickets</h3>
+          <section className="space-y-2 rounded-card border border-line bg-paper px-3 py-2">
+            <h3 className="text-sm font-medium">Tickets</h3>
             {!ticketSummaries || ticketSummaries.length === 0 ? (
-              <p className="font-mono text-xs text-ink-soft">Aucun ticket rattaché.</p>
+              <p className="text-xs text-ink-soft">Aucun ticket rattaché.</p>
             ) : (
               <ul className="space-y-1">
                 {ticketSummaries.map((t) => (
@@ -357,7 +354,7 @@ function TaskEditorForm({ existing, defaultType, defaultParentId, afterTaskId, p
                 déjà rattachée dans le formulaire. */}
             <Link
               href={`/projects/${projectId}/tickets?nouveau=${existing.id}`}
-              className="inline-block text-sm font-bold underline-offset-4 hover:underline brutal-focus"
+              className="inline-block text-sm font-medium underline-offset-4 hover:underline focus-ring"
             >
               + Nouveau ticket
             </Link>

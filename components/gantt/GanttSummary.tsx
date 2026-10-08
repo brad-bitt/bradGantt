@@ -16,7 +16,7 @@ function Stat({ label, children }: { label: string; children: React.ReactNode })
     <div className="flex shrink-0 items-baseline gap-2">
       {/* Casse mixte, encre douce : l'intitulé s'efface devant le chiffre qu'il présente. */}
       <span className="text-sm text-ink-soft">{label}</span>
-      <span className="text-sm font-bold">{children}</span>
+      <span className="text-sm font-medium">{children}</span>
     </div>
   )
 }
@@ -54,7 +54,7 @@ export function GanttSummary() {
       data-testid="gantt-summary"
       // `hidden sm:flex` : sur un téléphone, la barre repliée sur quatre lignes mangeait le tiers de
       // la hauteur ; la carte du projet dans la liste porte déjà ces chiffres.
-      className="hidden shrink-0 flex-wrap items-center gap-x-6 gap-y-2 border-t-[3px] border-ink bg-paper px-6 py-2 sm:flex short:hidden"
+      className="hidden shrink-0 flex-wrap items-center gap-x-6 gap-y-2 border-t border-line bg-surface px-6 py-2 text-sm text-ink-soft sm:flex short:hidden"
     >
       <Stat label="Tâches"><span className="font-mono">{summary.taskCount}</span></Stat>
       {summary.groupCount > 0 && <Stat label="Groupes"><span className="font-mono">{summary.groupCount}</span></Stat>}
@@ -75,11 +75,11 @@ export function GanttSummary() {
           aria-valuemin={0}
           aria-valuemax={100}
           aria-label="Avancement du projet"
-          className="relative block h-4 w-24 border-[3px] border-ink bg-paper"
+          className="relative block h-1.5 w-24 overflow-hidden rounded-full bg-line"
         >
-          <span className="absolute inset-y-0 left-0 hatch opacity-40" style={{ width: `${summary.progress}%` }} />
+          <span className="absolute inset-y-0 left-0 bg-ink" style={{ width: `${summary.progress}%` }} />
         </span>
-        <span className="font-mono text-sm font-bold">{summary.progress} %</span>
+        <span className="font-mono text-sm font-medium">{summary.progress} %</span>
       </div>
 
       {summary.nextMilestone && (
@@ -93,16 +93,16 @@ export function GanttSummary() {
       )}
 
       {summary.lateCount > 0 && (
-        // Niveau 3 au repos (texte rouge, jamais un aplat) ; jaune quand la mise en évidence est
-        // allumée — le jaune dit « actif ». Un second clic ou Échap l'éteint.
+        // Niveau 3 au repos (texte rouge, jamais un aplat) ; or voilé quand la mise en évidence est
+        // allumée — l'or dit « actif ». Un second clic ou Échap l'éteint.
         <button
           type="button"
           aria-pressed={highlightLate}
           onClick={toggleHighlightLate}
           title={highlightLate ? 'Ne plus distinguer le retard (Échap)' : 'Distinguer les tâches en retard'}
           className={cn(
-            'ml-auto shrink-0 border-[3px] px-2 py-0.5 text-sm font-bold brutal-focus',
-            highlightLate ? 'border-ink bg-yellow text-on-data' : 'border-transparent text-danger underline-offset-4 hover:underline',
+            'ml-auto shrink-0 rounded-control border px-2 py-0.5 text-sm font-medium focus-ring',
+            highlightLate ? 'border-transparent bg-accent-soft text-ink' : 'border-transparent text-danger hover:bg-danger/8',
           )}
         >
           <span className="font-mono">{summary.lateCount}</span> en retard

@@ -30,7 +30,7 @@ describe('GanttSummary', () => {
     await userEvent.click(button)
     expect(useGanttStore.getState().highlightLate).toBe(true)
     expect(button).toHaveAttribute('aria-pressed', 'true')
-    expect(button).toHaveClass('bg-yellow')
+    expect(button).toHaveClass('bg-accent-soft')
 
     await userEvent.click(button)
     expect(useGanttStore.getState().highlightLate).toBe(false)

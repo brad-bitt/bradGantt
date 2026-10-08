@@ -42,13 +42,13 @@ export function EmptyProject() {
   return (
     <div
       data-testid="gantt-empty"
-      className="pointer-events-auto sticky w-fit max-w-3xl bg-paper brutal shadow-brutal-lg p-4 sm:p-6 space-y-5"
+      className="pointer-events-auto sticky w-fit max-w-3xl space-y-5 rounded-card border border-line bg-surface p-4 sm:p-6"
       style={compact ? { left: 12, maxWidth: 'calc(100vw - 24px)' } : { left: sidebarWidth + 16 }}
     >
       <h2 className="text-2xl">Ce projet est vide</h2>
       {canEdit ? (
         <>
-          <p className="font-bold">
+          <p className="font-medium">
             Pose une première tâche, un jalon ou un groupe. Le diagramme se construit ensuite de
             proche en proche.
           </p>
@@ -61,8 +61,8 @@ export function EmptyProject() {
           {/* Les modèles : un diagramme complet en un clic, daté d'aujourd'hui. C'est ce que
               font tous les outils du marché sur un projet vide, et c'est la façon la plus
               rapide de VOIR ce que le produit permet avant de le retailler. */}
-          <div className="space-y-3 border-t-[3px] border-ink pt-5">
-            <p className="font-display text-sm uppercase">Ou pars d’un modèle</p>
+          <div className="space-y-3 border-t border-line pt-5">
+            <p className="font-display text-lg font-medium">Ou pars d’un modèle</p>
             <ul className="grid gap-3 sm:grid-cols-3">
               {TEMPLATES.map((t) => (
                 <TemplateChoice key={t.id} template={t} today={today} busy={applying !== null} applying={applying === t.id} onUse={() => pickTemplate(t.id)} />
@@ -70,14 +70,14 @@ export function EmptyProject() {
             </ul>
           </div>
 
-          <ul className="space-y-1 border-t-[3px] border-ink pt-3 font-mono text-xs text-ink-soft">
+          <ul className="space-y-1 border-t border-line pt-3 text-sm text-ink-soft">
             <li>↳ sur une ligne enchaîne la suivante juste après elle.</li>
             <li>Glisse une barre pour la déplacer, ses bords pour l’allonger.</li>
             <li>Tire la pastille du bord droit d’une barre vers une autre pour les lier.</li>
           </ul>
         </>
       ) : (
-        <p className="font-bold">Personne n’y a encore ajouté de tâche.</p>
+        <p className="font-medium">Personne n’y a encore ajouté de tâche.</p>
       )}
     </div>
   )
@@ -94,8 +94,8 @@ function TemplateChoice({ template, today, busy, applying, onUse }: {
   const dated = planned.filter((p) => p.type !== 'group')
   const range = { start: dated.map((p) => p.startDate).sort()[0], end: dated.map((p) => p.endDate).sort().at(-1)! }
   return (
-    <li className="flex flex-col gap-2 border-[3px] border-ink p-3">
-      <p className="font-bold leading-tight">{template.name}</p>
+    <li className="flex flex-col gap-2 rounded-card border border-line p-3">
+      <p className="font-medium leading-tight">{template.name}</p>
       {/* La vignette est celle des cartes de la liste : on reconnaît d'emblée ce qu'on obtiendra. */}
       <MiniGantt tasks={planned} range={range} today={today} />
       <p className="flex-1 text-xs text-ink-soft">{template.description}</p>

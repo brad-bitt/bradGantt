@@ -54,10 +54,10 @@ describe('GanttToolbar', () => {
     expect(useGanttStore.getState().editor).toEqual({ mode: 'create', parentId: null, type: 'milestone' })
   })
 
-  it('le zoom courant est en jaune, sans ombre', () => {
+  it('le zoom courant est en or voilé, dans un groupe à filet', () => {
     hydrate('viewer')
     render(<GanttToolbar />)
-    expect(screen.getByRole('button', { name: 'Jour' })).toHaveClass('bg-yellow')
-    expect(screen.getByRole('group', { name: 'Zoom' })).not.toHaveClass('shadow-brutal')
+    expect(screen.getByRole('button', { name: 'Jour' })).toHaveClass('bg-accent-soft')
+    expect(screen.getByRole('group', { name: 'Zoom' })).toHaveClass('rounded-control', 'border-line')
   })
 })

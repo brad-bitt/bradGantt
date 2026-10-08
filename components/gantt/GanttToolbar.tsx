@@ -19,7 +19,7 @@ export function GanttToolbar() {
   const create = (type: TaskType) => openEditor({ mode: 'create', parentId: null, type })
 
   return (
-    <div className="flex shrink-0 items-center gap-2 border-b-[3px] border-ink bg-paper px-3 py-2 sm:gap-3 sm:px-6 short:py-1">
+    <div className="flex shrink-0 items-center gap-2 border-b border-line bg-surface px-4 py-2 sm:gap-3 sm:px-6 short:py-1">
       <ZoomControls />
       {/* Sur téléphone, la barre ne garde que J / S / M et « + » : « Aujourd'hui » n'y tient pas.
           `max-sm:hidden` et non `hidden sm:inline-flex` : le `inline-flex` de base du Button est
@@ -43,7 +43,7 @@ export function GanttToolbar() {
               label="Ajouter"
               className="sm:hidden"
               trigger={<span aria-hidden className="text-lg leading-none">+</span>}
-              triggerClassName="size-8 bg-ink text-cream brutal brutal-press font-bold"
+              triggerClassName="size-8 rounded-control bg-ink text-paper font-medium hover:bg-ink/88"
               entries={[
                 { id: 'task', label: 'Tâche', onSelect: () => create('task') },
                 { id: 'milestone', label: 'Jalon', onSelect: () => create('milestone') },
