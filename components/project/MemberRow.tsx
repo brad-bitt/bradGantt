@@ -38,7 +38,7 @@ export function MemberRow({ member, projectId, isOwner }: { member: Member; proj
     <li className="flex items-center gap-3 py-2">
       <Avatar name={member.displayName} color={member.color} src={member.avatarUrl} size="sm" />
       <div className="flex-1 min-w-0">
-        <p className="font-bold truncate">{member.displayName}</p>
+        <p className="font-medium truncate">{member.displayName}</p>
         <p className="text-xs truncate">{member.email}</p>
       </div>
       {editable ? (

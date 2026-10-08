@@ -43,8 +43,8 @@ export function MembersPage({ projectId, members, invitations, isOwner }: Member
     <div className="min-h-0 flex-1 overflow-y-auto">
       <section aria-labelledby={titleId} className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8">
         <h2 id={titleId} className="text-3xl">Membres</h2>
-        <div className="border-[3px] border-ink bg-paper px-4 shadow-brutal">
-          <ul data-testid="members-list" className="divide-y-[3px] divide-ink/10">
+        <div className="rounded-card border border-line bg-surface px-4">
+          <ul data-testid="members-list" className="divide-y divide-line">
             {sorted.map((m) => <MemberRow key={m.userId} member={m} projectId={projectId} isOwner={isOwner} />)}
           </ul>
         </div>

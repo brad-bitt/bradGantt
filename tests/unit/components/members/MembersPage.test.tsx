@@ -59,4 +59,12 @@ describe('MembersPage', () => {
     expect(mockRevoke).toHaveBeenCalledWith('p1', 'i1')
     expect(screen.getByRole('button', { name: 'Inviter' })).toBeInTheDocument()
   })
+
+  it('la liste est une surface à filets, sans ombre (spec §9)', () => {
+    render(<MembersPage projectId="p1" members={members} invitations={[]} isOwner={false} />)
+    const frame = screen.getByTestId('members-list').parentElement!
+    expect(frame).toHaveClass('rounded-card', 'border-line', 'bg-surface')
+    expect(Array.from(frame.classList).some((c) => c.includes('shadow'))).toBe(false)
+    expect(screen.getByTestId('members-list')).toHaveClass('divide-line')
+  })
 })
