@@ -1,81 +1,135 @@
 # BradGantt
 
-BradGantt est une application de diagrammes de Gantt collaboratifs : plusieurs
-utilisateurs partagent un projet (owner/editor/viewer), y organisent des tâches,
-groupes et jalons avec dépendances, et voient les changements des autres en temps réel.
-Stack : Next.js 15 (App Router) + TypeScript + Tailwind v4 + Supabase (Postgres, Auth,
-RLS), dans un style éditorial (papier, encre, Fraunces).
+Application de **diagrammes de Gantt collaboratifs**. Plusieurs personnes partagent un
+projet (rôles propriétaire / éditeur / lecteur), y organisent tâches, groupes et jalons
+avec des dépendances, et suivent un backlog de tickets.
 
-## Prérequis
+- En ligne : https://brad-gantt.vercel.app
+- Code : https://github.com/brad-bitt/bradGantt
+- **Guide pour être autonome** (variables d'env, comptes, déploiement, sauvegardes,
+  dépannage) : [`docs/GUIDE-AUTONOMIE.md`](docs/GUIDE-AUTONOMIE.md)
 
-- Node.js 20+
-- Docker (pour la stack Supabase locale, lancée via la CLI `supabase`)
+## Stack
 
-## Démarrage
+| Brique            | Outil                                                        |
+| ----------------- | ------------------------------------------------------------ |
+| Front + serveur   | Next.js 15 (App Router), React 19, TypeScript                 |
+| Style             | Tailwind CSS v4 (identité « éditoriale » : papier, encre, Fraunces) |
+| Base, auth, temps réel | Supabase (Postgres + RLS, Auth Google / lien magique) |
+| État côté client  | Zustand (commandes optimistes avec retour arrière)            |
+| Emails d'invitation | Resend (facultatif : sans clé, les emails s'affichent dans la console) |
+| Tests             | Vitest + Testing Library, pgTAP (base), Playwright (bout en bout) |
+| Hébergement       | Vercel (app) + Supabase cloud (base)                          |
+
+## Démarrage rapide (en local)
+
+Prérequis : **Node.js 20+** et **Docker** (la base Supabase locale tourne dans Docker).
 
 ```bash
 npm install
-npx supabase start        # démarre Postgres, Auth, Studio... en local (Docker)
+npx supabase start                    # démarre la base locale (Postgres, Auth, Studio…)
+cp .env.local.example .env.local      # puis colle les clés affichées par la commande précédente
+npx supabase db reset                 # crée les tables + les données de test
+npm run dev                           # http://localhost:3100
 ```
 
-`supabase start` affiche les clés locales (`anon key`, `service_role key`, etc.) :
-reporte-les dans `.env.local` (copie `.env.local.example`, voir le détail de chaque
-variable dedans).
+`npx supabase start` affiche `API URL`, `anon key` et `service_role key` : ce sont les
+valeurs à mettre dans `.env.local` (le détail de chaque variable est dans
+[`docs/GUIDE-AUTONOMIE.md`](docs/GUIDE-AUTONOMIE.md#1-les-variables-denvironnement)).
+Pour revoir ces clés plus tard : `npx supabase status`. Pour arrêter : `npx supabase stop`.
 
-```bash
-npx supabase db reset      # applique les migrations + le seed de données de test
-npm run dev                # démarre l'app sur http://localhost:3100
-```
+`npx supabase db reset` est sans danger à rejouer sur **la base locale** : il la recrée
+entièrement à partir des migrations et du seed. (Il ne touche pas la base en ligne.)
 
-`npx supabase db reset` est sans danger à rejouer à tout moment sur ce projet : il
-recrée entièrement la base Postgres locale de ce projet (`bradgantt` est le
-`project_id` qui distingue sa stack Docker des autres projets Supabase locaux du
-poste, pas le nom de la base — la base elle-même s'appelle `postgres`) à partir des
-migrations et du seed.
+### Comptes de test (local uniquement)
+
+Le seed (`supabase/seed.sql`) crée quatre comptes, tous avec le mot de passe `password123` :
+`alice@test.local`, `bob@test.local`, `carol@test.local`, `dave@test.local`.
+
+En local, la connexion Google n'est pas configurée : utilise la page **`/e2e-login`**
+(email + mot de passe). Elle n'existe que si la variable serveur `E2E_ENABLED=1` est
+définie (les tests Playwright la définissent eux-mêmes). Pour l'utiliser à la main :
+`E2E_ENABLED=1 npm run dev`. **Ne jamais la définir en production** : c'est une porte
+de connexion qui contourne l'auth normale (voir `lib/e2e.ts`).
 
 ### Ports
 
-Ce projet fixe des ports non standards car le poste de développement a déjà d'autres
-projets Supabase locaux actifs (port 54321/3000 déjà pris). Les valeurs viennent de
-`supabase/config.toml` (`project_id = "bradgantt"`) et de `package.json` (`npm run dev`).
+Ports non standards, pour cohabiter avec d'autres projets Supabase sur le même poste
+(valeurs dans `supabase/config.toml`, `project_id = "bradgantt"`, et dans `package.json`).
 
 | Service                        | Port  |
-| ------------------------------- | ----- |
-| Application (`npm run dev`)     | 3100  |
-| Supabase API (PostgREST/Auth)   | 54421 |
-| Base Postgres                   | 54422 |
-| Supabase Studio                 | 54423 |
-| Boîte mail locale (Inbucket)    | 54424 |
+| ------------------------------ | ----- |
+| Application (`npm run dev`)    | 3100  |
+| Supabase API (PostgREST/Auth)  | 54421 |
+| Base Postgres                  | 54422 |
+| Supabase Studio (interface web de la base) | 54423 |
+| Boîte mail locale (Inbucket)   | 54424 |
 
-Si tu lances une autre stack Supabase en parallèle sur ce poste, assure-toi qu'elle
-utilise un `project_id` et des ports différents (`supabase/config.toml`) — les
-conteneurs Docker sont nommés `supabase_<service>_<project_id>` et ne se marchent pas
-dessus tant que les ports ne collisionnent pas.
+## Commandes
 
-## Utilisateurs de test
+| Commande              | Ce qu'elle fait                                              |
+| --------------------- | ------------------------------------------------------------ |
+| `npm run dev`         | Lance l'app en local sur :3100                                |
+| `npm run build`       | Construit la version de production (ce que fait Vercel)       |
+| `npm start`           | Lance la version construite                                   |
+| `npm test`            | Tests unitaires (Vitest)                                      |
+| `npm run test:db`     | Tests de la base (pgTAP : schéma, droits RLS, invitations)    |
+| `npm run test:e2e`    | Tests de bout en bout (Playwright, lance lui-même `npm run dev`) |
+| `npm run typecheck`   | Vérification TypeScript                                       |
+| `npm run lint`        | ESLint                                                        |
+| `npm run db:types`    | Régénère `lib/supabase/types.ts` depuis le schéma local       |
 
-Le seed (`supabase/seed.sql`, chargé par `supabase db reset`) crée quatre comptes :
+`test:db`, `test:e2e` et `db:types` ont besoin de la base locale démarrée
+(`npx supabase start`). Première fois avec Playwright : `npx playwright install chromium`.
 
-| Email               | Mot de passe   |
-| -------------------- | -------------- |
-| `alice@test.local`   | `password123`  |
-| `bob@test.local`     | `password123`  |
-| `carol@test.local`   | `password123`  |
-| `dave@test.local`    | `password123`  |
+Avant de pousser, le minimum : `npm run typecheck && npm run lint && npm test && npm run build`.
 
-La page `/e2e-login` permet de se connecter directement avec ces comptes (email +
-mot de passe, sans passer par le flux Google OAuth). Elle n'est servie que si la
-variable d'environnement serveur `E2E_ENABLED=1` est positionnée (voir
-`lib/e2e.ts` et `app/e2e-login/page.tsx`) — utilisée par les tests e2e Playwright
-(`playwright.config.ts` la positionne pour le serveur de dev qu'il pilote).
+## Structure du projet
 
-**`E2E_ENABLED` ne doit jamais être positionnée en production** : elle ouvre une porte
-de connexion par mot de passe qui contourne le flux d'auth normal. C'est une variable
-serveur uniquement (jamais `NEXT_PUBLIC_*`), lue au runtime — mais un build produit
-avec la variable positionnée ne peut plus la refermer sans reconstruire (voir le
-commentaire dans `lib/e2e.ts`).
+```
+app/                  Pages et routes Next.js
+  (auth)/login/       Page de connexion (Google + lien magique par email)
+  (app)/(accueil)/    Liste des projets (/projects)
+  (app)/(projet)/     Un projet : Gantt, Tickets, Membres
+  auth/callback/      Retour de connexion (Google / lien magique)
+  api/invitations/    Envoi des invitations par email
+  invite/[token]/     Acceptation d'une invitation
+  e2e-login/          Connexion par mot de passe, tests uniquement
+  globals.css         Couleurs, polices, thème sombre
+components/           Composants React (gantt, tickets, members, layout, ui…)
+lib/                  Logique : client Supabase, moteur Gantt, invitations, tickets…
+  supabase/           Création des clients Supabase (navigateur, serveur, middleware) + types
+middleware.ts         Rafraîchit la session et protège les pages connectées
+supabase/
+  config.toml         Config de la base locale (ports, auth)
+  migrations/         Évolutions du schéma SQL, appliquées dans l'ordre
+  seed.sql            Données de test locales
+  tests/              Tests pgTAP de la base
+tests/unit/           Tests Vitest
+tests/e2e/            Tests Playwright
+scripts/make-icons.mjs  Génère favicon et icône Apple depuis app/icon.svg
+docs/                 Guide d'autonomie + specs et plans de conception (docs/superpowers/)
+```
 
-## Navigation
+## Mise en production
+
+- **App** : Vercel, projet `brad-gantt`. Chaque `git push` sur la branche `master`
+  met à jour le site en ligne ; un push sur une autre branche crée seulement une
+  version de prévisualisation (URL à part).
+- **Base** : Supabase cloud, projet `vnwpgehxwcomhsgctqsl` (région eu-central-1).
+- **Nouvelle migration** : créer le fichier dans `supabase/migrations/`, tester en local
+  (`npx supabase db reset`), puis l'appliquer en ligne avec `npx supabase db push`.
+
+Pas-à-pas complet (variables Vercel, Google OAuth, sauvegardes, pièges) :
+[`docs/GUIDE-AUTONOMIE.md`](docs/GUIDE-AUTONOMIE.md).
+
+> Piège n°1 : sur le plan Vercel gratuit, un commit signé avec une adresse email
+> inconnue de Vercel est **bloqué sans message clair**. Ce repo doit commiter avec
+> `leo.peyre95@gmail.com` (`git config user.email` dans le dossier du projet).
+
+## Fonctionnalités en détail
+
+### Navigation
 
 L'en-tête change selon le contexte. Sur `/projects`, il porte la marque et le menu du
 compte. Dans un projet, il porte le fil d'Ariane « Projets / Nom », les onglets **Gantt**,
@@ -88,7 +142,7 @@ filet, les commandes d'objet sont du texte révélé au survol. Sur `/projects`,
 « N en retard » filtre la liste (`?filtre=retard`) ; dans le Gantt, le même chiffre en pied de
 page met les barres en retard en évidence (Échap pour l'éteindre).
 
-## Tickets
+### Tickets
 
 Chaque projet peut ouvrir un backlog de tickets numérotés (`#1`, `#2`, …), rattachables aux
 tâches de la frise. Un ticket porte un titre, une description, un statut (À faire / En cours /
@@ -107,21 +161,7 @@ Côté seed, « Projet tickets » est le seul projet avec un backlog, et il sert
 tests de bout en bout. « Projet démo » en est volontairement dépourvu : des specs comptent ses
 lignes et inspectent sa barre latérale, où un compteur fausserait les décomptes.
 
-## Commandes de test
-
-| Commande              | Ce qu'elle fait                                              |
-| ---------------------- | ------------------------------------------------------------- |
-| `npm test`             | Tests unitaires (Vitest + Testing Library)                    |
-| `npm run test:db`      | Tests pgTAP : schéma, policies RLS, `accept_invitation` (base locale) |
-| `npm run test:e2e`     | Tests end-to-end (Playwright, pilote `npm run dev` sur :3100) |
-| `npm run typecheck`    | Vérification TypeScript (`tsc --noEmit`)                      |
-| `npm run lint`         | ESLint                                                         |
-| `npm run db:types`     | Régénère `lib/supabase/types.ts` depuis le schéma local        |
-
-`npm run test:db` et `npm run db:types` nécessitent la stack Supabase locale démarrée
-(`npx supabase start`).
-
-## Construire un diagramme
+### Construire un diagramme
 
 Un projet neuf s'ouvre sur une carte d'accueil qui propose une première tâche, un premier jalon
 ou un premier groupe. Une fois la première ligne posée, trois gestes suffisent :
@@ -158,7 +198,7 @@ les groupes sont exclus de tous les calculs : leurs colonnes `start_date` / `end
 jamais réécrites quand leurs enfants bougent, c'est `computeLayout` qui recalcule leur empan à
 l'affichage. La liste des projets réutilise la même fonction pour la vignette de chaque carte.
 
-## Design
+### Design
 
 BradGantt a une identité **éditoriale** (spec `docs/superpowers/specs/2026-10-08-bradgantt-identite-editoriale-design.md`) :
 papier chaud et encre graphite, Fraunces pour les titres, IBM Plex Sans pour l'interface,
@@ -177,7 +217,7 @@ L'échelle de texte remplace celle de Tailwind : `text-xs` vaut 13 px, `text-sm`
 15 — rien ne descend sous 13 px, aucune capitale n'est forcée, et `tests/unit/design/` le vérifie
 en lisant les sources.
 
-## Marque et icônes
+### Marque et icônes
 
 Le signe (trois barres en escalier sur un carré d'encre) vit en deux exemplaires qui doivent
 rester identiques : `components/layout/Logo.tsx` pour l'interface et `app/icon.svg` pour le
@@ -190,7 +230,7 @@ système sans réseau.
 Le nom s'écrit « BradGantt », en Fraunces et en casse mixte. Le signe est un carré d'encre nu :
 plus de cadre clair, il n'a plus de bandeau sombre d'où se détacher.
 
-## Téléphone
+### Téléphone
 
 Sous 640 px de large, la vue est dite **compacte** (`COMPACT_BREAKPOINT` dans `lib/gantt/geometry.ts`) :
 la sidebar prend un peu moins de la moitié de l'écran au lieu de 300 px fixes (`sidebarWidthFor`),
@@ -206,7 +246,7 @@ efface alors ce qui n'est pas le diagramme). Le bandeau se ferme pour la session
 
 Les tests `tests/e2e/mobile.spec.ts` tournent en émulation Pixel 7 (portrait puis paysage).
 
-## Thème sombre
+### Thème sombre
 
 La bascule est dans le menu du compte (l'avatar, à droite de l'en-tête de la liste comme de
 celui d'un projet) et en haut à droite de la page de connexion. Un choix explicite est enregistré
@@ -223,7 +263,7 @@ les huit couleurs de tâches ne changent pas ; une barre les porte en teinte pâ
 32 % le jour, 45 % la nuit) sous un texte en encre du thème, et le CSS de `.data-bar` fait seul la
 conversion. La variante Tailwind `dark:` cible `[data-theme="dark"]`.
 
-## Membres et invitations
+### Membres et invitations
 
 L'onglet **Membres** de l'en-tête du projet (`/projects/<id>/membres`) liste l'équipe. Le
 propriétaire y invite, change un rôle (Éditeur / Lecteur) ou retire quelqu'un. La ligne du
@@ -250,51 +290,17 @@ clé, `EMAIL_FROM` doit utiliser un domaine vérifié chez Resend : le domaine d
 réponse et le formulaire l'affiche. Ce lien est un jeton d'accès au projet : il ne sort jamais
 de la boîte mail en production.
 
-## Production
-
-- **Hébergement** : Vercel, projet `brad-gantt` → https://brad-gantt.vercel.app
-  (déploiement auto à chaque push ; sur le plan Hobby, le commit HEAD doit être
-  signé `leo.peyre95@gmail.com`, sinon Vercel bloque silencieusement le build).
-- **Supabase cloud** : projet `vnwpgehxwcomhsgctqsl` (compte principal, région
-  eu-central-1) — migré le 2026-09-03 depuis l'ancien compte secondaire
-  (schéma + données + comptes `auth.users`, sauvegardes dans
-  `~/Bureau/Projets/.backups-supabase/`).
-- **Variables Vercel** : `NEXT_PUBLIC_SUPABASE_URL` et
-  `NEXT_PUBLIC_SUPABASE_ANON_KEY` (clé anon « legacy ») du projet cloud,
-  `NEXT_PUBLIC_SITE_URL` (l'URL publique, sans quoi les liens d'invitation
-  pointeraient sur l'origine de la requête), et pour les emails d'invitation
-  `RESEND_API_KEY` + `EMAIL_FROM` sur un domaine vérifié. Sans clé Resend,
-  l'application fonctionne mais les invitations partent dans les journaux
-  Vercel au lieu d'une boîte mail.
-- **Migrations** : `npx supabase db push` applique à la base cloud les migrations
-  absentes de son historique. Une migration ne doit donc jamais être antidatée
-  par rapport à la dernière déjà appliquée.
-- **Lier le CLI au projet cloud** (après un clone ou si `supabase/.temp` pointe
-  encore sur l'ancien projet) :
-  ```bash
-  npx supabase login
-  npx supabase link --project-ref vnwpgehxwcomhsgctqsl
-  ```
-- **Auth Google** : provider activé dans le dashboard Supabase ; l'URI de
-  redirection `https://vnwpgehxwcomhsgctqsl.supabase.co/auth/v1/callback` est
-  déclarée dans le client OAuth de la console Google Cloud.
-
 ## Architecture
 
 Le détail des choix de conception vit dans `docs/superpowers/` :
 
-- `docs/superpowers/specs/2026-08-28-bradgantt-design.md` — spec de conception
+- `docs/superpowers/specs/` — specs de conception (base, tickets, navigation, identité éditoriale)
 - `docs/superpowers/plans/` — plans d'implémentation par lot de fonctionnalités
 
-Deux idiomes d'écriture de données coexistent **volontairement** dans le code, chacun
-adapté à son cas d'usage plutôt qu'imposé partout par cohérence de façade :
+Deux façons d'écrire en base coexistent **volontairement** :
 
-- **Server Actions + `revalidatePath`** pour le CRUD des projets (créer/renommer/
-  supprimer un projet) : la latence d'un aller-retour serveur est acceptable pour des
-  actions peu fréquentes, et ce chemin reste le plus simple à auditer pour des écritures
-  protégées par RLS.
-- **Un store avec commandes optimistes et rollback** (plan suivant, moteur Gantt) pour
-  les tâches : le glisser-déposer d'une barre de Gantt a besoin d'un retour visuel
-  immédiat, incompatible avec un aller-retour serveur à chaque pixel de déplacement — la
-  mise à jour est appliquée localement tout de suite, puis confirmée ou annulée une fois
-  la réponse serveur connue.
+- **Server Actions + `revalidatePath`** pour les projets (créer, renommer, supprimer) :
+  actions rares, un aller-retour serveur est acceptable et simple à auditer sous RLS.
+- **Un store à commandes optimistes avec retour arrière** (`lib/optimistic/`, moteur Gantt)
+  pour les tâches : glisser une barre exige un retour visuel immédiat ; la modification
+  est appliquée tout de suite à l'écran, puis confirmée ou annulée selon la réponse serveur.
