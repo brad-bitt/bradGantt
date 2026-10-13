@@ -1,14 +1,22 @@
 import type { Metadata } from 'next'
-import { Fraunces, IBM_Plex_Sans, JetBrains_Mono } from 'next/font/google'
+import localFont from 'next/font/local'
 import './globals.css'
 import { Toaster } from '@/components/ui/Toast'
 import { THEME_BOOT_SCRIPT } from '@/components/layout/ThemeToggle'
 
-// Fraunces est une fonte variable : pas de liste de graisses, l'axe optique suit la taille.
-const fraunces = Fraunces({ subsets: ['latin'], axes: ['opsz'], variable: '--font-fraunces' })
-// IBM Plex Sans est statique : les trois graisses employées (400 corps, 500 libellés, 600 initiales).
-const plex = IBM_Plex_Sans({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-plex' })
-const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbrains-mono' })
+// Fontes hébergées dans app/fonts (sous-ensemble latin de Google Fonts, licence OFL) plutôt que
+// next/font/google : le build ne dépend plus d'un téléchargement chez Google, qui a déjà échoué
+// de façon passagère sur Vercel. Les trois fichiers sont variables, d'où les plages de graisses.
+// Fraunces : axes wght + opsz, l'axe optique suit la taille.
+const fraunces = localFont({
+  src: './fonts/fraunces-100-900.woff2',
+  weight: '100 900',
+  variable: '--font-fraunces',
+  adjustFontFallback: 'Times New Roman',
+})
+// IBM Plex Sans : graisses employées 400 corps, 500 libellés, 600 initiales.
+const plex = localFont({ src: './fonts/plex-100-700.woff2', weight: '100 700', variable: '--font-plex' })
+const mono = localFont({ src: './fonts/jetbrains-100-800.woff2', weight: '100 800', variable: '--font-jetbrains-mono' })
 
 export const metadata: Metadata = {
   title: 'BradGantt',
